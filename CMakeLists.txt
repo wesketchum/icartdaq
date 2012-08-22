@@ -29,7 +29,7 @@ add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
 target_link_libraries(${LIB_NAME} 
                       ds50daq_DAQ 
                       ${ARTDAQ_DAQRATE}
-                      ${ARTDAQ_DAQDATA} 
+                      ${ARTDAQ_DAQDATA}
 		      ${CETLIB})
 
 # ----------------------------------------------------------------------
