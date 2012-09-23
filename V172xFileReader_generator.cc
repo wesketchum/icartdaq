@@ -1,9 +1,9 @@
-#include "ds50daq/DAQ/FragmentReader.hh"
+#include "ds50daq/DAQ/V172xFileReader.hh"
 
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "ds50daq/DAQ/DS50Board.hh"
+#include "ds50daq/DAQ/V172xFragment.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <cstdint>
@@ -15,19 +15,15 @@
 #include <vector>
 
 using fhicl::ParameterSet;
-using ds50::Board;
+using ds50::V172xFragment;
 using namespace artdaq;
 
-ds50::FragmentReader::FragmentReader(ParameterSet const & ps)
-  :
+ds50::V172xFileReader::V172xFileReader(ParameterSet const & ps):
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
-  next_point_ {fileNames_.begin(), 0} {
-}
+  next_point_ {fileNames_.begin(), 0} {}
 
-bool
-ds50::FragmentReader::getNext_(FragmentPtrs & frags)
-{
+bool ds50::V172xFileReader::getNext_(FragmentPtrs & frags) {
   FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end()) {
     return false; // Nothing to do.
@@ -35,17 +31,17 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
   // Useful constants for byte arithmetic.
   static size_t const ds50_words_per_frag_word =
     sizeof(Fragment::value_type) /
-    sizeof(Board::data_t);
+    sizeof(V172xFragment::Header::data_t);
   static size_t const initial_payload_size =
-    Board::header_size_words() /
+    V172xFragment::header_size_words() /
     ds50_words_per_frag_word;
   static size_t const header_size_bytes =
-    Board::header_size_words() * sizeof(Board::data_t);
+    V172xFragment::header_size_words() * sizeof(V172xFragment::Header::data_t);
   // Open file.
   std::ifstream in_data;
   uint64_t read_bytes = 0;
   // Container into which to retrieve the header and interrogate with a
-  // Board overlay.
+  // V172xFragment overlay.
   Fragment header_frag(initial_payload_size);
   while (!((max_set_size_bytes_ < read_bytes) ||
            next_point_.first == fileNames_.end())) {
@@ -92,7 +88,7 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
       }
     }
     read_bytes += header_size_bytes;
-    Board const board(header_frag);
+    V172xFragment const board(header_frag);
     size_t const final_payload_size =
       (board.event_size() + board.event_size() % 2) /
       ds50_words_per_frag_word;
@@ -106,7 +102,7 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
               header_size_bytes;
     // Read rest of board data.
     uint64_t const bytes_left_to_read =
-      (board.event_size() * sizeof(Board::data_t)) - header_size_bytes;
+      (board.event_size() * sizeof(V172xFragment::Header::data_t)) - header_size_bytes;
     in_data.read(buf_ptr, bytes_left_to_read);
     if (!in_data) {
       throw cet::exception("FileReadFailure")
@@ -137,4 +133,4 @@ ds50::FragmentReader::getNext_(FragmentPtrs & frags)
   return true;
 }
 
-DEFINE_ARTDAQ_GENERATOR(ds50::FragmentReader)
+DEFINE_ARTDAQ_GENERATOR(ds50::V172xFileReader)

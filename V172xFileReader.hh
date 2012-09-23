@@ -1,5 +1,5 @@
-#ifndef ds50daq_DAQ_FragmentReader_hh
-#define ds50daq_DAQ_FragmentReader_hh
+#ifndef ds50daq_DAQ_V172xFileReader_hh
+#define ds50daq_DAQ_V172xFileReader_hh
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/Fragments.hh"
@@ -9,13 +9,13 @@
 #include <vector>
 
 namespace ds50 {
-  // FragmentReader reads DS50 events from a file or set of files.
-  class FragmentReader;
+  // V172xFileReader reads DS50 events from a file or set of files.
+  class V172xFileReader;
 }
 
-class ds50::FragmentReader : public artdaq::FragmentGenerator {
+class ds50::V172xFileReader : public artdaq::FragmentGenerator {
 public:
-  explicit FragmentReader(fhicl::ParameterSet const &);
+  explicit V172xFileReader(fhicl::ParameterSet const &);
 
 private:
   virtual bool getNext_(artdaq::FragmentPtrs & output);
@@ -29,4 +29,4 @@ private:
 
 };
 
-#endif /* ds50daq_DAQ_FragmentReader_hh */
+#endif /* ds50daq_DAQ_V172xFileReader_hh */
