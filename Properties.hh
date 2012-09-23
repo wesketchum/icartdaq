@@ -8,7 +8,7 @@
   look up attributes and constexpr in C++11 as a better way to do this
 */
 
-#include "ds50daq/DAQ/DS50Types.hh"
+#include "ds50daq/DAQ/V172xFragment.hh"
 
 extern "C" {
 #include <stdint.h>
@@ -23,6 +23,13 @@ extern "C" {
 #endif
 
 namespace ds50 {
+  typedef uint64_t reg_type;
+  typedef std::vector<reg_type> DataVec;
+  typedef V172xFragment::adc_type adc_type;
+  typedef V172xFragment::ADCCountVec ADCCountVec;
+  typedef double signal_type;
+  typedef std::vector<signal_type> SignalVec;
+
   Constexpr uint64_t reg_size_bits = (sizeof(reg_type) * 8);
   Constexpr uint64_t chunk_size_bytes = 1 << 16;
   Constexpr uint64_t chunk_size_counts = chunk_size_bytes / sizeof(adc_type);
