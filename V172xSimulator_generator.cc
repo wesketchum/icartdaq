@@ -71,7 +71,7 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   }
 }
 
-bool ds50::V172xSimulator::getNext_(FragmentPtrs & frags) {
+bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
   ++current_event_num_;
   if (events_to_generate_ != 0 &&
       current_event_num_ > events_to_generate_) {
