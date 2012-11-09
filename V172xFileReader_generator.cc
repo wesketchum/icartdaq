@@ -23,7 +23,7 @@ ds50::V172xFileReader::V172xFileReader(ParameterSet const & ps):
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   next_point_ {fileNames_.begin(), 0} {}
 
-bool ds50::V172xFileReader::getNext_(FragmentPtrs & frags) {
+bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
   FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end()) {
     return false; // Nothing to do.
