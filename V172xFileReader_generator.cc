@@ -19,11 +19,14 @@ using ds50::V172xFragment;
 using namespace artdaq;
 
 ds50::V172xFileReader::V172xFileReader(ParameterSet const & ps):
+  DS50FragmentGenerator(ps.get<ParameterSet> ("generator_ds50")),
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   next_point_ {fileNames_.begin(), 0} {}
 
 bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
+  if (should_stop ()) return false;
+
   FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end()) {
     return false; // Nothing to do.
@@ -116,7 +119,7 @@ bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
            bytes_left_to_read + header_size_bytes);
     read_bytes += bytes_left_to_read;
     // Update fragment header.
-    frag.setFragmentID(board.board_id());
+    frag.setFragmentID (fragment_id ());
     frag.setSequenceID(board.event_counter());
   }
   // Update counter for next time.
