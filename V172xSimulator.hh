@@ -22,12 +22,10 @@ namespace ds50 {
       virtual bool getNext__(artdaq::FragmentPtrs & output);
 
       std::size_t current_event_num_;
-      std::size_t const events_to_generate_; // go forever if this is 0
       std::size_t const fragments_per_event_;
       std::size_t const starting_fragment_id_;
       std::size_t const nChannels_;
       int const adc_bits_;
-      artdaq::RawDataType const run_number_;
       std::mt19937 engine_;
       std::vector<std::vector<size_t>> adc_freqs_;
       std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
