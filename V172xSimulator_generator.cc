@@ -90,6 +90,10 @@ bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
                         (std::round(content_generator_[i](engine_)));
                     }
                    );
+
+    artdaq::Fragment& frag = *frags.back();
+    frag.setFragmentID (fragment_id ());
+    frag.setSequenceID (current_event_num_);
   }
   return true;
 }
