@@ -18,6 +18,9 @@ namespace ds50 {
     public:
       explicit V172xSimulator(fhicl::ParameterSet const & ps);
 
+    protected:
+      void start_ () override {current_event_num_ = 0;}
+
     private:
       virtual bool getNext__(artdaq::FragmentPtrs & output);
 
