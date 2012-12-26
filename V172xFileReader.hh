@@ -27,6 +27,5 @@ namespace ds50 {
   size_t events_read_;
   std::pair<std::vector<std::string>::const_iterator, uint64_t> next_point_;
 };
->>>>>>> develop
 
 #endif /* ds50daq_DAQ_V172xFileReader_hh */
