@@ -50,13 +50,12 @@ namespace {
 }
 
 ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
+  DS50FragmentGenerator(ps.get<fhicl::ParameterSet> ("generator_ds50")),
   current_event_num_(0),
-  events_to_generate_(ps.get<size_t>("events_to_generate", 0)),
   fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
   starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
   nChannels_(ps.get<size_t>("nChannels", 600000)),
   adc_bits_ (ps.get<size_t>("adc_bits", 12)),
-  run_number_(ps.get<RawDataType>("run_number")),
   engine_(ps.get<int64_t>("random_seed", 314159)),
   adc_freqs_(),
   content_generator_() {
@@ -71,12 +70,10 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   }
 }
 
-bool ds50::V172xSimulator::getNext_(FragmentPtrs & frags) {
+bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
+  if (should_stop ()) return false;
   ++current_event_num_;
-  if (events_to_generate_ != 0 &&
-      current_event_num_ > events_to_generate_) {
-    return false;
-  }
+
   ds50::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
@@ -93,6 +90,10 @@ bool ds50::V172xSimulator::getNext_(FragmentPtrs & frags) {
                         (std::round(content_generator_[i](engine_)));
                     }
                    );
+
+    artdaq::Fragment& frag = *frags.back();
+    frag.setFragmentID (fragment_id ());
+    frag.setSequenceID (current_event_num_);
   }
   return true;
 }

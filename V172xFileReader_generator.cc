@@ -19,13 +19,21 @@ using ds50::V172xFragment;
 using namespace artdaq;
 
 ds50::V172xFileReader::V172xFileReader(ParameterSet const & ps):
+  DS50FragmentGenerator(ps.get<ParameterSet> ("generator_ds50")),
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
-  next_point_ {fileNames_.begin(), 0} {}
+  max_events_(ps.get<int>("max_events", -1)),
+  events_read_(0),
+  next_point_ {fileNames_.begin(), 0}
+ {
+ }
 
-bool ds50::V172xFileReader::getNext_(FragmentPtrs & frags) {
+bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
+  if (should_stop ()) return false;
+
   FragmentPtrs::size_type incoming_size = frags.size();
-  if (next_point_.first == fileNames_.end()) {
+  if (next_point_.first == fileNames_.end() ||
+      ! (max_events_ == -1 || static_cast<size_t>(max_events_) > events_read_)) {
     return false; // Nothing to do.
   }
   // Useful constants for byte arithmetic.
@@ -44,7 +52,8 @@ bool ds50::V172xFileReader::getNext_(FragmentPtrs & frags) {
   // V172xFragment overlay.
   Fragment header_frag(initial_payload_size);
   while (!((max_set_size_bytes_ < read_bytes) ||
-           next_point_.first == fileNames_.end())) {
+           next_point_.first == fileNames_.end()) &&
+         (max_events_ == -1 || static_cast<size_t>(max_events_) > events_read_)) {
     if (!in_data.is_open()) {
       in_data.open((*next_point_.first).c_str(),
                    std::ios::in | std::ios::binary);
@@ -116,8 +125,9 @@ bool ds50::V172xFileReader::getNext_(FragmentPtrs & frags) {
            bytes_left_to_read + header_size_bytes);
     read_bytes += bytes_left_to_read;
     // Update fragment header.
-    frag.setFragmentID(board.board_id());
+    frag.setFragmentID (fragment_id ());
     frag.setSequenceID(board.event_counter());
+    ++events_read_;
   }
   // Update counter for next time.
   if (in_data.is_open()) {
@@ -128,7 +138,9 @@ bool ds50::V172xFileReader::getNext_(FragmentPtrs & frags) {
         << " fragments in "
         << std::fixed
         << std::setprecision(1)
-        << read_bytes / 1024.0 / 1024.0 << " MiB."
+        << read_bytes / 1024.0 / 1024.0 << " MiB ("
+        << read_bytes
+        << " b)."
         << flusher;
   return true;
 }
