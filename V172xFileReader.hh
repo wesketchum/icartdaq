@@ -18,14 +18,15 @@ namespace ds50 {
     private:
       virtual bool getNext__(artdaq::FragmentPtrs & output);
 
-      // Configuration.
-      std::vector<std::string> const fileNames_;
-      uint64_t const max_set_size_bytes_;
+  // Configuration.
+  std::vector<std::string> const fileNames_;
+  uint64_t const max_set_size_bytes_;
+  int const max_events_;
 
-      // State
-      std::pair<std::vector<std::string>::const_iterator, uint64_t> next_point_;
-
-  };
-}
+  // State
+  size_t events_read_;
+  std::pair<std::vector<std::string>::const_iterator, uint64_t> next_point_;
+};
+>>>>>>> develop
 
 #endif /* ds50daq_DAQ_V172xFileReader_hh */
