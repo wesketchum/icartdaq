@@ -17,7 +17,7 @@ namespace {
   void read_adc_freqs(std::string const & fileName, std::string const & filePath,
                       std::vector<std::vector<size_t>> & freqs, int adc_bits) {
 
-    // 30-Dec-2012, KAB - added the ability to find the specified data file
+    // 06-Jan-2013, KAB - added the ability to find the specified data file
     // in a list of paths specified in an environmental variable
     if (getenv(filePath.c_str()) == nullptr) {
       setenv(filePath.c_str(), ".", 0);
@@ -73,7 +73,7 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   content_generator_() {
   content_generator_.reserve(fragments_per_event_);
   read_adc_freqs(ps.get<std::string>("freqs_file"),
-                 ps.get<std::string>("freqs_path", "DS50_CONFIG_PATH"),
+                 ps.get<std::string>("freqs_path", "DS50DAQ_CONFIG_PATH"),
                  adc_freqs_, adc_bits_);
   for (size_t i = 0; i < fragments_per_event_; ++i) {
     content_generator_.emplace_back(V172xFragment::adc_range(adc_bits_),
