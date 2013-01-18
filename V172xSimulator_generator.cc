@@ -5,6 +5,7 @@
 #include "ds50daq/DAQ/V172xFragment.hh"
 #include "ds50daq/DAQ/V172xFragmentWriter.hh"
 #include "fhiclcpp/ParameterSet.h"
+#include "artdaq/Utilities/SimpleLookupPolicy.h"
 
 #include <fstream>
 #include <iomanip>
@@ -13,13 +14,24 @@
 using namespace artdaq;
 
 namespace {
-  void read_adc_freqs(std::string const & fileName,
+  void read_adc_freqs(std::string const & fileName, std::string const & filePath,
                       std::vector<std::vector<size_t>> & freqs, int adc_bits) {
-    std::ifstream is(fileName);
+
+    // 06-Jan-2013, KAB - added the ability to find the specified data file
+    // in a list of paths specified in an environmental variable
+    if (getenv(filePath.c_str()) == nullptr) {
+      setenv(filePath.c_str(), ".", 0);
+    }
+    SimpleLookupPolicy lookup_policy(filePath);
+    std::string fullPath = fileName;
+    try {fullPath = lookup_policy(fileName);}
+    catch (...) {}
+
+    std::ifstream is(fullPath);
     if (!is) {
       throw cet::exception("FileOpenError")
         << "Unable to open distribution data file "
-        << fileName;
+        << fileName << " with paths in " << filePath << ".";
     }
     std::string header;
     std::getline(is, header);
@@ -60,7 +72,9 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   adc_freqs_(),
   content_generator_() {
   content_generator_.reserve(fragments_per_event_);
-  read_adc_freqs(ps.get<std::string>("freqs_file"), adc_freqs_, adc_bits_);
+  read_adc_freqs(ps.get<std::string>("freqs_file"),
+                 ps.get<std::string>("freqs_path", "DS50DAQ_CONFIG_PATH"),
+                 adc_freqs_, adc_bits_);
   for (size_t i = 0; i < fragments_per_event_; ++i) {
     content_generator_.emplace_back(V172xFragment::adc_range(adc_bits_),
                                     -0.5,
