@@ -109,7 +109,7 @@ bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
     artdaq::Fragment& frag = *frags.back();
     frag.setFragmentID (fragment_id ());
     frag.setSequenceID (current_event_num_);
-    frag.setType (Config::V172X_FRAGMENT_TYPE);
+    frag.setUserType (Config::V1720_FRAGMENT_TYPE);
   }
   return true;
 }
