@@ -1,36 +1,9 @@
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <string>
-#include <math.h>
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymTable.hh"
+#include "ds50daq/Compression/Codes.hh"
 
 using namespace std;
-using namespace ds50;
 
-void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)
-{
-  bool forever = max_samples == 0 ? true : false;
-  const size_t sz = sizeof(adc_type);
-  while (forever || max_samples > 0) {
-    adc_type data;
-    ifs.read((char *)&data, sz);
-    if (ifs.eof()) { break; }
-    out.push_back(data);
-    --max_samples;
-  }
-}
-
-typedef unsigned long code_type;
-
-struct Code {
-  code_type value_ : 32;
-  code_type length_ : 32;
-};
-
-// -----------------------------
+namespace ds50 {
 
 code_type unary_code(long n)
 {
@@ -52,21 +25,6 @@ code_type b_mask(long b)
   return c;
 }
 
-template <code_type k>
-Code subexp(code_type n)
-{
-  constexpr code_type a = 1 << k;
-  code_type b = n < a ? k : floor(log2(n));
-  code_type u = n < a ? 0 : b - k + 1;
-  code_type left = unary_code(u) << b; // coded in u+1 bits
-  code_type right = b_mask(b) & n;
-  Code result;
-  // number of bits in result code = u+1+b
-  result.value_ = left | right;
-  result.length_ = u + 1 + b;
-  return result;
-}
-
 // ------------------------------
 
 Code pod(code_type n)
@@ -79,28 +37,46 @@ Code pod(code_type n)
   return result; // length = num_bits*2;
 }
 
-// ------------------------------
-
-int main(int argc, char * argv[])
+void generateTable(Code (*f)(code_type), SymTable& out, size_t total)
 {
-  if (argc < 2) {
-    cerr << "Usage: "
-         << argv[0]
-         << " max_codes\n";
-    return -1;
-  }
-  size_t max_codes = atoi(argv[1]);
-  SymTable pod_table, subexp0_table, subexp1_table;
-  for (size_t i = 0; i < max_codes; ++i) {
-    Code p = pod(i);
-    Code s0 = subexp<0>(i);
-    Code s1 = subexp<1>(i);
-    pod_table.push_back(SymCode(i, p.value_, p.length_));
-    subexp0_table.push_back(SymCode(i, s0.value_, s0.length_));
-    subexp1_table.push_back(SymCode(i, s1.value_, s1.length_));
-  }
-  ::writeTable("pod_table.txt", pod_table);
-  ::writeTable("subexp0_table.txt", subexp0_table);
-  ::writeTable("subexp1_table.txt", subexp1_table);
-  return 0;
+  out.clear();
+  for(size_t i=0;i<total;++i)
+    {
+      Code p = f(i);
+      out.push_back(SymCode(i,p.value_,p.length_);
+    }
+}
+
+unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const& syms)
+{
+  return rleAndCompress(in.cbegin(), in.cend(), out, syms);
+}
+
+unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec::const_iterator& in_end,
+			     DataVec& out, SymTable const& syms)
+{
+  Accum acc(out,syms);
+  unsigned long bit_count=0;
+
+  // calculate run lengths and feed each number into the acc.
+  for (auto b = in_start; b != in_end; ++b) 
+    {
+      auto curr = *b;
+      for (size_t i = 0; i < sizeof(ADCCountVec::value_type); ++i) 
+	{
+	  if ((curr & 0x01))
+	    {
+	      acc.put(bit_count);
+	      bit_count = 0;
+	    }
+	  else
+	    { 
+	      ++bit_count;
+	    }
+	  curr >>= 1;
+	}
+    }
+  return acc.totalBits();
+}
+
 }
