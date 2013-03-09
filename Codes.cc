@@ -30,7 +30,8 @@ code_type b_mask(long b)
 Code pod(code_type n)
 {
   Code result;
-  if (n == 0) { result.value_ = 0; result.length_ = 1; return result; } // one bit
+  // need to check the n==0, I think the value and length should be 1 and 1
+  if (n == 0) { result.value_ = 1; result.length_ = 1; return result; } // one bit
   unsigned long num_bits = floor(log2(n) + 1);
   result.value_ = n;
   result.length_ = num_bits * 2;
