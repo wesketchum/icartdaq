@@ -47,13 +47,13 @@ void generateTable(Code (*f)(code_type), SymTable& out, size_t total)
     }
 }
 
-unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const& syms)
+  unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const& syms, unsigned bias)
 {
-  return rleAndCompress(in.cbegin(), in.cend(), out, syms);
+  return rleAndCompress(in.cbegin(), in.cend(), out, syms, bias);
 }
 
 unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec::const_iterator& in_end,
-			     DataVec& out, SymTable const& syms)
+			     DataVec& out, SymTable const& syms, unsigned bias)
 {
   Accum acc(out,syms);
   unsigned long bit_count=0;
@@ -61,7 +61,7 @@ unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec:
   // calculate run lengths and feed each number into the acc.
   for (auto b = in_start; b != in_end; ++b) 
     {
-      auto curr = *b;
+      auto curr = *b - bias;
       for (size_t i = 0; i < sizeof(ADCCountVec::value_type); ++i) 
 	{
 	  if ((curr & 0x01))

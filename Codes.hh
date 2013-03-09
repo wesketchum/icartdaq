@@ -35,9 +35,9 @@ namespace ds50
   }
 
   void generateTable(Code (*)(code_type), SymTable& out, size_t total);
-  unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const&);
+  unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const&, unsigned bias);
   unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec::const_iterator& in_end,
-			       DataVec& out, SymTable const&);
+			       DataVec& out, SymTable const&, unsigned bias);
   
 }
 
