@@ -27,6 +27,12 @@ code_type b_mask(long b)
 
 // ------------------------------
 
+// for decoding pod, the number of zeros found is the number of bits
+// afterwards that define the run length i.e. the value we are looking for.
+// The value is the run length.
+// here is a reasonable online page that talks about it:
+// http://www.firstpr.com.au/audiocomp/lossless/
+
 Code pod(code_type n)
 {
   Code result;
@@ -74,10 +80,21 @@ unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec:
 	    { 
 	      ++bit_count;
 	    }
-	  curr >>= 1;
+	  curr >>=1;
 	}
     }
   return acc.totalBits();
 }
+
+ unsigned long decodePod(DataVec const& source, ADCCountVec& destination, unsigned bias)
+ {
+   throw std::logic_error("no code for decodePod");
+ }
+
+ unsigned long decodeSubexp(DataVec const& source, ADCCountVec& destination, unsigned bias, unsigned k)
+ {
+   throw std::logic_error("no code for decodeSubexp");
+ }
+
 
 }
