@@ -19,6 +19,8 @@ set( LIB_SOURCES
      BlockReader.cc
      Decoder.cc
      Encoder.cc
+     Accum.cc
+     Codes.cc
      HuffmanTable.cc
      SymProb.cc
      SymTable.cc
@@ -41,7 +43,7 @@ add_executable( DecodeHuffman DecodeHuffman.cc )
 add_executable( EncodeHuffman EncodeHuffman.cc )
 #add_executable( EncodeDS50 EncodeDS50.cc )
 add_executable( BuildRiceTable BuildRiceTable.cc )
-add_executable( Codes Codes.cc )
+add_executable( CodesMain CodesMain.cc )
 add_executable( MakeSample MakeSample.cc )
 add_executable( tester tester.cc )
 

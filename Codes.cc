@@ -1,5 +1,8 @@
 
 #include "ds50daq/Compression/Codes.hh"
+#include "ds50daq/Compression/Accum.hh"
+
+#include <stdexcept>
 
 using namespace std;
 
@@ -50,16 +53,16 @@ void generateTable(Code (*f)(code_type), SymTable& out, size_t total)
   for(size_t i=0;i<total;++i)
     {
       Code p = f(i);
-      out.push_back(SymCode(i,p.value_,p.length_);
+      out.push_back(SymCode(i,p.value_,p.length_));
     }
 }
 
   unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const& syms, unsigned bias)
 {
-  return rleAndCompress(in.cbegin(), in.cend(), out, syms, bias);
+  return rleAndCompress(&in[0], &in[in.size()], out, syms, bias);
 }
 
-unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec::const_iterator& in_end,
+unsigned long rleAndCompress(ADCCountVec::value_type const* in_start, ADCCountVec::value_type const* in_end,
 			     DataVec& out, SymTable const& syms, unsigned bias)
 {
   Accum acc(out,syms);
@@ -86,12 +89,14 @@ unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec:
   return acc.totalBits();
 }
 
- unsigned long decodePod(DataVec const& source, ADCCountVec& destination, unsigned bias)
+ // unsigned long decodePod(DataVec const& source, ADCCountVec& destination, unsigned bias)
+ unsigned long decodePod(DataVec const& , ADCCountVec& , unsigned )
  {
    throw std::logic_error("no code for decodePod");
  }
 
- unsigned long decodeSubexp(DataVec const& source, ADCCountVec& destination, unsigned bias, unsigned k)
+ // unsigned long decodeSubexp(DataVec const& source, ADCCountVec& destination, unsigned bias, unsigned k)
+ unsigned long decodeSubexp(DataVec const& , ADCCountVec& , unsigned , unsigned )
  {
    throw std::logic_error("no code for decodeSubexp");
  }

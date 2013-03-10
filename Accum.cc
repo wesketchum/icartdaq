@@ -1,4 +1,5 @@
 
+#include "cetlib/exception.h"
 #include "ds50daq/Compression/Accum.hh"
 
 namespace ds50 {

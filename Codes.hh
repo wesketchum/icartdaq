@@ -54,7 +54,7 @@ namespace ds50
   // this function will work for each of the encoding methods in this file, you need to
   // know the specific encoding method to decode it. returns the number of bits.
   unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const&, unsigned bias);
-  unsigned long rleAndCompress(ADCCountVec::const_iterator& in_start, ADCCountVec::const_iterator& in_end,
+  unsigned long rleAndCompress(ADCCountVec::value_type const* in_start, ADCCountVec::value_type const* in_end,
 			       DataVec& out, SymTable const&, unsigned bias);
   
   unsigned long decodePod(DataVec const& source, ADCCountVec& destination, unsigned bias);

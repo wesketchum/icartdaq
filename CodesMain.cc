@@ -10,6 +10,7 @@
 #include "ds50daq/Compression/Codes.hh"
 
 using namespace ds50;
+using namespace std;
 
 void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)
 {
