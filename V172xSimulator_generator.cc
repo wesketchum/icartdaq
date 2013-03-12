@@ -2,6 +2,7 @@
 
 #include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
+#include "ds50daq/DAQ/Config.hh"
 #include "ds50daq/DAQ/V172xFragment.hh"
 #include "ds50daq/DAQ/V172xFragmentWriter.hh"
 #include "fhiclcpp/ParameterSet.h"
@@ -108,6 +109,7 @@ bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
     artdaq::Fragment& frag = *frags.back();
     frag.setFragmentID (fragment_id ());
     frag.setSequenceID (current_event_num_);
+    frag.setUserType (Config::V1720_FRAGMENT_TYPE);
   }
   return true;
 }
