@@ -23,13 +23,13 @@ FileReader::FileReader(string const& name,
       << "Unable to open file: " << name << endl;
 }
 
-
-bool FileReader::getNext(Fragment& out, size_t event_number)
+std::unique_ptr<Fragment>
+FileReader::getNext(size_t event_number)
 {
   V172xFragment::Header head;
   size_t items = fread(&head, sizeof(head),1,file_);
 
-  if (items==0 && feof(file_)) return false;
+  if (items==0 && feof(file_)) return nullptr;
   if (items!=1) 
     throw art::Exception(art::errors::FileReadError)
       << "Failed reading header from: " << name_;
@@ -46,19 +46,19 @@ bool FileReader::getNext(Fragment& out, size_t event_number)
 
   size_t total_int32_to_read = head.event_size - sizeof(head)/4;
 
-  Fragment frag(event_number, fragment_, ds50::Config::V1720_FRAGMENT_TYPE);
-  frag.resize(total_word_count);
+  std::unique_ptr<Fragment>  result(new Fragment(event_number,
+                                                 fragment_,
+                                                 ds50::Config::V1720_FRAGMENT_TYPE));
+  result->resize(total_word_count);
 
-  memcpy(&(*frag.dataBegin()), &head, sizeof(head));
-  //auto dest = frag.dataBegin() + head_size_words;
-  void* dest = &*(frag.dataBegin() + head_size_words);
+  memcpy(&(*(result->dataBegin())), &head, sizeof(head));
+  void* dest = &*((result->dataBegin()) + head_size_words);
   items = fread(dest, 4, total_int32_to_read, file_);
 
-  if (items==0 && feof(file_)) return false;
+  if (items==0 && feof(file_)) return nullptr;
   if (items!=total_int32_to_read) 
     throw art::Exception(art::errors::FileReadError)
       << "Failed readin data from: " << name_;
 
-  out = frag;
-  return true;
+  return result;
 }

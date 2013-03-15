@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdio>
+#include <memory>
 #include <string>
 
 #include "artdaq/DAQdata/Fragment.hh"
@@ -18,7 +19,9 @@ public:
              bool size_in_words = true);
   FileReader(FileReader const&) = delete;
   FileReader& operator=(FileReader const&) = delete;
-  bool getNext(artdaq::Fragment& out, size_t event_number);
+
+  // Returns a null pointer when the file is exhausted.
+  std::unique_ptr<artdaq::Fragment> getNext(size_t event_number);
 
 private:
   std::string const name_;
