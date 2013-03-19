@@ -17,17 +17,23 @@ public:
   // size_in_words=false.
   FileReader(std::string const& name, std::size_t fragment_number,
              bool size_in_words = true);
+
   FileReader(FileReader const&) = delete;
   FileReader& operator=(FileReader const&) = delete;
+
+  FileReader(FileReader&& fr);
+  FileReader& operator=(FileReader&& fr);
+
+  ~FileReader();
 
   // Returns a null pointer when the file is exhausted.
   std::unique_ptr<artdaq::Fragment> getNext(size_t event_number);
 
 private:
-  std::string const name_;
-  std::size_t const fragment_;
+  std::string name_;
+  std::size_t fragment_;
   FILE* file_;
-  bool const size_in_words_;
+  bool size_in_words_;
 };
 
 

@@ -23,6 +23,30 @@ FileReader::FileReader(string const& name,
       << "Unable to open file: " << name << endl;
 }
 
+FileReader::FileReader(FileReader&& fr) :
+  name_(fr.name_),
+  fragment_(fr.fragment_),
+  file_(fr.file_),
+  size_in_words_(fr.size_in_words_)
+{
+  fr.file_ = 0;
+}
+
+FileReader& FileReader::operator=(FileReader&& fr)
+{
+  name_ = std::move(fr.name_);
+  fragment_ = fr.fragment_;
+  file_ = fr.file_;
+  fr.file_ = 0;
+  return *this;
+}
+
+
+FileReader::~FileReader()
+{
+  if (file_ != nullptr) fclose(file_);
+}
+
 std::unique_ptr<Fragment>
 FileReader::getNext(size_t event_number)
 {
