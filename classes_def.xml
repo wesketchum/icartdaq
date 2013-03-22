@@ -1,0 +1,5 @@
+<lcgdict>
+  <class name="darkart::Channel"/>
+  <class name="std::vector<darkart::Channel>"/>
+  <class name="art::Wrapper<std::vector<darkart::Channel> >"/>
+</lcgdict>
