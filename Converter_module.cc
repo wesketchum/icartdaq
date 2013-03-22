@@ -9,6 +9,8 @@
 
 #include "art/Framework/Core/EDProducer.h"
 #include "art/Framework/Core/ModuleMacros.h"
+#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq/DAQdata/Fragments.hh"
 
 class Converter;
 
@@ -19,13 +21,10 @@ public:
 
   void produce(art::Event & e) override;
 
-
 private:
-
   // Declare member data here.
 
 };
-
 
 Converter::Converter(fhicl::ParameterSet const & )
 // :
@@ -39,9 +38,27 @@ Converter::~Converter()
   // Clean up dynamic memory and other resources here.
 }
 
-void Converter::produce(art::Event & )
+void Converter::produce(art::Event & e)
 {
-  // Implementation of required member function here.
+  // need to get module_label="daq" and instance_name="1720" or "1724"
+  art::Handle<artdaq::Fragments> h_1720, h_1724;
+  e.getByLabel("daq", h_1720, "1720");
+  e.getByLabel("daq", h_1724, "1724");
+
+  // std::unique_ptr<CompressedEvent> prod(new CompressedEvent(*handle));
+
+  size_t const len = h_1720->size();
+  for (size_t i = 0; i < len; ++i) 
+    {
+      artdaq::Fragment const & frag = (*h_1720)[i];
+      V172xFragment b(frag);
+      // start of payload is the DS50 header
+      auto adc_start = b.dataBegin();
+      auto adc_end   = b.dataEnd();
+
+    }
+    
+  // e.put(std::move(prod));
 }
 
 DEFINE_ART_MODULE(Converter)
