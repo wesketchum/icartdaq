@@ -1,36 +1,12 @@
-#include <fstream>
-#include <iostream>
-#include <algorithm>
-#include <string>
-#include <math.h>
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymTable.hh"
+#include "ds50daq/Compression/Codes.hh"
+#include "ds50daq/Compression/Accum.hh"
+
+#include <stdexcept>
 
 using namespace std;
-using namespace ds50;
 
-void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)
-{
-  bool forever = max_samples == 0 ? true : false;
-  const size_t sz = sizeof(adc_type);
-  while (forever || max_samples > 0) {
-    adc_type data;
-    ifs.read((char *)&data, sz);
-    if (ifs.eof()) { break; }
-    out.push_back(data);
-    --max_samples;
-  }
-}
-
-typedef unsigned long code_type;
-
-struct Code {
-  code_type value_ : 32;
-  code_type length_ : 32;
-};
-
-// -----------------------------
+namespace ds50 {
 
 code_type unary_code(long n)
 {
@@ -52,55 +28,78 @@ code_type b_mask(long b)
   return c;
 }
 
-template <code_type k>
-Code subexp(code_type n)
-{
-  constexpr code_type a = 1 << k;
-  code_type b = n < a ? k : floor(log2(n));
-  code_type u = n < a ? 0 : b - k + 1;
-  code_type left = unary_code(u) << b; // coded in u+1 bits
-  code_type right = b_mask(b) & n;
-  Code result;
-  // number of bits in result code = u+1+b
-  result.value_ = left | right;
-  result.length_ = u + 1 + b;
-  return result;
-}
-
 // ------------------------------
+
+// for decoding pod, the number of zeros found is the number of bits
+// afterwards that define the run length i.e. the value we are looking for.
+// The value is the run length.
+// here is a reasonable online page that talks about it:
+// http://www.firstpr.com.au/audiocomp/lossless/
 
 Code pod(code_type n)
 {
   Code result;
-  if (n == 0) { result.value_ = 0; result.length_ = 1; return result; } // one bit
+  // need to check the n==0, I think the value and length should be 1 and 1
+  if (n == 0) { result.value_ = 1; result.length_ = 1; return result; } // one bit
   unsigned long num_bits = floor(log2(n) + 1);
   result.value_ = n;
   result.length_ = num_bits * 2;
   return result; // length = num_bits*2;
 }
 
-// ------------------------------
-
-int main(int argc, char * argv[])
+void generateTable(Code (*f)(code_type), SymTable& out, size_t total)
 {
-  if (argc < 2) {
-    cerr << "Usage: "
-         << argv[0]
-         << " max_codes\n";
-    return -1;
-  }
-  size_t max_codes = atoi(argv[1]);
-  SymTable pod_table, subexp0_table, subexp1_table;
-  for (size_t i = 0; i < max_codes; ++i) {
-    Code p = pod(i);
-    Code s0 = subexp<0>(i);
-    Code s1 = subexp<1>(i);
-    pod_table.push_back(SymCode(i, p.value_, p.length_));
-    subexp0_table.push_back(SymCode(i, s0.value_, s0.length_));
-    subexp1_table.push_back(SymCode(i, s1.value_, s1.length_));
-  }
-  ::writeTable("pod_table.txt", pod_table);
-  ::writeTable("subexp0_table.txt", subexp0_table);
-  ::writeTable("subexp1_table.txt", subexp1_table);
-  return 0;
+  out.clear();
+  for(size_t i=0;i<total;++i)
+    {
+      Code p = f(i);
+      out.push_back(SymCode(i,p.value_,p.length_));
+    }
+}
+
+  unsigned long rleAndCompress(ADCCountVec const& in, DataVec& out, SymTable const& syms, unsigned bias)
+{
+  return rleAndCompress(&in[0], &in[in.size()], out, syms, bias);
+}
+
+unsigned long rleAndCompress(ADCCountVec::value_type const* in_start, ADCCountVec::value_type const* in_end,
+			     DataVec& out, SymTable const& syms, unsigned bias)
+{
+  Accum acc(out,syms);
+  unsigned long bit_count=0;
+
+  // calculate run lengths and feed each number into the acc.
+  for (auto b = in_start; b != in_end; ++b) 
+    {
+      auto curr = *b - bias;
+      for (size_t i = 0; i < sizeof(ADCCountVec::value_type); ++i) 
+	{
+	  if ((curr & 0x01))
+	    {
+	      acc.put(bit_count);
+	      bit_count = 0;
+	    }
+	  else
+	    { 
+	      ++bit_count;
+	    }
+	  curr >>=1;
+	}
+    }
+  return acc.totalBits();
+}
+
+ // unsigned long decodePod(DataVec const& source, ADCCountVec& destination, unsigned bias)
+ unsigned long decodePod(DataVec const& , ADCCountVec& , unsigned )
+ {
+   throw std::logic_error("no code for decodePod");
+ }
+
+ // unsigned long decodeSubexp(DataVec const& source, ADCCountVec& destination, unsigned bias, unsigned k)
+ unsigned long decodeSubexp(DataVec const& , ADCCountVec& , unsigned , unsigned )
+ {
+   throw std::logic_error("no code for decodeSubexp");
+ }
+
+
 }
