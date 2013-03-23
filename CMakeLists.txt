@@ -41,9 +41,9 @@ link_libraries( ${LIB_NAME} ) # All execs need this.
 art_make_exec(NAME BuildHuffmanTable LIBRARIES ${LIB_NAME})
 art_make_exec(NAME DecodeHuffman LIBRARIES ${LIB_NAME})
 art_make_exec(NAME EncodeHuffman LIBRARIES ${LIB_NAME})
-#art_make_exec(EncodeDS50)
+# art_make_exec(EncodeDS50)
 art_make_exec(NAME BuildRiceTable LIBRARIES ${LIB_NAME})
-art_make_exec(NAME Codes LIBRARIES ${LIB_NAME})
+art_make_exec(NAME CodesMain LIBRARIES ${LIB_NAME})
 art_make_exec(NAME MakeSample LIBRARIES ${LIB_NAME})
 art_make_exec(NAME tester NO_INSTALL LIBRARIES ${LIB_NAME})
 
