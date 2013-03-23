@@ -26,26 +26,26 @@ set( LIB_SOURCES
      SymTable.cc
    )
 
-add_library( ${LIB_NAME} SHARED ${LIB_SOURCES} )
-
-target_link_libraries(${LIB_NAME} 
-                      ds50daq_DAQ 
-                      ${ARTDAQ_DAQRATE}
-                      ${ARTDAQ_DAQDATA}
-		      ${CETLIB})
+art_make_library(SOURCE ${LIB_SOURCES}
+  LIBRARIES
+  ds50daq_DAQ
+  ${ARTDAQ_DAQRATE}
+  ${ARTDAQ_DAQDATA}
+	${CETLIB}
+  )
 
 # ----------------------------------------------------------------------
 # Build this project's executables:
 link_libraries( ${LIB_NAME} ) # All execs need this.
 
-add_executable( BuildHuffmanTable BuildHuffmanTable.cc )
-add_executable( DecodeHuffman DecodeHuffman.cc )
-add_executable( EncodeHuffman EncodeHuffman.cc )
-#add_executable( EncodeDS50 EncodeDS50.cc )
-add_executable( BuildRiceTable BuildRiceTable.cc )
-add_executable( CodesMain CodesMain.cc )
-add_executable( MakeSample MakeSample.cc )
-add_executable( tester tester.cc )
+art_make_exec(NAME BuildHuffmanTable LIBRARIES ${LIB_NAME})
+art_make_exec(NAME DecodeHuffman LIBRARIES ${LIB_NAME})
+art_make_exec(NAME EncodeHuffman LIBRARIES ${LIB_NAME})
+#art_make_exec(EncodeDS50)
+art_make_exec(NAME BuildRiceTable LIBRARIES ${LIB_NAME})
+art_make_exec(NAME Codes LIBRARIES ${LIB_NAME})
+art_make_exec(NAME MakeSample LIBRARIES ${LIB_NAME})
+art_make_exec(NAME tester NO_INSTALL LIBRARIES ${LIB_NAME})
 
 # ----------------------------------------------------------------------
 # Install this project's headers, sources, library, and executables:
