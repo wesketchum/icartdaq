@@ -16,12 +16,14 @@ if(BTYPE_UC STREQUAL DEBUG)
 endif()
 
 set( LIB_SOURCES 
-     BlockReader.cc
-     Decoder.cc
-     Encoder.cc
-     HuffmanTable.cc
-     SymProb.cc
-     SymTable.cc
+  Accum.cc
+  BlockReader.cc
+  Codes.cc
+  Decoder.cc
+  Encoder.cc
+  HuffmanTable.cc
+  SymProb.cc
+  SymTable.cc
    )
 
 art_make_library(SOURCE ${LIB_SOURCES}
