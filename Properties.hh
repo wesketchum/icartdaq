@@ -40,6 +40,8 @@ namespace ds50 {
   template <size_t N> struct Properties_t;
 
   typedef Properties_t<12> Properties;
+  typedef Properties_t<12> V1720Properties;
+  typedef Properties_t<14> V1724Properties;
 }
 
 inline size_t ds50::bitCountToBytes(reg_type bits)
