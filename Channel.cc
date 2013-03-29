@@ -1,8 +1,8 @@
 #include "darkart/Products/Channel.hh"
 
 darkart::Channel::Channel() :
-  channel_id(),
-  board_id(),
+  channel_id(INVALID_CHANNEL_ID),
+  board_id(INVALID_BOARD_ID),
   waveform()
 { }
 

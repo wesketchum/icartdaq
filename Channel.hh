@@ -5,8 +5,15 @@
 
 namespace darkart
 {
+  // An instance of struct Channel represents the number of
+  // photoelectrons per sample in the raw data. A channel id of 0 is
+  // invalid, and is only used for default-constructed Channels;
+  // similarly for board id of 0.
   struct Channel
   {
+    static const int INVALID_CHANNEL_ID = 0;
+    static const int INVALID_BOARD_ID = 0;
+    static const int SUM_CHANNEL_ID = -1;
     // Default constructed Channel has channel_id and board_id that are
     // invalid (0), and an empty waveform.
     Channel();
@@ -20,10 +27,25 @@ namespace darkart
     int channel_id;
     int board_id;
     std::vector<double> waveform;
+
+    // As a matter of course, we expose as little of our product
+    // interface to Root as possible. This helps minimize the size of
+    // the created dictionaries.
+
+    // Return the number of samples in the waveform.
+    std::size_t size() const;
   };
 
   // The event data product we store is a vector of channels.
   typedef std::vector<Channel> Channels;
+}
+
+
+inline
+std::size_t
+darkart::Channel::size() const
+{
+  return waveform.size();
 }
 
 #endif

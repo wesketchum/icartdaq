@@ -4,3 +4,4 @@
 
 template class std::vector<darkart::Channel>;
 template class art::Wrapper<std::vector<darkart::Channel> >;
+template class art::Wrapper<darkart::Channel>;
