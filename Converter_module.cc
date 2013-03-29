@@ -12,6 +12,7 @@
 #include "art/Framework/Principal/Event.h"
 #include "art/Framework/Principal/Handle.h"
 #include "art/Utilities/Exception.h"
+#include "art/Utilities/InputTag.h"
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
@@ -22,15 +23,23 @@
 #include "darkart/Products/Channel.hh"
 
 #include <utility>
+#include <memory>
 
-class Converter;
+//----------------------------------------------------------------------------
+// Class Converter is an EDProducer that creates two products, each of
+// type darkart::Channels (a vector of channels) from two inputs: V1720
+// and V1724 Fragments.
+//----------------------------------------------------------------------------
 
 class Converter : public art::EDProducer {
 public:
   explicit Converter(fhicl::ParameterSet const & p);
   virtual ~Converter();
-
   void produce(art::Event & e) override;
+
+private:
+  art::InputTag v1720_tag_;
+  art::InputTag v1724_tag_;
 };
 
 //----------------------------------------------------------------------------
@@ -110,7 +119,9 @@ void convert_fragments(artdaq::Fragments const& input,
 //----------------------------------------------------------------------------
 // The implementation of the module member functions begins here.
 
-Converter::Converter(fhicl::ParameterSet const & /* p */)
+Converter::Converter(fhicl::ParameterSet const & /* p */) :
+  v1720_tag_("daq", "V1720"),
+  v1724_tag_("daq", "V1724")
 {
   produces<darkart::Channels>("V1720");
   produces<darkart::Channels>("V1724");
@@ -123,8 +134,8 @@ void Converter::produce(art::Event & e)
 {
   // need to get module_label="daq" and instance_name="1720" or "1724"
   art::Handle<artdaq::Fragments> h_1720, h_1724;
-  e.getByLabel("daq", "V1720", h_1720);
-  e.getByLabel("daq", "V1724", h_1724);
+  e.getByLabel(v1720_tag_, h_1720);
+  e.getByLabel(v1724_tag_, h_1724);
 
   // Make our products, which begin empty.
   std::unique_ptr<darkart::Channels> v1720(new darkart::Channels);
