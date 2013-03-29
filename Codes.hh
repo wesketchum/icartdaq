@@ -34,6 +34,8 @@ namespace ds50
   // in other words, if 11 bits are extracted, including the 1s,
   // use 2^5 + value&001F
 
+  // general formula 2^(ones - (1-k)) + num_after
+
   template <code_type k>
   Code subexp(code_type n)
   {
