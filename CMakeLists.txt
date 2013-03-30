@@ -21,6 +21,7 @@ set( LIB_SOURCES
   Codes.cc
   Decoder.cc
   Encoder.cc
+  ExpDecode.cc
   HuffmanTable.cc
   SymProb.cc
   SymTable.cc

@@ -1,9 +1,13 @@
 
 #include "ds50daq/Compression/ExpDecode.hh"
 
+#include <iostream>
 using namespace std;
 
 namespace ds50 {
+
+  // jbk - warning ...
+  // this code has not been reduced to simplest form
 
   reg_type decodePod(size_t adc_bits,
 		     reg_type bit_count,
@@ -15,6 +19,9 @@ namespace ds50 {
     SaveBit sb(adc_bits, out);
     size_t num_zeros=0;
 
+    // std::cout << "------ bit count = " << bit_count << "\n";
+    bool no_ones=true;
+
     while(!nb.done())
       {
 	adc_type v = nb.next();
@@ -22,17 +29,36 @@ namespace ds50 {
 	if(v)
 	  {
 	    // pull num_zeros bits from nb
-	    if(num_zeros==0)
-	      sb.push(0);
+	    if(num_zeros==0) 
+	      { 
+		// std::cout << " num_zeros=" << num_zeros << "\n";
+		// sb.pushBit(1);
+	      }
 	    else
 	      {
-		while((--num_zeros)>0)
-		  v = (v<<1) & nb.next();
-		sb.push(v);
+		for(unsigned i=1;i<num_zeros;++i)
+		  v = (v<<1)|nb.next();
+		sb.pushZeros(v);
+		// std::cout << "v=" << v << " num_zeros=" << num_zeros << "\n";
 	      }
+	    if(!nb.done() ||  no_ones || (nb.done() && num_zeros==0 && !no_ones))
+	      {
+		sb.pushBit(1); 
+		no_ones=false;
+		// cout << "pushed 1\n";
+	      }
+	    num_zeros=0;
 	  }
 	else
 	  ++num_zeros;
       }
+
+    if(num_zeros>0) 
+      {
+	cout << "got final zeros = " << num_zeros << "\n";
+	sb.pushZeros(num_zeros-1);
+      }
+    return 0;
   }
+  
 }
