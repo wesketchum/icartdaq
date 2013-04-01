@@ -34,6 +34,13 @@ namespace darkart
 
     // Return the number of samples in the waveform.
     std::size_t size() const;
+
+    // Increase the extent of the contained vector of samples to have
+    // capacity (not size) cap.
+    void reserve(std::size_t cap);
+
+    // Add a new sample
+    void add(double x);
   };
 
   // The event data product we store is a vector of channels.
@@ -46,6 +53,20 @@ std::size_t
 darkart::Channel::size() const
 {
   return waveform.size();
+}
+
+inline
+void
+darkart::Channel::reserve(std::size_t cap)
+{
+  waveform.reserve(cap);
+}
+
+inline
+void
+darkart::Channel::add(double x)
+{
+  waveform.push_back(x);
 }
 
 #endif
