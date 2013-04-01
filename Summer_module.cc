@@ -19,6 +19,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include "darkart/Products/Channel.hh"
+#include "darkart/ArtModules/ChannelSummer.hh"
 
 //----------------------------------------------------------------------------
 // Class Summer is an EDProducer that creates two products, each of
@@ -39,35 +40,6 @@ private:
 
 using darkart::Channel;
 using darkart::Channels;
-
-typedef std::unique_ptr<Channel> channel_ptr;
-
-//----------------------------------------------------------------------------
-// We begin with some helper functions to be used in the implementation
-// of Summer.
-
-
-channel_ptr make_sum(Channels const& channels)
-{
-  size_t result_size = 
-    channels.empty() ? 0 : channels.front().size();
-    
-  channel_ptr result(new Channel(Channel::SUM_CHANNEL_ID,
-                                 Channel::INVALID_BOARD_ID,
-                                 result_size));
-  // The Channel was made with the right *capacity*, but now we have to
-  // make its *size* correct.
-  result->waveform.resize(result_size);
-  for (auto const& ch : channels)
-    {
-      for (size_t i = 0; i < result_size; ++i)
-        {
-          result->waveform[i] += ch.waveform[i];
-        }
-    }
-
-  return result;
-}
 
 
 //----------------------------------------------------------------------------
