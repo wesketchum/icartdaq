@@ -19,7 +19,7 @@
 #include "fhiclcpp/ParameterSet.h"
 
 #include "darkart/Products/Channel.hh"
-#include "darkart/ArtModules/ChannelSummer.hh"
+#include "darkart/ArtModules/channel_algs.hh"
 
 //----------------------------------------------------------------------------
 // Class Summer is an EDProducer that creates two products, each of
