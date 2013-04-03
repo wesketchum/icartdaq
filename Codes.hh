@@ -60,7 +60,11 @@ namespace ds50
   unsigned long rleAndCompress(size_t bits, 
 			       ADCCountVec::value_type const* in_start, ADCCountVec::value_type const* in_end,
 			       DataVec& out, SymTable const&, unsigned bias);
-  
+
+#if 0
+  adc_type applyBias(size_t total_bits, adc_type value, int shift_amount);
+  adc_type removeBias();
+#endif  
 }
 
 #endif

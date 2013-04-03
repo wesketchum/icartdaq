@@ -98,4 +98,18 @@ void generateTable(Code (*f)(code_type), SymTable& out, size_t total)
   return acc.totalBits();
 }
 
+#if 0
+  adc_type applyBias(size_t total_bits, adc_type value, int shift_amount)
+  {
+    reg_type tmp = value<<(sizeof(adc_type)*8);
+    return 0;
+    
+  }
+
+  adc_type removeBias()
+  {
+    return 0;
+  }
+#endif
+
 }

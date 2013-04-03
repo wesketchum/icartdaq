@@ -6,7 +6,7 @@
 namespace ds50 {
   struct NextBit
   {
-    NextBit(DataVec const& in, reg_type bit_count):
+    NextBit(reg_type const* in, reg_type bit_count):
       bit_count_(bit_count),
       in_(in),
       index_(0),
@@ -38,7 +38,7 @@ namespace ds50 {
     }
 
     reg_type bit_count_;
-    DataVec const& in_;
+    reg_type const* in_;
     size_t index_;
     reg_type curr_;
     size_t pos_;
@@ -46,12 +46,13 @@ namespace ds50 {
 
   struct SaveBit
   {
-    SaveBit(size_t adc_bits, ADCCountVec& out):
+    SaveBit(size_t adc_bits, adc_type* out):
       adc_bits_(adc_bits),
       out_(out),
-      curr_(0),
-      pos_(adc_bits_)
+      curr_(out),
+      pos_(0) // pos_(adc_bits_)
     {
+      *curr_=0;
     }
 
     void pushZeros(adc_type v)
@@ -70,9 +71,12 @@ namespace ds50 {
     {
       if(pos_==adc_bits_)
 	{
-	  out_.push_back(0);
+	  ++curr_;
+	  *curr_ = 0;
 	  pos_=0;
-	  curr_=&out_.back();
+	  // jbk - old way when arg was vector
+	  // out_.push_back(0);
+	  // curr_=&out_.back();
 	}
 
       *curr_ |= ((b&0x0001)<<pos_);
@@ -82,7 +86,7 @@ namespace ds50 {
     }
 
     size_t adc_bits_;
-    ADCCountVec& out_;
+    adc_type* out_;
     adc_type* curr_;
     adc_type pos_;
   };
@@ -92,6 +96,10 @@ namespace ds50 {
 		     DataVec const& in,
 		     ADCCountVec& out);
 
+  reg_type decodePod(size_t adc_bits,
+		     reg_type bit_count,
+		     reg_type const* in,
+		     adc_type* out);
 }
 
 #endif

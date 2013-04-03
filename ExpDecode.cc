@@ -14,6 +14,16 @@ namespace ds50 {
 		     DataVec const& in,
 		     ADCCountVec& out)
   {
+    return decodePod(adc_bits, bit_count,
+		     &in[0], &out[0]);
+		     
+  }
+
+  reg_type decodePod(size_t adc_bits,
+		     reg_type bit_count,
+		     reg_type const* in,
+		     adc_type* out)
+  {
     // ADCCountVec tmp;
     NextBit nb(in, bit_count);
     SaveBit sb(adc_bits, out);
