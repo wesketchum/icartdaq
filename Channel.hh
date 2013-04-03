@@ -43,6 +43,18 @@ namespace darkart
     void add(double x);
   };
 
+  // Channels are value types, so two Channels are equal if all their
+  // data are equal.
+  inline
+  bool operator==(Channel const& a, Channel const& b)
+  {
+    return
+
+      a.channel_id == b.channel_id &&
+      a.board_id   == b.board_id   &&
+      a.waveform   == b.waveform;
+  }
+
   // The event data product we store is a vector of channels.
   typedef std::vector<Channel> Channels;
 }
