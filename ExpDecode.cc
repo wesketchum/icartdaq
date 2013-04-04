@@ -48,12 +48,12 @@ namespace ds50 {
 	      {
 		for(unsigned i=1;i<num_zeros;++i)
 		  v = (v<<1)|nb.next();
-		sb.pushZeros(v);
+		sb.pushOnes(v);
 		// std::cout << "v=" << v << " num_zeros=" << num_zeros << "\n";
 	      }
 	    if(!nb.done() ||  no_ones || (nb.done() && num_zeros==0 && !no_ones))
 	      {
-		sb.pushBit(1); 
+		sb.pushBit(0); 
 		no_ones=false;
 		// cout << "pushed 1\n";
 	      }
@@ -66,7 +66,7 @@ namespace ds50 {
     if(num_zeros>0) 
       {
 	cout << "got final zeros = " << num_zeros << "\n";
-	sb.pushZeros(num_zeros-1);
+	sb.pushOnes(num_zeros-1);
       }
     return 0;
   }

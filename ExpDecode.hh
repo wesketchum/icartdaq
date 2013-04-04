@@ -60,6 +60,11 @@ namespace ds50 {
       for(int i=0;i<v;++i) pushBit(0);
     }
 
+    void pushOnes(adc_type v)
+    {
+      for(int i=0;i<v;++i) pushBit(1);
+    }
+
     void push(adc_type v)
     {
       // put v zeros followed by a 1

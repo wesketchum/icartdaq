@@ -21,10 +21,12 @@ namespace ds50 {
                       size_t countmax);
 
   // returns number of one bits in d. and the median in run_median
-  unsigned long calculateRunLengths(ADCCountVec const & d,
-                                    DataVec & out,
-                                    unsigned long & run_median);
-
+  void calculateRunLengths(size_t adc_bits,
+				 ADCCountVec const & d, 
+				 DataVec & out,
+				 unsigned long & run_median,
+				 unsigned long & one_bit_total,
+				 unsigned long & total_bits);
 }
 
 struct ds50::SymProb {

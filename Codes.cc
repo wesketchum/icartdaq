@@ -71,18 +71,20 @@ void generateTable(Code (*f)(code_type), SymTable& out, size_t total)
   unsigned long rleAndCompress(size_t bits,
 			       ADCCountVec::value_type const* in_start,
 			       ADCCountVec::value_type const* in_end,
-			       DataVec& out, SymTable const& syms, unsigned bias)
+			       DataVec& out, SymTable const& syms, unsigned)
 {
+  // adc_type mask = ((1UL<<bits)-1UL);
   Accum acc(out,syms);
   unsigned long bit_count=0;
 
   // calculate run lengths and feed each number into the acc.
   for (auto b = in_start; b != in_end; ++b) 
     {
-      auto curr = *b - bias;
+      // auto curr = (*b - bias)&mask;
+      auto curr = (*b);
       for (size_t i = 0; i < bits; ++i) 
 	{
-	  if ((curr & 0x01))
+	  if ((curr & 0x01)==0)
 	    {
 	      acc.put(bit_count);
 	      bit_count = 0;
