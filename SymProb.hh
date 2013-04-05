@@ -37,14 +37,31 @@ struct ds50::SymProb {
   unsigned long count;
 
   void incr() { ++count; }
-  bool operator<(SymProb const & other) const { return this->count > other.count; }
+  bool operator<(SymProb const & other) const 
+  { return this->count > other.count; }
 };
 
 /* for testing */
-inline std::ostream & ds50::operator<<(std::ostream & ost, SymProb const & s)
+inline std::ostream & ds50::operator<<(std::ostream & ost, 
+				       SymProb const & s)
 {
   ost << "(" << s.sym << "," << s.count << ")";
   return ost;
+}
+
+namespace ds50 {
+  class ProbCalculator
+  {
+  public:
+    explicit ProbCalculator(size_t bits_adc, bool use_diffs=false);
+    void apply(adc_type const* start, adc_type const* end);
+    void get(SymsVec& out) const;
+  private:
+    adc_type mask_;
+    size_t countmax_;
+    SymsVec syms_;
+    bool use_diffs_;
+  };
 }
 
 // ---------------

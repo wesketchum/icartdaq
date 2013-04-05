@@ -64,6 +64,13 @@ HuffmanTable::HuffmanTable(ADCCountVec const & t, size_t countmax)
   makeTable(t, countmax);
 }
 
+HuffmanTable::HuffmanTable(SymsVec const& sv)
+{
+  initNodes(sv);
+  initHeads();
+  constructTree();
+}
+
 void HuffmanTable::makeTable(ADCCountVec const & adcs, size_t countmax)
 {
   SymsVec sv;

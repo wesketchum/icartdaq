@@ -40,6 +40,7 @@ public:
 
   HuffmanTable(std::istream & training_set, size_t countmax, size_t max_samples);
   HuffmanTable(ADCCountVec const & training_set, size_t countmax);
+  HuffmanTable(SymsVec const& sv);
 
   void extractTable(SymTable & out) const;
   void writeTable(std::string const & filename) const;
