@@ -12,21 +12,30 @@ using namespace ds50;
 void ds50::readTable(const char * fname, SymTable & out, size_t countmax)
 {
   std::ifstream ifs(fname);
-  if (!ifs) {
-    throw cet::exception("FileOpenError")
-      << "Unable to open file "
-      << fname;
-  }
+  if (!ifs) 
+    {
+      throw cet::exception("FileOpenError")
+	<< "Unable to open file "
+	<< fname;
+    }
+
   out.clear();
-  out.resize(countmax);
+  out.reserve(countmax);
+
   // copy(istream_iterator<TableEntry>(ifs),istream_iterator<TableEntry>(),
   //  back_inserter(from_file));
-  while (1) {
-    SymCode te;
-    ifs >> te;
-    if (ifs.eof() || ifs.bad()) { break; }
-    out[te.sym_] = te;
-  }
+
+  while (1) 
+    {
+      SymCode te;
+      ifs >> te;
+      if (ifs.eof() || ifs.bad()) { break; }
+      out.push_back(te);
+    }
+
+  std::sort(out.begin(),out.end(),
+	    [](SymCode const& a, SymCode const& b)
+	    { return a.sym_ < b.sym_; });
 }
 
 void ds50::writeTable(const char * fname, SymTable const & in)

@@ -10,6 +10,10 @@ using namespace ds50;
 
 Decoder::Decoder(SymTable const & s): syms_(s), table_(), head_(syms_.size())
 {
+  sort(syms_.begin(), syms_.end(),
+       [](SymCode const & a, SymCode const & b) 
+       { return a.bit_count_ < b.bit_count_; });
+
   reverseCodes(syms_);
   table_.reserve(syms_.size() * 10);
   for_each(syms_.begin(), syms_.end(),
@@ -61,28 +65,44 @@ void Decoder::printTable(std::ostream & ost) const
 reg_type Decoder::operator()(reg_type bit_count,
                              DataVec::const_iterator in,
                              adc_type * out_ptr,
-                             adc_type const * out_end __attribute__((unused)))
+                             adc_type const * out_end __attribute__((unused)),
+			     bool use_diffs)
 {
   adc_type * const start = out_ptr; // Save start position.
   size_t curr = head_;
   reg_type const * pos = &*in;
   reg_type val = *pos;
-  for (reg_type i = 0; i < bit_count; ++i) {
-    auto inc = (i % 64 + 1) / 64;
-    // cout << i << " ";
-    curr = table_[curr + (val & 0x01)];
-    val >>= 1;
-    if (inc) {
-      // cout << "inc" << endl;
-      ++pos;
-      val = *pos;
+  adc_type prev=0;
+
+  for (reg_type i = 0; i < bit_count; ++i) 
+    {
+      auto inc = (i % 64 + 1) / 64;
+      // cout << i << " ";
+      curr = table_[curr + (val & 0x01)];
+      val >>= 1;
+      if (inc) 
+	{
+	  // cout << "inc" << endl;
+	  ++pos;
+	  val = *pos;
+	}
+      if (curr < head_)
+	{
+	  assert(out_ptr != out_end); // Safety check.
+	  if(use_diffs)
+	    {
+	      adc_type x = (adc_type)syms_[curr].sym_ + prev;
+	      *out_ptr++ = x;
+	      prev = x;
+	    }
+	  else
+	    {
+	      adc_type adcval = (adc_type)syms_[curr].sym_;
+	      *out_ptr++ = adcval;
+	    }
+	  curr = head_;
+	}
     }
-    if (curr < head_) {
-      assert(out_ptr != out_end); // Safety check.
-      *out_ptr++ = (adc_type)syms_[curr].sym_;
-      curr = head_;
-    }
-  }
   return out_ptr - start; // Result;
 }
 

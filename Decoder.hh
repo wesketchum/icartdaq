@@ -24,7 +24,8 @@ public:
   reg_type operator()(reg_type bit_count,
                       DataVec::const_iterator in,
                       adc_type * out_ptr,
-                      adc_type const * out_end);
+                      adc_type const * out_end,
+		      bool use_diffs);
 
   void printTable(std::ostream & ost) const;
 

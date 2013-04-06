@@ -12,7 +12,7 @@ namespace ds50 {
 
 class ds50::Encoder {
 public:
-  explicit Encoder(SymTable const &);
+  explicit Encoder(SymTable const &, bool use_diffs=false);
 
   // returns the number of bits in the out buffer
   reg_type operator()(ADCCountVec const & in, DataVec & out);
@@ -20,6 +20,7 @@ public:
 
 private:
   SymTable syms_;
+  bool use_diffs_;
 };
 
 #endif /* ds50daq_Compression_Encoder_hh */
