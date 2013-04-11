@@ -2,6 +2,8 @@
 
 #include <numeric>
 
+
+
 // Average will return NaN if called on an empty range (b == e).
 inline
 double average(std::vector<double>::const_iterator b, std::vector<double>::const_iterator e)
