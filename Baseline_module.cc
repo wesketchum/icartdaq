@@ -56,8 +56,8 @@ Baseline::Baseline(fhicl::ParameterSet const & ps) :
   v1720_tag_(ps.get<std::string>("v1720_tag")),
   v1724_tag_(ps.get<std::string>("v1724_tag"))
 {
-  produces<darkart::Channel>("v1720");
-  produces<darkart::Channel>("v1724");
+  produces<darkart::Channel>("V1720");
+  produces<darkart::Channel>("V1724");
 }
 
 Baseline::~Baseline()

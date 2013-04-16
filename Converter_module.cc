@@ -47,9 +47,9 @@ private:
 //----------------------------------------------------------------------------
 // The implementation of the module member functions begins here.
 
-Converter::Converter(fhicl::ParameterSet const & /* p */) :
-  v1720_tag_("daq", "V1720"),
-  v1724_tag_("daq", "V1724")
+Converter::Converter(fhicl::ParameterSet const & ps ) :
+  v1720_tag_(ps.get<std::string>("v1720_tag")),
+  v1724_tag_(ps.get<std::string>("v1724_tag"))
 {
   produces<darkart::Channels>("V1720");
   produces<darkart::Channels>("V1724");
@@ -76,8 +76,8 @@ void Converter::produce(art::Event & e)
   darkart::convert_fragments(*h_1724, *v1724, ds50::Config::V1724_FRAGMENT_TYPE);
 
   // Put our complete products into the Event.
-  e.put(std::move(v1720));
-  e.put(std::move(v1724));
+  e.put(std::move(v1720), "V1720");
+  e.put(std::move(v1724), "V1724");
 }
 
 
