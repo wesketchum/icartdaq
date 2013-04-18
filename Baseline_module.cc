@@ -66,14 +66,13 @@ Baseline::~Baseline()
 void Baseline::produce(art::Event & e)
 {
   // Get the inputs
-  art::Handle<Channel> h_v1720, h_v1724;
-  e.getByLabel(v1720_tag_, h_v1720);
-  e.getByLabel(v1724_tag_, h_v1724);
+  auto p_v1720 = e.getValidHandle<Channel>(v1720_tag_);
+	auto p_v1724 = e.getValidHandle<Channel>(v1724_tag_);
 
   // Create the baseline subtracted products, and put them into the
   // event.
-  e.put(make_baseline_subtracted(*h_v1720, num_avg_), "V1720");
-  e.put(make_baseline_subtracted(*h_v1724, num_avg_), "V1724");
+  e.put(make_baseline_subtracted(*p_v1720, num_avg_), "V1720");
+  e.put(make_baseline_subtracted(*p_v1724, num_avg_), "V1724");
 }
 
 DEFINE_ART_MODULE(Baseline)

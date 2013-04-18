@@ -57,16 +57,15 @@ Summer::Summer(fhicl::ParameterSet const & ps) :
 void Summer::produce(art::Event & e)
 {
   // Get the inputs
-  art::Handle<Channels> h_v1720, h_v1724;
-  e.getByLabel(v1720_tag_, h_v1720);
-  e.getByLabel(v1724_tag_, h_v1724);
+	auto p_v1720 = e.getValidHandle<Channels>(v1720_tag_);
+	auto p_v1724 = e.getValidHandle<Channels>(v1724_tag_);
 
   // Sum the channels. The function we call returns the result *by
   // value*, i.e. it is copied. This is not expensive because the type
   // in question has an inexpensive copy (a "move copy"). We put the
   // unnamed product directly into the event.
-  e.put(make_sum(*h_v1720), "V1720");
-  e.put(make_sum(*h_v1724), "V1724");
+  e.put(make_sum(*p_v1720), "V1720");
+  e.put(make_sum(*p_v1724), "V1724");
 }
 
 Summer::~Summer()
