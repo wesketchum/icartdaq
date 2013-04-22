@@ -90,8 +90,6 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
 
 bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
   if (should_stop ()) {
-    std::cout << "ds50::V172xSimulator::getNext__(): Sending EOD Fragment." << std::endl;
-    frags.emplace_back(artdaq::Fragment::eodFrag(1));
     return false;
   }
 
@@ -120,7 +118,6 @@ bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
     frag.setUserType (Config::V1720_FRAGMENT_TYPE);
   }
 
-  usleep(500000);
   return true;
 }
 
