@@ -1,0 +1,14 @@
+<lcgdict>
+  <class name="ds50::CompressedV172x::HeaderProxy"/>
+  <class name="ds50::CompressedV172x::MetadataProxy"/>
+  <class name="ds50::CompressedV172x::V172xHeaderVec"/>
+  <class name="ds50::CompressedV172x::V172xMetadataVec"/>
+  <class name="ds50::CompressedV172x::MetadataPresentVec"/>
+  <class name="ds50::CompressedV172x::DataVec"/>
+  <class name="ds50::CompressedV172x::CompVec"/>
+  <class name="ds50::CompressedV172x::CountVec"/>
+  <class name="ds50::CompressedV172x" ClassVersion="14">
+   <version ClassVersion="14" checksum="2329124239"/>
+  </class>
+  <class name="art::Wrapper<ds50::CompressedV172x>" compression="0"/>
+</lcgdict>

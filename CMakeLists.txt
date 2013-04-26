@@ -59,7 +59,7 @@ include(ArtMake)
 include(BuildPlugins)
 
 # source
-add_subdirectory (artdaq-demo)
+add_subdirectory(artdaq-demo)
 
 # testing
 add_subdirectory(test)
