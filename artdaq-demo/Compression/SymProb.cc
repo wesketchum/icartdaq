@@ -4,11 +4,11 @@
 #include <iterator>
 #include <iostream>
 
-#include "ds50daq/Compression/SymProb.hh"
+#include "artdaq-demo/Compression/SymProb.hh"
 
 using namespace std;
 
-void ds50::calculateProbs(ADCCountVec const & d,
+void demo::calculateProbs(ADCCountVec const & d,
 			  SymsVec & out, 
 			  size_t countmax)
 {
@@ -28,7 +28,7 @@ void ds50::calculateProbs(ADCCountVec const & d,
   // copy(out.begin(),out.end(),ostream_iterator<SymProb>(cout,"\n"));
 }
 
-namespace ds50 {
+namespace demo {
   ProbCalculator::ProbCalculator(size_t bits_adc, bool use_diffs):
     mask_(use_diffs==false ? (1<<bits_adc)-1 : (1<<16)-1),
     countmax_(mask_),
@@ -77,7 +77,7 @@ namespace ds50 {
 
 // -----------------
 
-void ds50::calculateRunLengths(size_t adc_bits,
+void demo::calculateRunLengths(size_t adc_bits,
 			       ADCCountVec const & d, 
 			       DataVec & out,
 			       unsigned long & run_median,

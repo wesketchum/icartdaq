@@ -1,9 +1,9 @@
-#ifndef ds50daq_expdecode_HH
-#define ds50daq_expdecode_HH
+#ifndef artdaq_demo_Compression_ExpDecode_hh
+#define artdaq_demo_Compression_ExpDecode_hh
 
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 
-namespace ds50 {
+namespace demo {
   struct NextBit
   {
     NextBit(reg_type const* in, reg_type bit_count):
@@ -107,5 +107,5 @@ namespace ds50 {
 		     adc_type* out);
 }
 
-#endif
+#endif /* artdaq_demo_Compression_ExpDecode_hh */
 

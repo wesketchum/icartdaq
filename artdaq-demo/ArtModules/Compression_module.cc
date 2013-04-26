@@ -7,12 +7,12 @@
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Persistency/Provenance/BranchType.h"
 #include "art/Persistency/Provenance/EventID.h"
-#include "ds50daq/Compression/Encoder.hh"
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/StatsKeeper.hh"
-#include "ds50daq/Compression/SymTable.hh"
-#include "ds50daq/DAQ/V172xFragment.hh"
-#include "ds50daq/DAQ/CompressedV172x.hh"
+#include "artdaq-demo/Compression/Encoder.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/StatsKeeper.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Products/CompressedV172x.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
@@ -80,7 +80,7 @@ namespace {
 
     compression_record(art::EventID e,
                        artdaq::Fragment const& uncomp,
-                       ds50::DataVec const& comp) :
+                       demo::DataVec const& comp) :
       eid(e), fid(uncomp.fragmentID()),
       uncompressed_size(uncomp.dataSize()),
       compressed_size(comp.size())
@@ -97,7 +97,7 @@ namespace {
   }
 }
 
-namespace ds50 {
+namespace demo {
 
   class Compression : public art::EDProducer {
   public:
@@ -154,12 +154,12 @@ namespace ds50 {
     return t;
   }
 
-  Compression::DS50Compression(fhicl::ParameterSet const & p):
+  Compression::Compression(fhicl::ParameterSet const & p):
     mod_label_(p.get<std::string>("module_label")),
     raw_label_(p.get<std::string>("raw_label","daq")),
     inst_name_(p.get<std::string>("instance_name")),
     table_file_(p.get<std::string>("table_file")),
-    table_file_path_(p.get<std::string>("table_file_path", "DS50DAQ_CONFIG_PATH")),
+    table_file_path_(p.get<std::string>("table_file_path", "DAQ_CONFIG_PATH")),
     use_diffs_(p.get<bool>("use_diffs")),
     perf_print_(p.get<bool>("perf_print",false)),
     bits_(use_diffs_?16:inst_name_=="V1724" ? 14 : inst_name_=="V1720" ? 12 : 0),
@@ -195,7 +195,7 @@ namespace ds50 {
       {
 	artdaq::Fragment const & frag = (*h_172x)[i];
 	V172xFragment b(frag);
-	// start of payload is the DS50 header
+	// start of payload is the  header
 	// b.checkADCData(12); // Check data integrity.
 
 #if 1

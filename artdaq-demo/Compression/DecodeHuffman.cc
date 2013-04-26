@@ -10,9 +10,9 @@
 // #include <map>
 // #include <cmath>
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymCode.hh"
-#include "ds50daq/Compression/Decoder.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymCode.hh"
+#include "artdaq-demo/Compression/Decoder.hh"
 
 using std::cerr;
 using std::cout;
@@ -20,7 +20,7 @@ using std::endl;
 using std::ifstream;
 using std::ofstream;
 using std::sort;
-using namespace ds50;
+using namespace demo;
 
 void process_bit(reg_type /* bit */, ADCCountVec & /* values */)
 {

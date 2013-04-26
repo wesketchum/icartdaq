@@ -11,9 +11,9 @@
 #include "art/Framework/Principal/Handle.h"
 
 #include "art/Utilities/Exception.h"
-#include "ds50daq/DAQ/V172xFragment.hh"
-#include "ds50daq/DAQ/V1495Fragment.hh"
-#include "ds50daq/DAQ/V1190Fragment.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V1495Fragment.hh"
+#include "artdaq-demo/Overlays/V1190Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 
 #include <algorithm>
@@ -24,11 +24,11 @@
 #include <vector>
 #include <iostream>
 
-namespace ds50 {
+namespace demo {
   class EventDump;
 }
 
-class ds50::EventDump : public art::EDAnalyzer {
+class demo::EventDump : public art::EDAnalyzer {
 public:
   explicit EventDump(fhicl::ParameterSet const & pset);
   virtual ~EventDump();
@@ -42,18 +42,18 @@ private:
 };
 
 
-ds50::EventDump::DS50EventDump(fhicl::ParameterSet const & pset) :
+demo::EventDump::EventDump(fhicl::ParameterSet const & pset) :
   raw_data_label_(pset.get<std::string>("raw_data_label")),
   uncompressed_V1720_label_(pset.get<std::string>("uncompressed_V1720_label")),
   uncompressed_V1724_label_(pset.get<std::string>("uncompressed_V1724_label"))
 {
 }
 
-ds50::EventDump::~DS50EventDump()
+demo::EventDump::~EventDump()
 {
 }
 
-void ds50::EventDump::analyze(art::Event const & evt)
+void demo::EventDump::analyze(art::Event const & evt)
 {
   art::EventNumber_t eventNumber = evt.event();
 
@@ -235,4 +235,4 @@ void ds50::EventDump::analyze(art::Event const & evt)
   std::cout << std::endl;
 }
 
-DEFINE_ART_MODULE(ds50::EventDump)
+DEFINE_ART_MODULE(demo::EventDump)

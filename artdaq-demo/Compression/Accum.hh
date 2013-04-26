@@ -1,10 +1,10 @@
-#ifndef ds50_Accum_HH
-#define ds50_Accum_HH
+#ifndef artdaq_demo_Compression_Accum_hh
+#define artdaq_demo_Compression_Accum_hh
 
-#include "ds50daq/Compression/SymTable.hh"
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 
-namespace ds50 {
+namespace demo {
   constexpr auto bits_per_word = sizeof(reg_type) * 8;
   
   struct Accum
@@ -26,4 +26,4 @@ namespace ds50 {
 }
 
 
-#endif
+#endif /* artdaq_demo_Compression_Accum_hh */

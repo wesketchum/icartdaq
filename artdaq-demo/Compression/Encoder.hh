@@ -1,16 +1,16 @@
-#ifndef ds50daq_Compression_Encoder_hh
-#define ds50daq_Compression_Encoder_hh
+#ifndef artdaq_demo_Compression_Encoder_hh
+#define artdaq_demo_Compression_Encoder_hh
 
 #include <istream>
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
 
-namespace ds50 {
+namespace demo {
   class Encoder;
 }
 
-class ds50::Encoder {
+class demo::Encoder {
 public:
   explicit Encoder(SymTable const &, bool use_diffs=false);
 
@@ -23,4 +23,4 @@ private:
   bool use_diffs_;
 };
 
-#endif /* ds50daq_Compression_Encoder_hh */
+#endif /* artdaq_demo_Compression_Encoder_hh */

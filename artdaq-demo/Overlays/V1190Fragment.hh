@@ -1,5 +1,5 @@
-#ifndef V1190FRAGMENT_H
-#define V1190FRAGMENT_H
+#ifndef artdaq_demo_Overlays_V1190Fragment_hh
+#define artdaq_demo_Overlays_V1190Fragment_hh
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "cetlib/exception.h"
@@ -7,7 +7,7 @@
 #include <ostream>
 #include <vector>
 
-namespace ds50 {
+namespace demo {
   class V1190Fragment {
     public:
       typedef uint32_t word_t;
@@ -72,19 +72,19 @@ namespace ds50 {
   std::ostream & operator << (std::ostream &, V1190Fragment::Word const &);
 }
 
-template <typename... T> void ds50::V1190Fragment::Word::check_type (T... args) const {
+template <typename... T> void demo::V1190Fragment::Word::check_type (T... args) const {
   std::vector<types> v = {args...};
   bool found = false;
   for (auto x: v) if (type () == x) found = true;
   if (!found) throw cet::exception("WrongV1190Word") << "type is " << int(type ()) << " while request is for " << v[0];
 }
 
-inline ds50::V1190Fragment::Word const * ds50::V1190Fragment::dataBegin () const {
+inline demo::V1190Fragment::Word const * demo::V1190Fragment::dataBegin () const {
   return reinterpret_cast<V1190Fragment::Word const *>(&*data_.dataBegin());
 }
-inline ds50::V1190Fragment::Word const * ds50::V1190Fragment::dataEnd () const {
+inline demo::V1190Fragment::Word const * demo::V1190Fragment::dataEnd () const {
   return dataBegin () + data_.dataSize () * sizeof (artdaq::RawDataType) / sizeof (Word);
 }
 
 
-#endif
+#endif /* artdaq_demo_Overlays_V1190Fragment_hh */

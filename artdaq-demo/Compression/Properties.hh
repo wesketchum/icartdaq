@@ -1,5 +1,5 @@
-#ifndef ds50daq_Compression_Properties_hh
-#define ds50daq_Compression_Properties_hh
+#ifndef artdaq_demo_Compression_Properties_hh
+#define artdaq_demo_Compression_Properties_hh
 
 /*
   domain is [-20,140] mV, range is [0,2^12] counts
@@ -8,7 +8,7 @@
   look up attributes and constexpr in C++11 as a better way to do this
 */
 
-#include "ds50daq/DAQ/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
 
 extern "C" {
 #include <stdint.h>
@@ -22,7 +22,7 @@ extern "C" {
 #define Constexpr constexpr
 #endif
 
-namespace ds50 {
+namespace demo {
   typedef uint64_t reg_type;
   typedef std::vector<reg_type> DataVec;
   typedef V172xFragment::adc_type adc_type;
@@ -44,13 +44,13 @@ namespace ds50 {
   typedef Properties_t<14> V1724Properties;
 }
 
-inline size_t ds50::bitCountToBytes(reg_type bits)
+inline size_t demo::bitCountToBytes(reg_type bits)
 {
   return (bits / reg_size_bits + ((bits % reg_size_bits) == 0 ? 0 : 1)) * sizeof(reg_type);
 }
 
 template <size_t N>
-struct ds50::Properties_t {
+struct demo::Properties_t {
   Constexpr static adc_type count_max() { return 1 << N; }
   Constexpr static adc_type count_min() { return 0; }
 
@@ -77,4 +77,4 @@ struct ds50::Properties_t {
 #undef Constexpr
 #endif
 
-#endif /* ds50daq_Compression_Properties_hh */
+#endif /* artdaq_demo_Compression_Properties_hh */

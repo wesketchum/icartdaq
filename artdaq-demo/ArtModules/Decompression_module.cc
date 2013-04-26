@@ -5,10 +5,10 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Framework/Principal/SubRun.h"
 #include "art/Persistency/Provenance/BranchType.h"
-#include "ds50daq/Compression/Decoder.hh"
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymTable.hh"
-#include "ds50daq/DAQ/CompressedV172x.hh"
+#include "artdaq-demo/Compression/Decoder.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
+#include "artdaq-demo/Products/CompressedV172x.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
@@ -20,7 +20,7 @@
 #include <iostream>
 #include <string>
 
-namespace ds50 {
+namespace demo {
 
   class Decompression : public art::EDProducer
   {
@@ -70,11 +70,11 @@ namespace ds50 {
 
 #define ORIG_WAY 0
 
-  Decompression::DS50Decompression(fhicl::ParameterSet const & p)
+  Decompression::Decompression(fhicl::ParameterSet const & p)
     : compressed_label_(p.get<std::string>("compressed_label")),
       inst_name_(p.get<std::string>("instance_name")),
       table_file_(p.get<std::string>("table_file")),
-      table_file_path_(p.get<std::string>("table_file_path", "DS50DAQ_CONFIG_PATH")),
+      table_file_path_(p.get<std::string>("table_file_path", "DAQ_CONFIG_PATH")),
       table_(readAndSortTable(table_file_, table_file_path_)),
       decode_(table_)
   {

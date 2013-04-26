@@ -1,5 +1,5 @@
-#include "ds50daq/Compression/SymTable.hh"
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 #include "cetlib/exception.h"
 
 #include <fstream>
@@ -7,9 +7,9 @@
 #include <iterator>
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
-void ds50::readTable(const char * fname, SymTable & out, size_t countmax)
+void demo::readTable(const char * fname, SymTable & out, size_t countmax)
 {
   std::ifstream ifs(fname);
   if (!ifs) 
@@ -38,13 +38,13 @@ void ds50::readTable(const char * fname, SymTable & out, size_t countmax)
 	    { return a.sym_ < b.sym_; });
 }
 
-void ds50::writeTable(const char * fname, SymTable const & in)
+void demo::writeTable(const char * fname, SymTable const & in)
 {
   ofstream ofs(fname);
   copy(in.cbegin(), in.cend(), ostream_iterator<SymCode>(ofs, "\n"));
 }
 
-void ds50::reverseCodes(SymTable & out)
+void demo::reverseCodes(SymTable & out)
 {
   // reverse the bits
   for (auto cur = out.begin(), end = out.end(); cur != end; ++cur) {

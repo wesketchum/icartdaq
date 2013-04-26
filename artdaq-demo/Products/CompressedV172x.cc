@@ -1,9 +1,9 @@
 
-#include "ds50daq/DAQ/CompressedV172x.hh"
+#include "artdaq-demo/Products/CompressedV172x.hh"
 
 #include <cstring>
 
-namespace ds50 {
+namespace demo {
   CompressedV172x::CompressedV172x(std::vector<artdaq::Fragment> const & init):
     v172x_headers_(init.size()),
     v172x_metadata_list_(init.size()),

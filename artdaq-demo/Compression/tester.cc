@@ -1,14 +1,14 @@
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/HuffmanTable.hh"
-#include "ds50daq/Compression/Decoder.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/HuffmanTable.hh"
+#include "artdaq-demo/Compression/Decoder.hh"
 
 #include <algorithm>
 #include <iterator>
 #include <iostream>
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
 inline
 void push_n(ADCCountVec & v, ADCCountVec::value_type x, size_t n)

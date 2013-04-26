@@ -9,10 +9,10 @@
 #include <fstream>
 #include <time.h>
 
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
 /*
   []  Capture nothing (or, a scorched earth strategy?)

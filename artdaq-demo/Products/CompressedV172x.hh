@@ -1,5 +1,5 @@
-#ifndef ds50daq_DAQ_CompressedV172x_hh
-#define ds50daq_DAQ_CompressedV172x_hh
+#ifndef artdaq_demo_Products_CompressedV172x_hh
+#define artdaq_demo_Products_CompressedV172x_hh
 
 // NOTE: the GPU might be more efficient at using 32-bit integers than 64-bit integers,
 // in this case the code below will need to be modified.
@@ -10,15 +10,15 @@
 
 #include "artdaq/DAQdata/features.hh"
 #include "artdaq/DAQdata/Fragment.hh"
-#include "ds50daq/DAQ/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
 
 #include <vector>
 
-namespace ds50 {
+namespace demo {
   class CompressedV172x;
 }
 
-class ds50::CompressedV172x {
+class demo::CompressedV172x {
 public:
   typedef uint64_t reg_type;
   typedef std::vector<reg_type> DataVec;
@@ -86,7 +86,7 @@ private:
 
 inline
 artdaq::Fragment
-ds50::CompressedV172x::headerOnlyFrag(size_t which) const
+demo::CompressedV172x::headerOnlyFrag(size_t which) const
 {
   using artdaq::Fragment;
   Fragment result
@@ -97,7 +97,7 @@ ds50::CompressedV172x::headerOnlyFrag(size_t which) const
                         std::ceil((V172xFragment::Header::size_words *
                                    sizeof(V172xFragment::Header::data_t)) /
                                   sizeof(artdaq::RawDataType))));
-  ds50::V172xFragment b(result);
+  demo::V172xFragment b(result);
   result.setSequenceID(b.event_counter());
   result.setFragmentID(b.board_id());
   if (metadata_present_list_[which]) {
@@ -110,4 +110,4 @@ ds50::CompressedV172x::headerOnlyFrag(size_t which) const
 }
 #endif /* USE_MODERN_FEATURES */
 
-#endif /* ds50daq_DAQ_CompressedV172x_hh */
+#endif /* artdaq_demo_Products_CompressedV172x_hh */

@@ -1,12 +1,12 @@
-#ifndef ds50daq_Compression_Tree_hh
-#define ds50daq_Compression_Tree_hh
+#ifndef artdaq_demo_Compression_Tree_hh
+#define artdaq_demo_Compression_Tree_hh
 
 #include <cassert>
 #include <ostream>
 
-#include "ds50daq/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
 
-namespace ds50 {
+namespace demo {
   class Node;
   class Leaf;
   class Branch;
@@ -14,7 +14,7 @@ namespace ds50 {
   std::ostream & operator<<(std::ostream & ost, Node const & n);
 }
 
-class ds50::Node {
+class demo::Node {
 public:
   typedef unsigned long data_type;
 
@@ -24,7 +24,7 @@ public:
   virtual void print(std::ostream & ost) const = 0;
 };
 
-class ds50::Leaf : public ds50::Node {
+class demo::Leaf : public demo::Node {
 public:
   Leaf(): count_(0), sym_(0) { }
   // We don't need the +1 on cnt, as long as we never add to the alphabet
@@ -61,13 +61,13 @@ private:
   data_type sym_;
 };
 
-inline std::ostream & ds50::operator<<(std::ostream & ost, Node const & n)
+inline std::ostream & demo::operator<<(std::ostream & ost, Node const & n)
 {
   n.print(ost);
   return ost;
 }
 
-class ds50::Branch : public ds50::Node {
+class demo::Branch : public demo::Node {
 public:
   Branch(): count_(0), left_(0), right_(0) { }
   Branch(Node * left, Node * right): count_(left->count() + right->count()), left_(left), right_(right)
@@ -106,4 +106,4 @@ private:
 
 
 
-#endif /* ds50daq_Compression_Tree_hh */
+#endif /* artdaq_demo_Compression_Tree_hh */

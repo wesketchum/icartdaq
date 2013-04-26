@@ -3,12 +3,12 @@
 #include <iostream>
 #include <algorithm>
 
-#include "ds50daq/Compression/HuffmanTable.hh"
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymProb.hh"
+#include "artdaq-demo/Compression/HuffmanTable.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymProb.hh"
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
 namespace {
   void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)

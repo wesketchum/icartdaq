@@ -3,10 +3,10 @@
 #include <cassert>
 #include <iostream>
 
-#include "ds50daq/Compression/Decoder.hh"
+#include "artdaq-demo/Compression/Decoder.hh"
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
 Decoder::Decoder(SymTable const & s): syms_(s), table_(), head_(syms_.size())
 {

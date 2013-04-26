@@ -1,15 +1,15 @@
-#ifndef ds50daq_Compression_Decoder_hh
-#define ds50daq_Compression_Decoder_hh
+#ifndef artdaq_demo_Compression_Decoder_hh
+#define artdaq_demo_Compression_Decoder_hh
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
 
-namespace ds50 {
+namespace demo {
   class Decoder;
   constexpr auto neg_one = ~(0ul);
 }
 
-class ds50::Decoder {
+class demo::Decoder {
 public:
   Decoder(SymTable const &);
 
@@ -47,4 +47,4 @@ private:
   size_t last_;
 };
 
-#endif /* ds50daq_Compression_Decoder_hh */
+#endif /* artdaq_demo_Compression_Decoder_hh */

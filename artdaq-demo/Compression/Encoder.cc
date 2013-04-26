@@ -1,6 +1,6 @@
 
-#include "ds50daq/Compression/Encoder.hh"
-#include "ds50daq/Compression/Accum.hh"
+#include "artdaq-demo/Compression/Encoder.hh"
+#include "artdaq-demo/Compression/Accum.hh"
 #include "cetlib/exception.h"
 
 #include <algorithm>
@@ -10,7 +10,7 @@
 #include <stdexcept>
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
 
 // -----------------

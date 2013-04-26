@@ -1,10 +1,10 @@
-#ifndef ds50daq_Codes_HH
-#define ds50daq_Codes_HH
+#ifndef artdaq_demo_Compression_Codes_hh
+#define artdaq_demo_Compression_Codes_hh
 
-#include "ds50daq/Compression/SymTable.hh"
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 
-namespace ds50
+namespace demo
 {
 
   typedef unsigned long code_type;
@@ -67,4 +67,4 @@ namespace ds50
 #endif  
 }
 
-#endif
+#endif /* artdaq_demo_Compression_Codes_hh */

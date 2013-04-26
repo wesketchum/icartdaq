@@ -14,7 +14,7 @@
 #include "art/Framework/Principal/Handle.h"
 
 #include "art/Utilities/Exception.h"
-#include "ds50daq/DAQ/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 
 #include <algorithm>
@@ -24,11 +24,11 @@
 #include <iomanip>
 #include <vector>
 
-namespace ds50 {
+namespace demo {
   class DataCharacterizer;
 }
 
-class ds50::DataCharacterizer : public art::EDAnalyzer {
+class demo::DataCharacterizer : public art::EDAnalyzer {
 public:
   explicit DataCharacterizer(fhicl::ParameterSet const & p);
   virtual ~DataCharacterizer();
@@ -48,7 +48,7 @@ private:
 };
 
 
-ds50::DataCharacterizer::DS50DataCharacterizer(fhicl::ParameterSet const & p)
+demo::DataCharacterizer::DataCharacterizer(fhicl::ParameterSet const & p)
   :
   data_label_(p.get<std::string>("data_label")),
   dist_file_(p.get<std::string>("dist_file")),
@@ -57,11 +57,11 @@ ds50::DataCharacterizer::DS50DataCharacterizer(fhicl::ParameterSet const & p)
 {
 }
 
-ds50::DataCharacterizer::~DS50DataCharacterizer()
+demo::DataCharacterizer::~DataCharacterizer()
 {
 }
 
-void ds50::DataCharacterizer::analyze(art::Event const & e)
+void demo::DataCharacterizer::analyze(art::Event const & e)
 {
   art::Handle<artdaq::Fragments> handle;
   e.getByLabel(data_label_, handle);
@@ -86,7 +86,7 @@ void ds50::DataCharacterizer::analyze(art::Event const & e)
 }
 
 void
-ds50::DataCharacterizer::endJob()
+demo::DataCharacterizer::endJob()
 {
   std::ofstream fs(dist_file_);
   if (!fs) {
@@ -130,4 +130,4 @@ ds50::DataCharacterizer::endJob()
   fs.close();
 }
 
-DEFINE_ART_MODULE(ds50::DataCharacterizer)
+DEFINE_ART_MODULE(demo::DataCharacterizer)

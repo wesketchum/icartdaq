@@ -1,7 +1,7 @@
-#include "ds50daq/DAQ/V1495Fragment.hh"
+#include "artdaq-demo/Overlays/V1495Fragment.hh"
 #include "cetlib/exception.h"
 
-bool ds50::V1495Fragment::channel_in_trigger (int ch) const {
+bool demo::V1495Fragment::channel_in_trigger (int ch) const {
   if (ch < 0 || ch >= 38) throw cet::exception("V1495Fragment") << "illegal channel request " << ch;
   return (trigger_pattern () >> ch) & 1;
   //if (ch < 15) return (trigger_pattern () >> ch) & 1;
@@ -9,7 +9,7 @@ bool ds50::V1495Fragment::channel_in_trigger (int ch) const {
   //else return (trigger_pattern () >> ++ch) & 1;
 }
 
-std::ostream & ds50::operator << (std::ostream & os, V1495Fragment const & b) {
+std::ostream & demo::operator << (std::ostream & os, V1495Fragment const & b) {
   os << "V1495 Fragment Run: "
     << b.run_number ()
     << ", event counter: "

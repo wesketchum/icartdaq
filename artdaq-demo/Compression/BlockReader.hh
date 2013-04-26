@@ -1,14 +1,14 @@
-#ifndef ds50daq_Compression_BlockReader_hh
-#define ds50daq_Compression_BlockReader_hh
+#ifndef artdaq_demo_Compression_BlockReader_hh
+#define artdaq_demo_Compression_BlockReader_hh
 
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 #include <iosfwd>
 
-namespace ds50 {
+namespace demo {
   class BlockReader;
 }
 
-class ds50::BlockReader {
+class demo::BlockReader {
 public:
   explicit BlockReader(std::istream &);
 
@@ -20,4 +20,4 @@ private:
   ADCCountVec buffer_;
 };
 
-#endif /* ds50daq_Compression_BlockReader_hh */
+#endif /* artdaq_demo_Compression_BlockReader_hh */

@@ -1,5 +1,5 @@
-#ifndef ds50daq_Compression_SymProb_hh
-#define ds50daq_Compression_SymProb_hh
+#ifndef artdaq_demo_Compression_SymProb_hh
+#define artdaq_demo_Compression_SymProb_hh
 
 /*
   jbk - old note from code for incr():
@@ -7,9 +7,9 @@
 */
 
 #include <ostream>
-#include "ds50daq/Compression/Properties.hh"
+#include "artdaq-demo/Compression/Properties.hh"
 
-namespace ds50 {
+namespace demo {
   struct SymProb;
 
   std::ostream & operator<<(std::ostream & ost, SymProb const & s);
@@ -29,7 +29,7 @@ namespace ds50 {
 				 unsigned long & total_bits);
 }
 
-struct ds50::SymProb {
+struct demo::SymProb {
   SymProb() : sym(0), count(0) { }
   explicit SymProb(unsigned int s, unsigned long c = 0UL) : sym(s), count(c) { }
 
@@ -42,14 +42,14 @@ struct ds50::SymProb {
 };
 
 /* for testing */
-inline std::ostream & ds50::operator<<(std::ostream & ost, 
+inline std::ostream & demo::operator<<(std::ostream & ost, 
 				       SymProb const & s)
 {
   ost << "(" << s.sym << "," << s.count << ")";
   return ost;
 }
 
-namespace ds50 {
+namespace demo {
   class ProbCalculator
   {
   public:
@@ -66,4 +66,4 @@ namespace ds50 {
 
 // ---------------
 
-#endif /* ds50daq_Compression_SymProb_hh */
+#endif /* artdaq_demo_Compression_SymProb_hh */

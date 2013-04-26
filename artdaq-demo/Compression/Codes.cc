@@ -1,12 +1,12 @@
 
-#include "ds50daq/Compression/Codes.hh"
-#include "ds50daq/Compression/Accum.hh"
+#include "artdaq-demo/Compression/Codes.hh"
+#include "artdaq-demo/Compression/Accum.hh"
 
 #include <stdexcept>
 
 using namespace std;
 
-namespace ds50 {
+namespace demo {
 
 code_type unary_code(long n)
 {

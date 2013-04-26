@@ -1,8 +1,8 @@
-#include "ds50daq/Compression/BlockReader.hh"
+#include "artdaq-demo/Compression/BlockReader.hh"
 
 #include <istream>
 
-using namespace ds50;
+using namespace demo;
 
 BlockReader::BlockReader(std::istream & ist): ist_(&ist), buffer_(chunk_size_counts)
 { }

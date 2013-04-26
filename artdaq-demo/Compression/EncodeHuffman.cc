@@ -10,13 +10,13 @@
 #include <limits>
 #include <map>
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymCode.hh"
-#include "ds50daq/Compression/BlockReader.hh"
-#include "ds50daq/Compression/Encoder.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymCode.hh"
+#include "artdaq-demo/Compression/BlockReader.hh"
+#include "artdaq-demo/Compression/Encoder.hh"
 
 using namespace std;
-using namespace ds50;
+using namespace demo;
 
 int main(int argc, char * argv[])
 {

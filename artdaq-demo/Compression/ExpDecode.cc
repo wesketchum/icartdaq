@@ -1,10 +1,10 @@
 
-#include "ds50daq/Compression/ExpDecode.hh"
+#include "artdaq-demo/Compression/ExpDecode.hh"
 
 #include <iostream>
 using namespace std;
 
-namespace ds50 {
+namespace demo {
 
   // jbk - warning ...
   // this code has not been reduced to simplest form

@@ -2,12 +2,12 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "ds50daq/Compression/HuffmanTable.hh"
+#include "artdaq-demo/Compression/HuffmanTable.hh"
 
 using std::cerr;
 using std::ifstream;
 using std::string;
-using namespace ds50;
+using namespace demo;
 
 int main(int argc, char * argv[])
 {

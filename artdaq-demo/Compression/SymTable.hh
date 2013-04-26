@@ -1,10 +1,10 @@
-#ifndef ds50daq_Compression_SymTable_hh
-#define ds50daq_Compression_SymTable_hh
+#ifndef artdaq_demo_Compression_SymTable_hh
+#define artdaq_demo_Compression_SymTable_hh
 
-#include "ds50daq/Compression/SymCode.hh"
+#include "artdaq-demo/Compression/SymCode.hh"
 #include <vector>
 
-namespace ds50 {
+namespace demo {
   typedef std::vector<SymCode> SymTable;
 
   void readTable(const char * fname, SymTable & out, size_t countmax);
@@ -12,4 +12,4 @@ namespace ds50 {
   void reverseCodes(SymTable &);
 }
 
-#endif /* ds50daq_Compression_SymTable_hh */
+#endif /* artdaq_demo_Compression_SymTable_hh */

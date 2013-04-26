@@ -1,11 +1,11 @@
-#ifndef ds50daq_StatsKeeper_h
-#define ds50daq_StatsKeeper_h
+#ifndef artdaq_demo_Compression_StatsKeeper_hh
+#define artdaq_demo_Compression_StatsKeeper_hh
 
 #include <iostream>
 #include <vector>
 #include <math.h>
 
-namespace ds50
+namespace demo
 {
 
   class StatsKeeper
@@ -54,4 +54,4 @@ inline std::ostream& operator<<(std::ostream& ost, StatsKeeper const& s)
 
 }
 
-#endif
+#endif /* artdaq_demo_Compression_StatsKeeper_hh */

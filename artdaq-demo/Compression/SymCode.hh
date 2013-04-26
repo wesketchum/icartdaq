@@ -1,5 +1,5 @@
-#ifndef ds50daq_Compression_SymCode_hh
-#define ds50daq_Compression_SymCode_hh
+#ifndef artdaq_demo_Compression_SymCode_hh
+#define artdaq_demo_Compression_SymCode_hh
 
 #include <ostream>
 #include <istream>
@@ -41,4 +41,4 @@ inline std::istream & operator>>(std::istream & ist, SymCode & t)
 }
 
 
-#endif /* ds50daq_Compression_SymCode_hh */
+#endif /* artdaq_demo_Compression_SymCode_hh */

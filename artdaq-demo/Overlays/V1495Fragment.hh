@@ -1,12 +1,12 @@
-#ifndef ds50daq_DAQ_DS50V1495FRAGMENT_hh
-#define ds50daq_DAQ_DS50V1495FRAGMENT_hh
+#ifndef artdaq_demo_Overlays_V1495Fragment_hh
+#define artdaq_demo_Overlays_V1495Fragment_hh
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include <ostream>
 #include <sys/time.h>
 
 // Fragment overlay class for DS50 data.
-namespace ds50 {
+namespace demo {
   class V1495Fragment {
     public:
 //#pragma pack(push,2)
@@ -88,14 +88,14 @@ namespace ds50 {
 
   std::ostream & operator << (std::ostream &, V1495Fragment const &);
 }
-inline ds50::V1495Fragment::V1495Fragment(artdaq::Fragment const & f): data_(f) {}
+inline demo::V1495Fragment::V1495Fragment(artdaq::Fragment const & f): data_(f) {}
 
-inline ds50::V1495Fragment::POD const * ds50::V1495Fragment::pod_() const {
+inline demo::V1495Fragment::POD const * demo::V1495Fragment::pod_() const {
   return reinterpret_cast<V1495Fragment::POD const *>(&*data_.dataBegin());
 }
 
-inline bool ds50::V1495Fragment::fast_verify () const { 
+inline bool demo::V1495Fragment::fast_verify () const { 
   return pod_size () == event_size () && ((pod_ ()->trigger_id & 0xfff) == (trigger_counter () & 0xfff));
 }
 
-#endif
+#endif /* artdaq_demo_Overlays_V1495Fragment_hh */

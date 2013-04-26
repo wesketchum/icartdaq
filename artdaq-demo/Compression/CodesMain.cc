@@ -5,11 +5,11 @@
 #include <string>
 #include <math.h>
 
-#include "ds50daq/Compression/Properties.hh"
-#include "ds50daq/Compression/SymTable.hh"
-#include "ds50daq/Compression/Codes.hh"
+#include "artdaq-demo/Compression/Properties.hh"
+#include "artdaq-demo/Compression/SymTable.hh"
+#include "artdaq-demo/Compression/Codes.hh"
 
-using namespace ds50;
+using namespace demo;
 using namespace std;
 
 void readTrainingSet(istream & ifs, ADCCountVec & out, size_t max_samples)

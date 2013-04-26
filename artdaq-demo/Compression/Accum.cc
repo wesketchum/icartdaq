@@ -1,8 +1,8 @@
 
 #include "cetlib/exception.h"
-#include "ds50daq/Compression/Accum.hh"
+#include "artdaq-demo/Compression/Accum.hh"
 
-namespace ds50 {
+namespace demo {
 
   Accum::Accum(DataVec & out, SymTable const & syms)
     :

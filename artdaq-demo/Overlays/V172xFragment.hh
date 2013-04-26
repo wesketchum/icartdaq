@@ -1,5 +1,5 @@
-#ifndef ds50daq_DAQ_DS50V172XFRAGMENT_hh
-#define ds50daq_DAQ_DS50V172XFRAGMENT_hh
+#ifndef artdaq_demo_Overlays_V172xFragment_hh
+#define artdaq_demo_Overlays_V172xFragment_hh
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/features.hh"
@@ -8,13 +8,13 @@
 #include <vector>
 
 // Fragment overlay class for DS50 data.
-namespace ds50 {
+namespace demo {
   class V172xFragment;
 
   std::ostream & operator << (std::ostream &, V172xFragment const &);
 }
 
-class ds50::V172xFragment {
+class demo::V172xFragment {
   public:
     struct metadata {
       typedef uint32_t data_t;
@@ -100,66 +100,66 @@ private:
   artdaq::Fragment const & data_;
 };
 
-inline ds50::V172xFragment::V172xFragment(artdaq::Fragment const & f): data_(f) {}
+inline demo::V172xFragment::V172xFragment(artdaq::Fragment const & f): data_(f) {}
 
-inline size_t ds50::V172xFragment::event_size() const { return header_()->event_size; }
+inline size_t demo::V172xFragment::event_size() const { return header_()->event_size; }
 
-inline ds50::V172xFragment::Header::channel_mask_t ds50::V172xFragment::channel_mask() const { return header_()->channel_mask; }
+inline demo::V172xFragment::Header::channel_mask_t demo::V172xFragment::channel_mask() const { return header_()->channel_mask; }
 
-inline ds50::V172xFragment::Header::pattern_t ds50::V172xFragment::pattern() const { return header_()->pattern; }
+inline demo::V172xFragment::Header::pattern_t demo::V172xFragment::pattern() const { return header_()->pattern; }
 
-inline ds50::V172xFragment::Header::board_id_t ds50::V172xFragment::board_id() const { return header_()->board_id; }
+inline demo::V172xFragment::Header::board_id_t demo::V172xFragment::board_id() const { return header_()->board_id; }
 
-inline ds50::V172xFragment::Header::event_counter_t ds50::V172xFragment::event_counter() const { return header_()->event_counter; }
+inline demo::V172xFragment::Header::event_counter_t demo::V172xFragment::event_counter() const { return header_()->event_counter; }
 
-inline ds50::V172xFragment::Header::trigger_time_tag_t ds50::V172xFragment::trigger_time_tag() const { return header_()->trigger_time_tag; }
+inline demo::V172xFragment::Header::trigger_time_tag_t demo::V172xFragment::trigger_time_tag() const { return header_()->trigger_time_tag; }
 
 #if USE_MODERN_FEATURES
-inline size_t ds50::V172xFragment::total_adc_values() const {
+inline size_t demo::V172xFragment::total_adc_values() const {
   return (event_size() - header_size_words()) * adcs_per_word_();
 }
 #endif /* USE_MODERN_FEATURES */
 
-inline size_t ds50::V172xFragment::adc_values_for_channel() const { return total_adc_values() / enabled_channels(); }
+inline size_t demo::V172xFragment::adc_values_for_channel() const { return total_adc_values() / enabled_channels(); }
 
-inline ds50::V172xFragment::adc_type const * ds50::V172xFragment::dataBegin() const {
+inline demo::V172xFragment::adc_type const * demo::V172xFragment::dataBegin() const {
   return reinterpret_cast<adc_type const *>(header_() + 1);
 }
 
-inline ds50::V172xFragment::adc_type const * ds50::V172xFragment::dataEnd() const {
+inline demo::V172xFragment::adc_type const * demo::V172xFragment::dataEnd() const {
   return dataBegin() + total_adc_values();
 }
 
-inline ds50::V172xFragment::adc_type const * ds50::V172xFragment::chDataEnd(int ch) const {
+inline demo::V172xFragment::adc_type const * demo::V172xFragment::chDataEnd(int ch) const {
     return chDataBegin (ch) + adc_values_for_channel ();
 }
 
 #if USE_MODERN_FEATURES
 
-inline bool ds50::V172xFragment::fastVerify(int daq_adc_bits) const {
+inline bool demo::V172xFragment::fastVerify(int daq_adc_bits) const {
   return (findBadADC(daq_adc_bits) == dataEnd());
 }
 
-inline ds50::V172xFragment::adc_type const * ds50::V172xFragment::findBadADC(int daq_adc_bits) const {
+inline demo::V172xFragment::adc_type const * demo::V172xFragment::findBadADC(int daq_adc_bits) const {
   return std::find_if(dataBegin(), dataEnd(), [&](adc_type const adc) -> bool { return (adc >> daq_adc_bits); });
 }
 
-inline constexpr size_t ds50::V172xFragment::header_size_words() { return V172xFragment::Header::size_words; }
+inline constexpr size_t demo::V172xFragment::header_size_words() { return V172xFragment::Header::size_words; }
 
-inline constexpr size_t ds50::V172xFragment::adc_range(int daq_adc_bits) { return (1ul << daq_adc_bits); }
+inline constexpr size_t demo::V172xFragment::adc_range(int daq_adc_bits) { return (1ul << daq_adc_bits); }
 
-inline constexpr size_t ds50::V172xFragment:: adcs_per_word_() {
+inline constexpr size_t demo::V172xFragment:: adcs_per_word_() {
   return sizeof(V172xFragment::Header::data_t) / sizeof(adc_type);
 }
 
-inline constexpr size_t ds50::V172xFragment:: words_per_frag_word_() {
+inline constexpr size_t demo::V172xFragment:: words_per_frag_word_() {
   return sizeof(artdaq::Fragment::value_type) / sizeof(V172xFragment::Header::data_t);
 }
 
-inline ds50::V172xFragment::Header const * ds50::V172xFragment::header_() const {
+inline demo::V172xFragment::Header const * demo::V172xFragment::header_() const {
   return reinterpret_cast<V172xFragment::Header const *>(&*data_.dataBegin());
 }
 
 #endif /* USE_MODERN_FEATURES */
 
-#endif /* ds50daq_DAQ_DS50V172XFRAGMENT_hh */
+#endif /* artdaq_demo_Overlays_V172xFragment_hh */
