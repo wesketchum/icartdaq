@@ -11,6 +11,9 @@
 #include <fstream>
 #include <iomanip>
 #include <iterator>
+#include <iostream>
+
+#include <unistd.h>
 
 using namespace artdaq;
 
@@ -64,7 +67,7 @@ namespace {
 
 ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   DS50FragmentGenerator(ps.get<fhicl::ParameterSet> ("generator_ds50")),
-  current_event_num_(0),
+  current_event_num_(1),
   fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
   starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
   nChannels_(ps.get<size_t>("nChannels", 600000)),
@@ -86,7 +89,10 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
 }
 
 bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
-  if (should_stop ()) return false;
+  if (should_stop ()) {
+    return false;
+  }
+
   ++current_event_num_;
 
   ds50::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
@@ -111,6 +117,7 @@ bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
     frag.setSequenceID (current_event_num_);
     frag.setUserType (Config::V1720_FRAGMENT_TYPE);
   }
+
   return true;
 }
 
