@@ -1,17 +1,17 @@
-#ifndef ds50daq_DAQ_V172xFileReader_hh
-#define ds50daq_DAQ_V172xFileReader_hh
+#ifndef artdaq_demo_Generators_V172xFileReader_hh
+#define artdaq_demo_Generators_V172xFileReader_hh
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "DS50FragmentGenerator.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
 
 #include <string>
 #include <vector>
 
-namespace ds50 {
+namespace demo {
   // V172xFileReader reads DS50 events from a file or set of files.
 
-  class V172xFileReader : public DS50FragmentGenerator {
+  class V172xFileReader : public artdaq::FragmentGenerator {
     public:
       explicit V172xFileReader(fhicl::ParameterSet const &);
 
@@ -29,4 +29,4 @@ namespace ds50 {
 };
 }
 
-#endif /* ds50daq_DAQ_V172xFileReader_hh */
+#endif /* artdaq_demo_Generators_V172xFileReader_hh */

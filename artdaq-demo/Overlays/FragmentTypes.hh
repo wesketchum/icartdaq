@@ -1,5 +1,5 @@
-#ifndef artdaq_demo_Overlays_FragmentType_hh
-#define artdaq_demo_Overlays_FragmentType_hh
+#ifndef artdaq_demo_Overlays_FragmentTypes_hh
+#define artdaq_demo_Overlays_FragmentTypes_hh
 #include "artdaq/DAQdata/Fragment.hh"
 
 namespace demo {
@@ -21,4 +21,4 @@ namespace demo {
   using detail::FragmentTypes;
 
 }
-#endif /* artdaq_demo_Overlays_FragmentType_hh */
+#endif /* artdaq_demo_Overlays_FragmentTypes_hh */

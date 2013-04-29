@@ -1,10 +1,9 @@
-#include "ds50daq/DAQ/V172xSimulator.hh"
+#include "artdaq-demo/Generators/V172xSimulator.hh"
 
 #include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "ds50daq/DAQ/Config.hh"
-#include "ds50daq/DAQ/V172xFragment.hh"
-#include "ds50daq/DAQ/V172xFragmentWriter.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 
@@ -46,7 +45,7 @@ namespace {
     freqs.clear();
     freqs.resize(nHeaders -1); // Take account of ADC column.
     for (auto & freq : freqs) {
-      freq.resize(ds50::V172xFragment::adc_range(adc_bits));
+      freq.resize(demo::V172xFragment::adc_range(adc_bits));
     }
     while (is.peek() != EOF) { // If we get EOF here, we're OK.
       if (!is.good()) {
@@ -54,7 +53,7 @@ namespace {
           << "Error reading distribution data file "
           << fileName;
       }
-      ds50::V172xFragment::adc_type channel;
+      demo::V172xFragment::adc_type channel;
       is >> channel;
       for (auto & freq : freqs) {
         is >> freq[channel];
@@ -65,8 +64,8 @@ namespace {
   }
 }
 
-ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
-  DS50FragmentGenerator(ps.get<fhicl::ParameterSet> ("generator_ds50")),
+demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
+  FragmentGenerator(),
   current_event_num_(1),
   fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
   starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
@@ -88,14 +87,14 @@ ds50::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   }
 }
 
-bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
+bool demo::V172xSimulator::getNext__(FragmentPtrs & frags) {
   if (should_stop ()) {
     return false;
   }
 
   ++current_event_num_;
 
-  ds50::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
+  demo::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
   for (size_t i = 0; i < fragments_per_event_; ++i, ++fragID) {
@@ -115,10 +114,10 @@ bool ds50::V172xSimulator::getNext__(FragmentPtrs & frags) {
     artdaq::Fragment& frag = *frags.back();
     frag.setFragmentID (fragment_id ());
     frag.setSequenceID (current_event_num_);
-    frag.setUserType (Config::V1720_FRAGMENT_TYPE);
+    frag.setUserType (FragmentType::V1720);
   }
 
   return true;
 }
 
-DEFINE_ARTDAQ_GENERATOR(ds50::V172xSimulator)
+DEFINE_ARTDAQ_GENERATOR(demo::V172xSimulator)

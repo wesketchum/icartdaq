@@ -1,5 +1,5 @@
-#ifndef ds50daq_DAQ_FileReader_hh
-#define ds50daq_DAQ_FileReader_hh
+#ifndef exe_FileReader_hh
+#define exe_FileReader_hh
 
 #include <cstddef>
 #include <cstdio>
@@ -37,4 +37,4 @@ private:
 };
 
 
-#endif
+#endif /* exe_FileReader_hh */

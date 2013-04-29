@@ -1,9 +1,9 @@
-#include "ds50daq/DAQ/V172xFileReader.hh"
+#include "artdaq-demo/Generators/V172xFileReader.hh"
 
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "ds50daq/DAQ/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "fhiclcpp/ParameterSet.h"
 
 #include <cstdint>
@@ -15,11 +15,11 @@
 #include <vector>
 
 using fhicl::ParameterSet;
-using ds50::V172xFragment;
+using demo::V172xFragment;
 using namespace artdaq;
 
-ds50::V172xFileReader::V172xFileReader(ParameterSet const & ps):
-  DS50FragmentGenerator(ps.get<ParameterSet> ("generator_ds50")),
+demo::V172xFileReader::V172xFileReader(ParameterSet const & ps):
+  FragmentGenerator(),
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   max_events_(ps.get<int>("max_events", -1)),
@@ -28,7 +28,7 @@ ds50::V172xFileReader::V172xFileReader(ParameterSet const & ps):
  {
  }
 
-bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
+bool demo::V172xFileReader::getNext__(FragmentPtrs & frags) {
   if (should_stop ()) return false;
 
   FragmentPtrs::size_type incoming_size = frags.size();
@@ -37,12 +37,12 @@ bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
     return false; // Nothing to do.
   }
   // Useful constants for byte arithmetic.
-  static size_t const ds50_words_per_frag_word =
+  static size_t const words_per_frag_word =
     sizeof(Fragment::value_type) /
     sizeof(V172xFragment::Header::data_t);
   static size_t const initial_payload_size =
     V172xFragment::header_size_words() /
-    ds50_words_per_frag_word;
+    words_per_frag_word;
   static size_t const header_size_bytes =
     V172xFragment::header_size_words() * sizeof(V172xFragment::Header::data_t);
   // Open file.
@@ -100,7 +100,7 @@ bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
     V172xFragment const board(header_frag);
     size_t const final_payload_size =
       (board.event_size() + board.event_size() % 2) /
-      ds50_words_per_frag_word;
+      words_per_frag_word;
     frags.emplace_back(new Fragment(final_payload_size));
     Fragment & frag = *frags.back();
     // Copy the header info in from header_frag.
@@ -145,4 +145,4 @@ bool ds50::V172xFileReader::getNext__(FragmentPtrs & frags) {
   return true;
 }
 
-DEFINE_ARTDAQ_GENERATOR(ds50::V172xFileReader)
+DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)

@@ -1,20 +1,20 @@
-#ifndef ds50daq_DAQ_V172xSimulator_hh
-#define ds50daq_DAQ_V172xSimulator_hh
+#ifndef artdaq_demo_Generators_V172xSimulator_hh
+#define artdaq_demo_Generators_V172xSimulator_hh
 
 #include "fhiclcpp/fwd.h"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "DS50FragmentGenerator.hh"
-#include "ds50daq/DAQ/V172xFragment.hh"
+#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
 
 #include <random>
 #include <vector>
 
-namespace ds50 {
+namespace demo {
   // V172xSimulator creates simulated DS50 events, with data
   // distributed according to a "histogram" provided in the configuration
   // data.
 
-  class V172xSimulator : public DS50FragmentGenerator {
+  class V172xSimulator : public artdaq::FragmentGenerator {
     public:
       explicit V172xSimulator(fhicl::ParameterSet const & ps);
 
@@ -35,4 +35,4 @@ namespace ds50 {
   };
 }
 
-#endif /* ds50daq_DAQ_V172xSimulator_hh */
+#endif /* artdaq_demo_Generators_V172xSimulator_hh */
