@@ -64,6 +64,9 @@ add_subdirectory(artdaq-demo)
 # testing
 add_subdirectory(test)
 
+# tools
+add_subdirectory(tools)
+
 # ups - table and config files
 add_subdirectory(ups)
 
