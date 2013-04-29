@@ -13,18 +13,15 @@
 #include "art/Framework/Principal/Handle.h"
 #include "art/Utilities/Exception.h"
 #include "art/Utilities/InputTag.h"
-
+#include "artdaq-demo/ArtModules/converter_algs.hh"
+#include "artdaq-demo/Overlays/FragmentTypes.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Products/Channel.hh"
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 
-#include "ds50daq/DAQ/V172xFragment.hh"
-#include "ds50daq/DAQ/Config.hh"
-
-#include "darkart/Products/Channel.hh"
-#include "darkart/ArtModules/converter_algs.hh"
-
-#include <utility>
 #include <memory>
+#include <utility>
 
 //----------------------------------------------------------------------------
 // Class Converter is an EDProducer that creates two products, each of
@@ -62,7 +59,7 @@ void Converter::produce(art::Event & e)
 {
   // need to get module_label="daq" and instance_name="1720" or "1724"
   auto p_v1720 = e.getValidHandle<artdaq::Fragments>(v1720_tag_);
-	auto p_v1724 = e.getValidHandle<artdaq::Fragments>(v1724_tag_);
+  auto p_v1724 = e.getValidHandle<artdaq::Fragments>(v1724_tag_);
 
   // Make our products, which begin empty.
   std::unique_ptr<darkart::Channels> v1720(new darkart::Channels);
@@ -71,8 +68,8 @@ void Converter::produce(art::Event & e)
   // Call the algorithm that will fill the products. We have to pass in
   // the enumeration value that tells us the type of board we're dealing
   // with, because the data don't carry that information directly.
-  darkart::convert_fragments(*p_v1720, *v1720, ds50::Config::V1720_FRAGMENT_TYPE);
-  darkart::convert_fragments(*p_v1724, *v1724, ds50::Config::V1724_FRAGMENT_TYPE);
+  darkart::convert_fragments(*p_v1720, *v1720, demo::FragmentTypes::V1720);
+  darkart::convert_fragments(*p_v1724, *v1724, demo::FragmentTypes::V1724);
 
   // Put our complete products into the Event.
   e.put(std::move(v1720), "V1720");

@@ -1,4 +1,4 @@
-#include "darkart/ArtModules/channel_algs.hh"
+#include "artdaq-demo/ArtModules/channel_algs.hh"
 
 #include <numeric>
 

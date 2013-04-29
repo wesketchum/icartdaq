@@ -18,8 +18,8 @@
 #include <memory>
 #include "fhiclcpp/ParameterSet.h"
 
-#include "darkart/Products/Channel.hh"
-#include "darkart/ArtModules/channel_algs.hh"
+#include "artdaq-demo/Products/Channel.hh"
+#include "artdaq-demo/ArtModules/channel_algs.hh"
 
 //----------------------------------------------------------------------------
 // Class Summer is an EDProducer that creates two products, each of

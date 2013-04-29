@@ -1,10 +1,9 @@
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq-demo/Products/CompressedV172x.hh"
 #include "art/Persistency/Common/Wrapper.h"
-#include <vector>
+#include "artdaq-demo/Products/CompressedV172x.hh"
+#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-demo/Products/Channel.hh"
 
-template class std::vector<artdaq::Fragment>;
-template class art::Wrapper<std::vector<artdaq::Fragment> >;
+#include <vector>
 
 namespace {
   struct dictionary {
@@ -13,3 +12,8 @@ namespace {
 }
 
 template class art::Wrapper<demo::CompressedV172x>;
+
+template class std::vector<darkart::Channel>;
+template class art::Wrapper<std::vector<darkart::Channel> >;
+template class art::Wrapper<darkart::Channel>;
+

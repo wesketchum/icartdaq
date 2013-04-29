@@ -1,4 +1,4 @@
-#include "darkart/Products/Channel.hh"
+#include "artdaq-demo/Products/Channel.hh"
 #include "art/Persistency/Common/Wrapper.h"
 #include <vector>
 

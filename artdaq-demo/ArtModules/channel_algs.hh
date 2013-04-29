@@ -1,9 +1,9 @@
-#ifndef darkart_ArtModules_channel_algs_hh
-#define darkart_ArtModules_channel_algs_hh
+#ifndef artdaq_demo_ArtModules_channel_algs_hh
+#define artdaq_demo_ArtModules_channel_algs_hh
 
 #include <memory>
 
-#include "darkart/Products/Channel.hh"
+#include "artdaq-demo/Products/Channel.hh"
 
 namespace darkart
 {
@@ -18,4 +18,4 @@ namespace darkart
                                                     std::size_t numavg);
 }
 
-#endif
+#endif /* artdaq_demo_ArtModules_channel_algs_hh */

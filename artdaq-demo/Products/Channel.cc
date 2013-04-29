@@ -1,4 +1,4 @@
-#include "darkart/Products/Channel.hh"
+#include "artdaq-demo/Products/Channel.hh"
 
 darkart::Channel::Channel() :
   channel_id(INVALID_CHANNEL_ID),

@@ -1,10 +1,10 @@
-#ifndef darkart_ArtModules_converter_algs_hh
-#define darkart_ArtModules_converter_algs_hh
+#ifndef artdaq_demo_ArtModules_converter_algs_hh
+#define artdaq_demo_ArtModules_converter_algs_hh
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
-#include "darkart/Products/Channel.hh"
-#include "ds50daq/DAQ/V172xFragment.hh"
+#include "artdaq-demo/Products/Channel.hh"
+#include "artdaq-demo/Overlays/V172xFragment.hh"
 
 namespace darkart
 {
@@ -20,11 +20,11 @@ namespace darkart
   // numbers. This is the point that calibration might be applied, if
   // such calibration is appropriate. This implementation uses the toy
   // function 'scaling_factor'.
-  void convert_channel(ds50::V172xFragment::adc_type const * begin,
-                       ds50::V172xFragment::adc_type const * end,
+  void convert_channel(demo::V172xFragment::adc_type const * begin,
+                       demo::V172xFragment::adc_type const * end,
                        Channel& output,
                        artdaq::Fragment::type_t board_type);
-  
+
   // Translate a single artdaq::Fragment object into a series of
   // darkart::Channel objects.
   void convert_fragment(artdaq::Fragment const& frag,
@@ -39,10 +39,10 @@ namespace darkart
 
   // Translate a single channel from raw ADC counts to a
   // darkart::Channel.
-  void convert_channel(ds50::V172xFragment::adc_type const * begin,
-                       ds50::V172xFragment::adc_type const * end,
+  void convert_channel(demo::V172xFragment::adc_type const * begin,
+                       demo::V172xFragment::adc_type const * end,
                        darkart::Channel& output,
                        artdaq::Fragment::type_t board_type);
 }
 
-#endif
+#endif /* artdaq_demo_ArtModules_converter_algs_hh */

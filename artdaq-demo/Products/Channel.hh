@@ -1,5 +1,5 @@
-#ifndef darkart_Products_Channel_hh
-#define darkart_Products_Channel_hh
+#ifndef artdaq_demo_Products_Channel_hh
+#define artdaq_demo_Products_Channel_hh
 
 #include <vector>
 
@@ -81,4 +81,4 @@ darkart::Channel::add(double x)
   waveform.push_back(x);
 }
 
-#endif
+#endif /* artdaq_demo_Products_Channel_hh */
