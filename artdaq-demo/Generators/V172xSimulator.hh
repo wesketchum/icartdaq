@@ -8,6 +8,7 @@
 
 #include <random>
 #include <vector>
+#include <atomic>
 
 namespace demo {
   // V172xSimulator creates simulated DS50 events, with data
@@ -15,23 +16,31 @@ namespace demo {
   // data.
 
   class V172xSimulator : public artdaq::FragmentGenerator {
-    public:
-      explicit V172xSimulator(fhicl::ParameterSet const & ps);
+  public:
+    explicit V172xSimulator(fhicl::ParameterSet const & ps);
+    int fragment_id() const { return fragment_id_; }
 
-    protected:
-      void start_ () override {current_event_num_ = 0;}
+  private:
+    bool getNext_(artdaq::FragmentPtrs & output);
+    bool requiresStateMachine_() const {return true;}
+    void start_() {should_stop_.store(false); current_event_num_=0;}
+    void pause_() {}
+    void resume_() {}
+    void stop_() {should_stop_.store(true);}
 
-    private:
-      virtual bool getNext__(artdaq::FragmentPtrs & output);
+    std::size_t current_event_num_;
+    std::size_t const fragments_per_event_;
+    std::size_t const starting_fragment_id_;
+    std::size_t const nChannels_;
+    int const adc_bits_;
+    std::mt19937 engine_;
+    std::vector<std::vector<size_t>> adc_freqs_;
+    std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
+    int fragment_id_;
+    std::atomic<bool> should_stop_;
 
-      std::size_t current_event_num_;
-      std::size_t const fragments_per_event_;
-      std::size_t const starting_fragment_id_;
-      std::size_t const nChannels_;
-      int const adc_bits_;
-      std::mt19937 engine_;
-      std::vector<std::vector<size_t>> adc_freqs_;
-      std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
+  protected:
+    bool should_stop() {return should_stop_.load();}
   };
 }
 

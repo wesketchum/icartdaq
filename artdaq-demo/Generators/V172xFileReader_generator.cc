@@ -28,7 +28,7 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps):
  {
  }
 
-bool demo::V172xFileReader::getNext__(FragmentPtrs & frags) {
+bool demo::V172xFileReader::getNext_(FragmentPtrs & frags) {
   if (should_stop ()) return false;
 
   FragmentPtrs::size_type incoming_size = frags.size();
@@ -145,4 +145,4 @@ bool demo::V172xFileReader::getNext__(FragmentPtrs & frags) {
   return true;
 }
 
-DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)
+//DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)

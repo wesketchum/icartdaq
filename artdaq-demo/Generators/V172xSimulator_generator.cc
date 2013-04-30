@@ -4,6 +4,7 @@
 #include "cetlib/exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
+#include "artdaq-demo/Overlays/FragmentTypes.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 
@@ -87,7 +88,7 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
   }
 }
 
-bool demo::V172xSimulator::getNext__(FragmentPtrs & frags) {
+bool demo::V172xSimulator::getNext_(FragmentPtrs & frags) {
   if (should_stop ()) {
     return false;
   }
@@ -114,7 +115,7 @@ bool demo::V172xSimulator::getNext__(FragmentPtrs & frags) {
     artdaq::Fragment& frag = *frags.back();
     frag.setFragmentID (fragment_id ());
     frag.setSequenceID (current_event_num_);
-    frag.setUserType (FragmentType::V1720);
+    frag.setUserType (FragmentTypes::V1720);
   }
 
   return true;

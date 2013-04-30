@@ -7,26 +7,38 @@
 
 #include <string>
 #include <vector>
+#include <atomic>
 
 namespace demo {
   // V172xFileReader reads DS50 events from a file or set of files.
 
   class V172xFileReader : public artdaq::FragmentGenerator {
-    public:
-      explicit V172xFileReader(fhicl::ParameterSet const &);
+  public:
+    explicit V172xFileReader(fhicl::ParameterSet const &);
+    int fragment_id() const { return fragment_id_; }
 
-    private:
-      virtual bool getNext__(artdaq::FragmentPtrs & output);
+  private:
+    bool getNext_(artdaq::FragmentPtrs & output);
+    bool requiresStateMachine_() const {return true;}
+    void start_() {should_stop_.store(false);}
+    void pause_() {}
+    void resume_() {}
+    void stop_() {should_stop_.store(true);}
 
-  // Configuration.
-  std::vector<std::string> const fileNames_;
-  uint64_t const max_set_size_bytes_;
-  int const max_events_;
+    // Configuration.
+    std::vector<std::string> const fileNames_;
+    uint64_t const max_set_size_bytes_;
+    int const max_events_;
 
-  // State
-  size_t events_read_;
-  std::pair<std::vector<std::string>::const_iterator, uint64_t> next_point_;
-};
+    // State
+    size_t events_read_;
+    std::pair<std::vector<std::string>::const_iterator, uint64_t> next_point_;
+    int fragment_id_;
+    std::atomic<bool> should_stop_;
+
+  protected:
+    bool should_stop() {return should_stop_.load();}
+  };
 }
 
 #endif /* artdaq_demo_Generators_V172xFileReader_hh */
