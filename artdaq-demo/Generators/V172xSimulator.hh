@@ -18,7 +18,6 @@ namespace demo {
   class V172xSimulator : public artdaq::FragmentGenerator {
   public:
     explicit V172xSimulator(fhicl::ParameterSet const & ps);
-    int fragment_id() const { return fragment_id_; }
 
   private:
     bool getNext_(artdaq::FragmentPtrs & output);
@@ -36,7 +35,6 @@ namespace demo {
     std::mt19937 engine_;
     std::vector<std::vector<size_t>> adc_freqs_;
     std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
-    int fragment_id_;
     std::atomic<bool> should_stop_;
 
   protected:

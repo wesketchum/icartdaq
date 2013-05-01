@@ -113,7 +113,7 @@ bool demo::V172xSimulator::getNext_(FragmentPtrs & frags) {
                    );
 
     artdaq::Fragment& frag = *frags.back();
-    frag.setFragmentID (fragment_id ());
+    frag.setFragmentID (fragID);
     frag.setSequenceID (current_event_num_);
     frag.setUserType (FragmentTypes::V1720);
   }

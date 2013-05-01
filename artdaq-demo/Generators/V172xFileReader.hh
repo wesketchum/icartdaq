@@ -15,7 +15,6 @@ namespace demo {
   class V172xFileReader : public artdaq::FragmentGenerator {
   public:
     explicit V172xFileReader(fhicl::ParameterSet const &);
-    int fragment_id() const { return fragment_id_; }
 
   private:
     bool getNext_(artdaq::FragmentPtrs & output);
@@ -29,11 +28,11 @@ namespace demo {
     std::vector<std::string> const fileNames_;
     uint64_t const max_set_size_bytes_;
     int const max_events_;
+    std::size_t const starting_fragment_id_;
 
     // State
     size_t events_read_;
     std::pair<std::vector<std::string>::const_iterator, uint64_t> next_point_;
-    int fragment_id_;
     std::atomic<bool> should_stop_;
 
   protected:

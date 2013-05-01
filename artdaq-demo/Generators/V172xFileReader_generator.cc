@@ -23,6 +23,7 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps):
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   max_events_(ps.get<int>("max_events", -1)),
+  starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
   events_read_(0),
   next_point_ {fileNames_.begin(), 0}
  {
@@ -45,6 +46,7 @@ bool demo::V172xFileReader::getNext_(FragmentPtrs & frags) {
     words_per_frag_word;
   static size_t const header_size_bytes =
     V172xFragment::header_size_words() * sizeof(V172xFragment::Header::data_t);
+  demo::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
   // Open file.
   std::ifstream in_data;
   uint64_t read_bytes = 0;
@@ -125,7 +127,7 @@ bool demo::V172xFileReader::getNext_(FragmentPtrs & frags) {
            bytes_left_to_read + header_size_bytes);
     read_bytes += bytes_left_to_read;
     // Update fragment header.
-    frag.setFragmentID (fragment_id ());
+    frag.setFragmentID (fragID++);
     frag.setSequenceID(board.event_counter());
     ++events_read_;
   }
@@ -145,4 +147,4 @@ bool demo::V172xFileReader::getNext_(FragmentPtrs & frags) {
   return true;
 }
 
-//DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)
+DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)
