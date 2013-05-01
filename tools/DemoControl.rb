@@ -6,12 +6,12 @@ require "xmlrpc/client"
 
 # It'd be nice if we were using a newer version of ruby (1.9.3) that had
 # better string format substitution.  For the time being we'll setup our
-# string constants using the newer convention and do the ugly substitutions.
+# string constants using the newer convention and do the substitutions.
 EB_DISK_CONFIG = "\
 BEGIN_PROLOG
   huff:
   {
-    module_type: DS50Compression
+    module_type: Compression
     raw_label: daq
     want_bins: false
     perf_print: false
@@ -28,7 +28,7 @@ BEGIN_PROLOG
 
   unhuff:
   {
-    module_type: DS50Decompression
+    module_type: Decompression
   }
 
   dunhuff_1720: @local::unhuff
@@ -40,6 +40,16 @@ BEGIN_PROLOG
   dunhuff_1724.compressed_label: huffdiffV1724
   dunhuff_1724.table_file: \"table_daqV1724_huff_diff.txt\"
 END_PROLOG
+services: {
+  scheduler: {
+    fileMode: NOMERGE
+  }
+  user: {
+    NetMonTransportServiceInterface: {
+      service_provider: NetMonTransportService
+    }
+  }
+}
 daq: {
   max_fragment_size_words: 524288
   event_builder: {
@@ -80,7 +90,7 @@ source: {
   module_type: RawInput
   waiting_time: 20
   resume_after_timeout: true
-  fragment_type_map: [[1, \"missed\"], [2, \"V1495\"], [3, \"V1720\"], [4, \"V1724\"], [5, \"V1190\"]]
+  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"]]
 }
 process_name: ONLINEDEMO"
 
@@ -96,9 +106,7 @@ daq: {
     freqs_file: \"ds50_hist.dat\" 
     fragments_per_event: 1 
     nChannels: 3000 
-    generator_ds50: {
-      fragment_id: %{fragment_id}
-    }
+    starting_fragment_id: %{fragment_id}
     rt_priority: 2
   }
 }"
@@ -107,8 +115,7 @@ class ConfigGen
   def generateEventBuilder(ebIndex, totalFRs, dataDir, runNumber,
                            compressionLevel, totalv1720s, totalv1724s)
     # Do the substitutions in the event builder configuration given the options
-    # that were passed in from the command line.  Assure that files written out
-    # by each EB are unique by including a timestamp in the file name.
+    # that were passed in from the command line.  
     ebConfig = String.new(EB_DISK_CONFIG)
     ebConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
     ebConfig.gsub!(/\%\{buffer_count\}/, String(totalFRs*10))
@@ -155,7 +162,7 @@ class ConfigGen
     ebConfig.gsub!(/\%\{output_file\}/, outputFile)
     return ebConfig
   end
-  
+
   def generateV1720(fragmentID, totalEBs, totalFRs)
     # Do the substitutions in the V1720 configuration given the options that 
     # were passed in from the command line.
@@ -203,9 +210,10 @@ class CommandLineParser
         ebConfig.port = Integer(eb[1])
         ebConfig.compression_level = Integer(eb[2])
         ebConfig.kind = "eb"
+        ebConfig.index = @options.eventBuilders.length
         @options.eventBuilders << ebConfig
       end
-    
+
       opts.on("--v1720 [host,port,fragment_id]", Array, 
               "Add a V1720 fragment receiver that runs on",
               "the specified host, port and fragment ID.") do |v1720|
@@ -218,6 +226,7 @@ class CommandLineParser
         v1720Config.port = Integer(v1720[1])
         v1720Config.fragment_id = Integer(v1720[2])
         v1720Config.kind = "v1720"
+        v1720Config.index = @options.v1720s.length
         @options.v1720s << v1720Config
       end
 
@@ -243,7 +252,7 @@ class CommandLineParser
       end
 
       opts.on("-c", "--command [command]", 
-              "Execute a command: start, stop, init.") do |command|
+              "Execute a command: start, stop, init, shutdown, pause, resume.") do |command|
         @options.command = command
       end
 
@@ -277,7 +286,7 @@ class CommandLineParser
   end
 
   def validate()
-    # ... make sure there is an eb and a 1720
+    # In sim mode make sure there is an eb and a 1720
     return nil
   end
 
@@ -299,13 +308,16 @@ class CommandLineParser
       hostMap[host].sort! { |x,y|
         x.port <=> y.port
       }
+
+      totalFRs = @options.v1720s.length
       hostMap[host].each do |item|
         case item.kind
         when "eb"
-          puts "    EventBuilder, port %d" % item.port
+          puts "    EventBuilder, port %d, rank %d" % [item.port, totalFRs + item.index]
         when "v1720", "v1724"
-          puts "    FragmentReceiver, Simulated %s, port %d" % [item.kind.upcase,
-                                                                item.port]
+          puts "    FragmentReceiver, Simulated %s, port %d, rank %d" % [item.kind.upcase,
+                                                                         item.port,
+                                                                         item.index]
         end
       end
       puts ""
@@ -347,7 +359,7 @@ class CommandLineParser
         cfg = @configGen.generateEventBuilder(ebIndex, totalFRs, @options.dataDir,
                                               @options.runNumber,
                                               proc.compression_level,
-                                              totalv1720s, totalv1724s)
+                                              totalV1720s, totalv1724s)
         ebIndex += 1
       when "v1720", "v1724"
         cfg = @configGen.generateV1720(proc.fragment_id, totalEBs, totalFRs)
@@ -402,7 +414,7 @@ class SystemControl
       end
       ebIndex += 1
     }
-    
+
     v1720Index = 0
     @options.v1720s.each { |v1720Options|
       threads << Thread.new() do
@@ -425,7 +437,7 @@ class SystemControl
 
   def start(runNumber)
     # Starting runs is simple in that all processes are sent the same message
-    # and that can be done serially, but it needs to be done it a certain order.
+    # and that can be done serially.
     (@options.eventBuilders + @options.v1720s).each do |proc|
       puts "Attempting to connect to %s:%d and start a run." % [proc.host, 
                                                                 proc.port]
@@ -441,46 +453,45 @@ class SystemControl
     end
   end
 
-  def stop
-    threads = []
-    (@options.v1720s).each do |proc|
-      threads << Thread.new do
-        puts "Attempting to connect to %s:%d and stop a run." % [proc.host, 
-                                                                 proc.port]
-        xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2", proc.port)
-        result = xmlrpcClient.call("daq.stop")
-        case proc.kind
-        when "eb"
-          puts "EventBuilder on %s:%d result: %s" % [proc.host, proc.port, 
-                                                     result]
-        when "v1720", "v1724"
-          puts "%s FragmentReceiver on %s:%d result: %s" % [proc.kind.upcase, proc.host,
-                                                            proc.port, result]
-        end
+  def sendSerialCommand(commandName, procs)
+    procs.each do |proc|
+      puts "Attempting to connect to %s:%d and %s a run." % [proc.host, 
+                                                             proc.port,
+                                                             commandName]
+      xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2", proc.port)
+      result = xmlrpcClient.call("daq.%s" % [commandName])
+      case proc.kind
+      when "eb"
+        puts "EventBuilder on %s:%d result: %s" % [proc.host, proc.port, 
+                                                   result]
+      when "v1720"
+        puts "V1720 FragmentReceiver on %s:%d result: %s" % [proc.host, proc.port,
+                                                             result]
+      when "v1170"
+        puts "V1170 FragmentReceiver on %s:%d result: %s" % [proc.host, proc.port,
+                                                             result]
       end
     end
-    threads.each { |aThread|
-      aThread.join
-    }
+  end
 
-    threads = []
-    (@options.eventBuilders).each do |proc|
-      threads << Thread.new do
-        puts "Attempting to connect to %s:%d and stop a run." % [proc.host, 
-                                                                 proc.port]
-        xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2", proc.port)
-        xmlrpcClient.timeout = 150
-        result = xmlrpcClient.call("daq.stop")
-        case proc.kind
-        when "eb"
-          puts "EventBuilder on %s:%d result: %s" % [proc.host, proc.port, 
-                                                     result]
-        end
-      end
-    end
-    threads.each { |aThread|
-      aThread.join
-    }
+  def shutdown()
+    self.sendSerialCommand("shutdown", @options.eventBuilders +
+                           @options.v1720s)
+  end
+
+  def pause()
+    self.sendSerialCommand("pause", @options.v1720s +
+                           @options.eventBuilders)
+  end
+
+  def stop()
+    self.sendSerialCommand("stop", @options.v1720s +
+                           @options.eventBuilders)
+  end
+
+  def resume()
+    self.sendSerialCommand("resume", @options.eventBuilders +
+                           @options.v1720s)
   end
 end
 
@@ -507,5 +518,11 @@ if __FILE__ == $0
     sysCtrl.start(options.runNumber)
   elsif options.command == "stop"
     sysCtrl.stop()
+  elsif options.command == "shutdown"
+    sysCtrl.shutdown()
+  elsif options.command == "pause"
+    sysCtrl.pause()
+  elsif options.command == "resume"
+    sysCtrl.resume()
   end
 end
