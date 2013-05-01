@@ -12,8 +12,6 @@
 
 #include "art/Utilities/Exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
-#include "artdaq-demo/Overlays/V1495Fragment.hh"
-#include "artdaq-demo/Overlays/V1190Fragment.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 
 #include <algorithm>
@@ -149,88 +147,6 @@ void demo::EventDump::analyze(art::Event const & evt)
     std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
               << ", event " << eventNumber << " has zero"
               << " V1724 fragments." << std::endl;
-  }
-  std::cout << std::endl;
-
-  // ***********************
-  // *** V1190 Fragments ***
-  // ***********************
-
-  evt.getByLabel(raw_data_label_, "V1190", raw);
-
-  if (raw.isValid()) {
-    std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
-              << ", event " << eventNumber << " has " << raw->size()
-              << " V1190 fragment(s)." << std::endl;
-
-    for (size_t idx = 0; idx < raw->size(); ++idx) {
-      const auto& frag((*raw)[idx]);
-
-      std::cout << "  Fragment " << frag.fragmentID() << " has size "
-                << frag.size() << " words." << std::endl;
-
-      V1190Fragment bb(frag);
-      V1190Fragment::Word const *dataWord = bb.dataBegin();
-      if (dataWord != 0) {
-        V1190Fragment::Word::event_count_t event_count = 0;
-        while (dataWord != bb.dataEnd()) {
-          //std::cout << "V1190 " << (*dataWord) << std::endl;
-          if (dataWord->type() == V1190Fragment::Word::global_header) {
-            event_count = dataWord->event_count();
-          }
-          ++dataWord;
-        }
-        std::cout << std::showbase
-                  << "    event count = " << event_count
-                  << std::endl;
-      }
-    }
-  }
-  else {
-    std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
-              << ", event " << eventNumber << " has zero"
-              << " V1190 fragments." << std::endl;
-  }
-  std::cout << std::endl;
-
-  // ***********************
-  // *** V1495 Fragments ***
-  // ***********************
-
-  evt.getByLabel(raw_data_label_, "V1495", raw);
-
-  if (raw.isValid()) {
-    std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
-              << ", event " << eventNumber << " has " << raw->size()
-              << " V1495 fragment(s)." << std::endl;
-
-    for (size_t idx = 0; idx < raw->size(); ++idx) {
-      const auto& frag((*raw)[idx]);
-
-      std::cout << "  Fragment " << frag.fragmentID() << " has size "
-                << frag.size() << " words." << std::endl;
-
-      V1495Fragment bb(frag);
-      std::cout << std::showbase
-                << "    trigger type = " << bb.trigger_type ()
-                << ", trigger counter = " << bb.trigger_counter()
-                << ", run number = " << bb.run_number()
-                << ", GPS coarse = " << bb.gps_coarse()
-                << ", GPS fine = " << bb.gps_fine()
-                << std::endl;
-
-      if (frag.hasMetadata()) {
-        V1495Fragment::metadata const* md =
-          frag.metadata<V1495Fragment::metadata>();
-        std::cout << std::showbase << "    firmware version = "
-                  << ((int)md->firmware_version) << std::endl;
-      }
-    }
-  }
-  else {
-    std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
-              << ", event " << eventNumber << " has zero"
-              << " V1495 fragments." << std::endl;
   }
   std::cout << std::endl;
 }
