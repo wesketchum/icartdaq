@@ -44,11 +44,6 @@ services: {
   scheduler: {
     fileMode: NOMERGE
   }
-  user: {
-    NetMonTransportServiceInterface: {
-      service_provider: NetMonTransportService
-    }
-  }
 }
 daq: {
   max_fragment_size_words: 524288
@@ -60,6 +55,20 @@ daq: {
     use_art: true
     print_event_store_stats: true
   }
+}
+outputs: {
+  normalOutput: {
+    module_type: RootOutput
+    fileName: \"%{output_file}\"
+    compressionLevel: 0
+    %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
+  }
+}
+source: {
+  module_type: RawInput
+  waiting_time: 20
+  resume_after_timeout: true
+  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"]]
 }
 physics: {
   producers: {
@@ -78,21 +87,7 @@ physics: {
   my_output_modules: [ normalOutput ]
   end_paths: [ my_output_modules ]
 }
-outputs: {
-  normalOutput: {
-    module_type: RootOutput
-    fileName: \"%{output_file}\"
-    compressionLevel: 0
-    %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
-  }
-}
-source: {
-  module_type: RawInput
-  waiting_time: 20
-  resume_after_timeout: true
-  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"]]
-}
-process_name: ONLINEDEMO"
+process_name: DAQ"
 
 V1720_SIM_CONFIG = "\
 daq: {
