@@ -21,6 +21,17 @@
 
 using fhicl::ParameterSet;
 
+namespace {
+  demo::V172xFragment::adc_type
+  init_seed(fhicl::ParameterSet const & ps)
+  {
+    std::random_device rd;
+    return ps.get<demo::V172xFragment::adc_type>
+      ("seed",
+       std::uniform_int_distribution<demo::V172xFragment::adc_type>()(rd));
+  }
+}
+
 demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   :
   FragmentGenerator(),
@@ -31,16 +42,13 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   secondary_types_(),
   fragment_ids_(ps.get<artdaq::Fragment::fragment_id_t>("fragment_ids"), { 1 } ),
   size_in_words_(ps.get<bool>("size_in_words", true)),
-  seed_(ps.get<V172xFragment::adc_type>("seed",
-                                        std::independent_bits_engine<std::random_device,
-                                        sizeof(V172xFragment::adc_type) * 8,
-                                        V172xFragment::adc_type>()())),
+  seed_(init_seed(ps)),
   events_read_(0),
   next_point_ {fileNames_.begin(), 0},
   should_stop_(0),
   twoBits_(seed_)
  {
-   auto st_strings =
+     auto st_strings =
      ps.get<std::vector<std::string>>("secondary_fragment_type", { });
    std::transform(st_strings.begin(),
                   st_strings.end(),
