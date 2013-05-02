@@ -7,7 +7,7 @@
 
 namespace {
   static std::vector<std::string> const
-  names { "MISSED", "V1495" "V1720", "V1724", "V1190", "UNKNOWN" };
+  names { "MISSED", "V1495", "V1720", "V1724", "V1190", "UNKNOWN" };
 }
 
 demo::FragmentType
@@ -18,15 +18,17 @@ demo::toFragmentType(std::string t_string)
                  t_string.begin(),
                  toupper);
   auto it = std::find(names.begin(), names.end(), t_string);
-  return FragmentType::MISSED +
-    (it == names.end()) ? static_cast<FragmentType>(0) : static_cast<FragmentType>(it - names.begin());
+  return (it == names.end()) ?
+    FragmentType::INVALID :
+    static_cast<FragmentType>(artdaq::Fragment::FirstUserFragmentType +
+                              (it - names.begin()));
 }
 
 std::string
 demo::fragmentTypeToString(FragmentType val)
 {
   if (val < FragmentType::INVALID) {
-    return names[val - FragmentType::MISSED];
+    return names[val - artdaq::Fragment::FirstUserFragmentType];
   }
   else {
     return "INVALID/UNKNOWN";

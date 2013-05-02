@@ -6,12 +6,11 @@ namespace demo {
 
   namespace detail {
     enum FragmentType : artdaq::Fragment::type_t
-    { MISSED = artdaq::Fragment::FirstUserFragmentType,
-        V1495,
+    { V1495,
         V1720,
         V1724,
         V1190,
-        INVALID
+        INVALID // Should always be last.
         };
 
     // Safety check.
