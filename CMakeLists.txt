@@ -57,6 +57,7 @@ cet_find_library( SIGC    NAMES sigc-2.0  PATHS ENV LIBSIGCPP_LIB NO_DEFAULT_PAT
 include(ArtDictionary)
 include(ArtMake)
 include(BuildPlugins)
+include(CetTest)
 
 # source
 add_subdirectory(artdaq-demo)
