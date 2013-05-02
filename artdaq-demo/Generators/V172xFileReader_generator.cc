@@ -191,6 +191,13 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
   return true;
 }
 
+std::vector<artdaq::Fragment::fragment_id_t>
+demo::V172xFileReader::
+fragmentIDs_()
+{
+  return fragment_ids_;
+}
+
 void
 demo::V172xFileReader::
 produceSecondaries_(artdaq::FragmentPtrs & frags)

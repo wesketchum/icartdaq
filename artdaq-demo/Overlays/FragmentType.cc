@@ -7,7 +7,7 @@
 
 namespace {
   static std::vector<std::string> const
-  names { "MISSED", "V1495" "V1720", "V1724", "V1190" };
+  names { "MISSED", "V1495" "V1720", "V1724", "V1190", "UNKNOWN" };
 }
 
 demo::FragmentType
@@ -25,6 +25,10 @@ demo::toFragmentType(std::string t_string)
 std::string
 demo::fragmentTypeToString(FragmentType val)
 {
-  assert(val >=0 && val < FragmentType::INVALID);
-  return names[val - FragmentType::MISSED];
+  if (val < FragmentType::INVALID) {
+    return names[val - FragmentType::MISSED];
+  }
+  else {
+    return "INVALID/UNKNOWN";
+  }
 }

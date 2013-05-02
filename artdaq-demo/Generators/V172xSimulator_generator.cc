@@ -1,5 +1,6 @@
 #include "artdaq-demo/Generators/V172xSimulator.hh"
 
+#include "art/Utilities/Exception.h"
 #include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
@@ -15,9 +16,26 @@
 
 #include <unistd.h>
 
-using namespace artdaq;
-
 namespace {
+  size_t typeToADC(demo::FragmentType type)
+  {
+    switch (type) {
+    case demo::FragmentType::V1720:
+      return 12;
+      break;
+    case demo::FragmentType::V1724:
+      return 14;
+      break;
+    default:
+      throw art::Exception(art::errors::Configuration)
+        << "Unknown board type "
+        << type
+        << " ("
+        << demo::fragmentTypeToString(type)
+        << ").\n";
+    };
+  }
+
   void read_adc_freqs(std::string const & fileName, std::string const & filePath,
                       std::vector<std::vector<size_t>> & freqs, int adc_bits) {
 
@@ -26,7 +44,7 @@ namespace {
     if (getenv(filePath.c_str()) == nullptr) {
       setenv(filePath.c_str(), ".", 0);
     }
-    SimpleLookupPolicy lookup_policy(filePath);
+    artdaq::SimpleLookupPolicy lookup_policy(filePath);
     std::string fullPath = fileName;
     try {fullPath = lookup_policy(fileName);}
     catch (...) {}
@@ -65,44 +83,57 @@ namespace {
   }
 }
 
-demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps):
+demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
+  :
   FragmentGenerator(),
-  current_event_num_(1),
-  fragments_per_event_(ps.get<size_t>("fragments_per_event", 5)),
-  starting_fragment_id_(ps.get<size_t>("starting_fragment_id", 0)),
   nChannels_(ps.get<size_t>("nChannels", 600000)),
-  adc_bits_ (ps.get<size_t>("adc_bits", 12)),
+  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "V1720"))),
+  fragment_ids_(),
+  current_event_num_(0ul),
   engine_(ps.get<int64_t>("random_seed", 314159)),
   adc_freqs_(),
-  content_generator_() {
-  content_generator_.reserve(fragments_per_event_);
+  content_generator_()
+{
+  // Initialize fragment_ids_.
+  fragment_ids_.resize(ps.get<size_t>("fragments_per_event", 5));
+  auto current_id = ps.get<size_t>("starting_fragment_id", 0);
+  std::generate(fragment_ids_.begin(),
+                fragment_ids_.end(),
+                [&current_id]() { return current_id++; });
+
+  // Read frequency tables.
+  size_t const adc_bits = typeToADC(fragment_type_);
+  auto const fragments_per_event = fragment_ids_.size();
+  content_generator_.reserve(fragments_per_event);
   read_adc_freqs(ps.get<std::string>("freqs_file"),
-                 ps.get<std::string>("freqs_path", "DS50DAQ_CONFIG_PATH"),
-                 adc_freqs_, adc_bits_);
-  for (size_t i = 0; i < fragments_per_event_; ++i) {
-    content_generator_.emplace_back(V172xFragment::adc_range(adc_bits_),
+                 ps.get<std::string>("freqs_path", "DAQ_CONFIG_PATH"),
+                 adc_freqs_,
+                 adc_bits);
+
+  // Initialize content generators.
+  for (size_t i = 0; i < fragments_per_event; ++i) {
+    content_generator_.emplace_back(V172xFragment::adc_range(adc_bits),
                                     -0.5,
-                                    V172xFragment::adc_range(adc_bits_) - 0.5,
+                                    V172xFragment::adc_range(adc_bits) - 0.5,
                                     [this, i](double x) -> double { return adc_freqs_[i][std::round(x)]; }
                                    );
   }
 }
 
-bool demo::V172xSimulator::getNext_(FragmentPtrs & frags) {
+bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
   if (should_stop ()) {
     return false;
   }
 
   ++current_event_num_;
 
-  demo::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
-  for (size_t i = 0; i < fragments_per_event_; ++i, ++fragID) {
-    frags.emplace_back(new Fragment);
+  for (size_t i = 0; i < fragment_ids_.size(); ++i) {
+    frags.emplace_back(new artdaq::Fragment);
     V172xFragmentWriter newboard(*frags.back());
     newboard.resize(nChannels_);
-    newboard.setBoardID(fragID);
+    newboard.setBoardID(fragment_ids_[i]);
     newboard.setEventCounter(current_event_num_);
     std::generate_n(newboard.dataBegin(),
                     nChannels_,
@@ -113,12 +144,18 @@ bool demo::V172xSimulator::getNext_(FragmentPtrs & frags) {
                    );
 
     artdaq::Fragment& frag = *frags.back();
-    frag.setFragmentID (fragID);
+    frag.setFragmentID (newboard.board_id());
     frag.setSequenceID (current_event_num_);
-    frag.setUserType (FragmentType::V1720);
+    frag.setUserType(fragment_type_);
   }
 
   return true;
 }
 
+std::vector<artdaq::Fragment::fragment_id_t>
+demo::V172xSimulator::
+fragmentIDs_()
+{
+  return fragment_ids_;
+}
 DEFINE_ARTDAQ_GENERATOR(demo::V172xSimulator)

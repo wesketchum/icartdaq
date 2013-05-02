@@ -5,6 +5,7 @@
 #include "artdaq/DAQdata/Fragments.hh"
 #include "artdaq/DAQdata/FragmentGenerator.hh"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Overlays/FragmentType.hh"
 
 #include <random>
 #include <vector>
@@ -20,18 +21,21 @@ namespace demo {
     explicit V172xSimulator(fhicl::ParameterSet const & ps);
 
   private:
-    bool getNext_(artdaq::FragmentPtrs & output);
-    bool requiresStateMachine_() const {return true;}
-    void start_() {should_stop_.store(false); current_event_num_=0;}
-    void pause_() {}
-    void resume_() {}
-    void stop_() {should_stop_.store(true);}
+    bool getNext_(artdaq::FragmentPtrs & output) override;
+    std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
+    bool requiresStateMachine_() const override {return true;}
+    void start_() override {should_stop_.store(false); current_event_num_=0;}
+    void pause_() override{}
+    void resume_() override {}
+    void stop_() override {should_stop_.store(true);}
 
-    std::size_t current_event_num_;
-    std::size_t const fragments_per_event_;
-    std::size_t const starting_fragment_id_;
+    // Configuration.
     std::size_t const nChannels_;
-    int const adc_bits_;
+    FragmentType const fragment_type_;
+    std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_;
+
+    // State.
+    std::size_t current_event_num_;
     std::mt19937 engine_;
     std::vector<std::vector<size_t>> adc_freqs_;
     std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;

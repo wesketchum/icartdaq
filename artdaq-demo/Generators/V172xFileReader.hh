@@ -38,7 +38,7 @@ namespace demo {
     std::vector<std::string> const fileNames_;
     uint64_t const max_set_size_bytes_;
     int const max_events_;
-    FragmentType primary_type_;
+    FragmentType const primary_type_;
     std::vector<FragmentType> secondary_types_;
     std::vector<artdaq::Fragment::fragment_id_t> const fragment_ids_;
     bool const size_in_words_; // To cope with malformed files.
