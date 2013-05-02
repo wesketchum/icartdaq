@@ -4,7 +4,7 @@
 #include "cetlib/exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
-#include "artdaq-demo/Overlays/FragmentTypes.hh"
+#include "artdaq-demo/Overlays/FragmentType.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 
@@ -115,7 +115,7 @@ bool demo::V172xSimulator::getNext_(FragmentPtrs & frags) {
     artdaq::Fragment& frag = *frags.back();
     frag.setFragmentID (fragID);
     frag.setSequenceID (current_event_num_);
-    frag.setUserType (FragmentTypes::V1720);
+    frag.setUserType (FragmentType::V1720);
   }
 
   return true;
