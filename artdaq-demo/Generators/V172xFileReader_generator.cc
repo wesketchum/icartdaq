@@ -27,8 +27,8 @@ namespace {
   {
     std::random_device rd;
     return ps.get<demo::V172xFragment::adc_type>
-      ("seed",
-       std::uniform_int_distribution<demo::V172xFragment::adc_type>()(rd));
+           ("seed",
+            std::uniform_int_distribution<demo::V172xFragment::adc_type>()(rd));
   }
 }
 
@@ -36,43 +36,46 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   :
   FragmentGenerator(),
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
-  max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
+  max_set_size_bytes_(ps.get<double>("max_set_size_gib",
+                                     14.0) * 1024 * 1024 * 1024),
   max_events_(ps.get<int>("max_events", -1)),
-  primary_type_(toFragmentType(ps.get<std::string>("primary_fragment_type", "V1720"))),
+  primary_type_(toFragmentType(ps.get<std::string>("primary_fragment_type",
+                                                   "V1720"))),
   secondary_types_(),
-  fragment_ids_(ps.get<artdaq::Fragment::fragment_id_t>("fragment_ids"), { 1 } ),
-  size_in_words_(ps.get<bool>("size_in_words", true)),
-  seed_(init_seed(ps)),
-  events_read_(0),
-  next_point_ {fileNames_.begin(), 0},
-  should_stop_(0),
-  twoBits_(seed_)
- {
-     auto st_strings =
-     ps.get<std::vector<std::string>>("secondary_fragment_type", { });
-   std::transform(st_strings.begin(),
-                  st_strings.end(),
-                  std::back_inserter(secondary_types_),
-                  &toFragmentType);
-   size_t expected_ids = 1 + secondary_types_.size();
-   if (fragment_ids_.size() != expected_ids) {
-     throw art::Exception(art::errors::Configuration)
-       << "Incorrect number of fragment IDs ("
-       << fragment_ids_.size()
-       << ", expected "
-       << expected_ids
-       << "), first file "
-       << *fileNames_.begin()
-       << ".\n";
-   }
- }
+  fragment_ids_
+  (ps.get<std::vector<artdaq::Fragment::fragment_id_t>>("fragment_ids", { 1 })),
+size_in_words_(ps.get<bool>("size_in_words", true)),
+seed_(init_seed(ps)),
+events_read_(0),
+next_point_ {fileNames_.begin(), 0},
+should_stop_(0),
+twoBits_(seed_)
+{
+  auto st_strings =
+    ps.get<std::vector<std::string>>("secondary_fragment_type", { });
+  std::transform(st_strings.begin(),
+                 st_strings.end(),
+                 std::back_inserter(secondary_types_),
+                 &toFragmentType);
+  size_t expected_ids = 1 + secondary_types_.size();
+  if (fragment_ids_.size() != expected_ids) {
+    throw art::Exception(art::errors::Configuration)
+        << "Incorrect number of fragment IDs ("
+        << fragment_ids_.size()
+        << ", expected "
+        << expected_ids
+        << "), first file "
+        << *fileNames_.begin()
+        << ".\n";
+  }
+}
 
-bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
-  if (should_stop ()) return false;
-
+bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags)
+{
+  if (should_stop()) { return false; }
   artdaq::FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end() ||
-      ! (max_events_ == -1 || static_cast<size_t>(max_events_) > events_read_)) {
+      !(max_events_ == -1 || static_cast<size_t>(max_events_) > events_read_)) {
     return false; // Nothing to do.
   }
   // Useful constants for byte arithmetic.
@@ -144,7 +147,6 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
     size_t const final_payload_size =
       (vHead->event_size / words_per_frag_word) +
       (vHead->event_size % words_per_frag_word) ? 1 : 0;
-
     frags.emplace_back(new artdaq::Fragment(final_payload_size));
     artdaq::Fragment & frag = *frags.back();
     // Copy the header info in from header_frag.
@@ -165,7 +167,7 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
           << read_bytes
           << " bytes.";
     }
-    assert((frag.dataEnd() - frag.dataBegin()) * sizeof(RawDataType) ==
+    assert((frag.dataEnd() - frag.dataBegin()) * sizeof(artdaq::RawDataType) ==
            bytes_left_to_read + header_size_bytes);
     read_bytes += bytes_left_to_read;
     // Update fragment header.
@@ -205,7 +207,7 @@ produceSecondaries_(artdaq::FragmentPtrs & frags)
   auto const & pFrag = *frags.back();
   size_t id_index { 1 }; // First secondary fragmentID.
   for (auto i = secondary_types_.cbegin(),
-            e = secondary_types_.cend();
+       e = secondary_types_.cend();
        i != e;
        ++i, ++id_index) {
     frags.emplace_back(convertFragment_(pFrag, *i, fragment_ids_[id_index]));
@@ -222,7 +224,6 @@ convertFragment_(artdaq::Fragment const & source,
   result->setUserType(dType);
   result->setFragmentID(id);
   V172xFragmentWriter overlay(*result);
-
   // Only know how to convert V1720 <-> V1724.
   if (source.type() == FragmentType::V1720 &&
       dType == FragmentType::V1724) {
@@ -230,27 +231,28 @@ convertFragment_(artdaq::Fragment const & source,
                    overlay.dataEnd(),
                    overlay.dataBegin(),
                    [this](V172xFragment::adc_type x) ->
-                   V172xFragment::adc_type {
-                     auto tmp = x << 2;
-                     tmp |= twoBits_();
-                     return tmp;
-                   });
+    V172xFragment::adc_type {
+      auto tmp = x << 2;
+      tmp |= twoBits_();
+      return tmp;
+    });
   }
   else if (source.type() == FragmentType::V1724 &&
            dType == FragmentType::V1720) {
     std::transform(overlay.dataBegin(),
                    overlay.dataEnd(),
                    overlay.dataBegin(),
-                   [](V172xFragment::adc_type x) {
-                     return x >> 2;
-                   });
-  } else {
+    [](V172xFragment::adc_type x) {
+      return x >> 2;
+    });
+  }
+  else {
     throw art::Exception(art::errors::Configuration)
-      << "convertFragment: cannot convert from "
-      << fragmentTypeToString(FragmentType(source.type()))
-      << " to "
-      << fragmentTypeToString(dType)
-      << ".\n";
+        << "convertFragment: cannot convert from "
+        << fragmentTypeToString(FragmentType(source.type()))
+        << " to "
+        << fragmentTypeToString(dType)
+        << ".\n";
   }
   return std::move(result);
 }

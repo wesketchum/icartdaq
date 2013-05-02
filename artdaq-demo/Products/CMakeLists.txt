@@ -1,4 +1,7 @@
-art_make(DICT_LIBRARIES ${ARTDAQ_DAQDATA})
+art_make(
+  LIB_LIBRARIES ${CETLIB}
+  DICT_LIBRARIES ${ARTDAQ_DAQDATA}
+  )
 
 install_headers()
 install_source()
