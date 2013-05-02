@@ -14,7 +14,7 @@
 #include "art/Utilities/Exception.h"
 #include "art/Utilities/InputTag.h"
 #include "artdaq-demo/ArtModules/converter_algs.hh"
-#include "artdaq-demo/Overlays/FragmentTypes.hh"
+#include "artdaq-demo/Overlays/FragmentType.hh"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Products/Channel.hh"
 #include "artdaq/DAQdata/Fragment.hh"
@@ -68,8 +68,8 @@ void Converter::produce(art::Event & e)
   // Call the algorithm that will fill the products. We have to pass in
   // the enumeration value that tells us the type of board we're dealing
   // with, because the data don't carry that information directly.
-  darkart::convert_fragments(*p_v1720, *v1720, demo::FragmentTypes::V1720);
-  darkart::convert_fragments(*p_v1724, *v1724, demo::FragmentTypes::V1724);
+  darkart::convert_fragments(*p_v1720, *v1720, demo::FragmentType::V1720);
+  darkart::convert_fragments(*p_v1724, *v1724, demo::FragmentType::V1724);
 
   // Put our complete products into the Event.
   e.put(std::move(v1720), "V1720");
