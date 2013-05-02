@@ -1,6 +1,8 @@
 #include "artdaq-demo/Generators/V172xFileReader.hh"
 
+#include "art/Utilities/Exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
 #include "artdaq/DAQdata/Debug.hh"
 #include "artdaq/DAQdata/GeneratorMacros.hh"
 #include "cetlib/exception.h"
@@ -25,10 +27,10 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib", 14.0) * 1024 * 1024 * 1024),
   max_events_(ps.get<int>("max_events", -1)),
-  size_in_words_(ps.get<bool>("size_in_words", true)),
-  primary_type_(toFragmentType(ps.get<string>("primary_fragment_type", "V1720"))),
+  primary_type_(toFragmentType(ps.get<std::string>("primary_fragment_type", "V1720"))),
   secondary_types_(),
-  fragment_ids_(ps.get<decltype(fragment_ids_)>("fragment_ids", { 1 })),
+  fragment_ids_(ps.get<artdaq::Fragment::fragment_id_t>("fragment_ids"), { 1 } ),
+  size_in_words_(ps.get<bool>("size_in_words", true)),
   seed_(ps.get<V172xFragment::adc_type>("seed",
                                         std::independent_bits_engine<std::random_device,
                                         sizeof(V172xFragment::adc_type) * 8,
@@ -39,7 +41,7 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   twoBits_(seed_)
  {
    auto st_strings =
-     ps.get<std::vector<string>>("secondary_fragment_type", { });
+     ps.get<std::vector<std::string>>("secondary_fragment_type", { });
    std::transform(st_strings.begin(),
                   st_strings.end(),
                   std::back_inserter(secondary_types_),
@@ -52,7 +54,7 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
        << ", expected "
        << expected_ids
        << "), first file "
-       << fileNames_.begin()
+       << *fileNames_.begin()
        << ".\n";
    }
  }
@@ -60,27 +62,26 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
 bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
   if (should_stop ()) return false;
 
-  FragmentPtrs::size_type incoming_size = frags.size();
+  artdaq::FragmentPtrs::size_type incoming_size = frags.size();
   if (next_point_.first == fileNames_.end() ||
       ! (max_events_ == -1 || static_cast<size_t>(max_events_) > events_read_)) {
     return false; // Nothing to do.
   }
   // Useful constants for byte arithmetic.
   static size_t const words_per_frag_word =
-    sizeof(Fragment::value_type) /
+    sizeof(artdaq::Fragment::value_type) /
     sizeof(V172xFragment::Header::data_t);
   static size_t const initial_payload_size =
     V172xFragment::header_size_words() /
     words_per_frag_word;
   static size_t const header_size_bytes =
     V172xFragment::header_size_words() * sizeof(V172xFragment::Header::data_t);
-  demo::V172xFragment::Header::board_id_t fragID(starting_fragment_id_);
   // Open file.
   std::ifstream in_data;
   uint64_t read_bytes = 0;
   // Container into which to retrieve the header and interrogate with a
   // V172xFragment overlay.
-  Fragment header_frag(initial_payload_size);
+  artdaq::Fragment header_frag(initial_payload_size);
   while (!((max_set_size_bytes_ < read_bytes) ||
            next_point_.first == fileNames_.end()) &&
          (max_events_ == -1 || static_cast<size_t>(max_events_) > events_read_)) {
@@ -128,16 +129,16 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
     }
     read_bytes += header_size_bytes;
     V172xFragment::Header * vHead =
-      reintrepret_cast<V172xFragment::Header *>(buf_ptr);
+      reinterpret_cast<V172xFragment::Header *>(buf_ptr);
     if (!size_in_words_) { // File is incorrectly formatted: fix.
-      vHead.event_size /= V172xFragment::Header::size_words;
+      vHead->event_size /= V172xFragment::Header::size_words;
     }
     size_t const final_payload_size =
-      (vHead.event_size / words_per_frag_word) +
-      (vHead.event_size % words_per_frag_word) ? 1 : 0;
+      (vHead->event_size / words_per_frag_word) +
+      (vHead->event_size % words_per_frag_word) ? 1 : 0;
 
-    frags.emplace_back(new Fragment(final_payload_size));
-    Fragment & frag = *frags.back();
+    frags.emplace_back(new artdaq::Fragment(final_payload_size));
+    artdaq::Fragment & frag = *frags.back();
     // Copy the header info in from header_frag.
     memcpy(&*frag.dataBegin(),
            &*header_frag.dataBegin(),
@@ -146,7 +147,7 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
               header_size_bytes;
     // Read rest of board data.
     uint64_t const bytes_left_to_read =
-      (vHead.event_size * sizeof(V172xFragment::Header::data_t)) - header_size_bytes;
+      (vHead->event_size * sizeof(V172xFragment::Header::data_t)) - header_size_bytes;
     in_data.read(buf_ptr, bytes_left_to_read);
     if (!in_data) {
       throw cet::exception("FileReadFailure")
@@ -161,7 +162,7 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
     read_bytes += bytes_left_to_read;
     // Update fragment header.
     frag.setFragmentID(fragment_ids_[0]);
-    frag.setSequenceID(vHead.event_counter);
+    frag.setSequenceID(vHead->event_counter);
     frag.setUserType(primary_type_);
     ++events_read_;
     produceSecondaries_(frags);
@@ -184,27 +185,31 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags) {
 
 void
 demo::V172xFileReader::
-produceSecondaries(artdaq::FragmentPtrs & frags) const
+produceSecondaries_(artdaq::FragmentPtrs & frags)
 {
-  std::transform(secondaries_.begin(),
-                 secondaries_.end(),
-                 std::back_inserter(frags),
-                 std::bind(&convertFragment, this, *frags.back()));
+  auto const & pFrag = *frags.back();
+  size_t id_index { 1 }; // First secondary fragmentID.
+  for (auto i = secondary_types_.cbegin(),
+            e = secondary_types_.cend();
+       i != e;
+       ++i, ++id_index) {
+    frags.emplace_back(convertFragment_(pFrag, *i, fragment_ids_[id_index]));
+  }
 }
 
 artdaq::FragmentPtr
 demo::V172xFileReader::
-convertFragment(artdaq::Fragment const & source,
-                demo::FragmentType dType,
-                artdaq::Fragment::fragment_id_t id) const
+convertFragment_(artdaq::Fragment const & source,
+                 demo::FragmentType dType,
+                 artdaq::Fragment::fragment_id_t id)
 {
-  artdaq::FragmentPtr result(new Fragment(source));
+  artdaq::FragmentPtr result(new artdaq::Fragment(source));
   result->setUserType(dType);
   result->setFragmentID(id);
   V172xFragmentWriter overlay(*result);
 
   // Only know how to convert V1720 <-> V1724.
-  if (source.fragmentType() == FragmentType::V1720 &&
+  if (source.type() == FragmentType::V1720 &&
       dType == FragmentType::V1724) {
     std::transform(overlay.dataBegin(),
                    overlay.dataEnd(),
@@ -216,7 +221,7 @@ convertFragment(artdaq::Fragment const & source,
                      return tmp;
                    });
   }
-  else if (source.fragmentType() == FragmentType::V1724 &&
+  else if (source.type() == FragmentType::V1724 &&
            dType == FragmentType::V1720) {
     std::transform(overlay.dataBegin(),
                    overlay.dataEnd(),
@@ -225,9 +230,9 @@ convertFragment(artdaq::Fragment const & source,
                      return x >> 2;
                    });
   } else {
-    throw art::Exception(art::Exception::errors::Configuration)
+    throw art::Exception(art::errors::Configuration)
       << "convertFragment: cannot convert from "
-      << fragmentTypeToString(source.fragmentType())
+      << fragmentTypeToString(FragmentType(source.type()))
       << " to "
       << fragmentTypeToString(dType)
       << ".\n";

@@ -28,10 +28,11 @@ namespace demo {
     void resume_() override {}
     void stop_() override {should_stop_.store(true);}
 
-    void produceSecondaries(artdaq::FragmentPtrs & frags) const;
+    void produceSecondaries_(artdaq::FragmentPtrs & frags);
     artdaq::FragmentPtr
-    convertFragment(artdaq::Fragment const & source,
-                    demo::FragmentType dType) const;
+    convertFragment_(artdaq::Fragment const & source,
+                     demo::FragmentType dType,
+                     artdaq::Fragment::fragment_id_t id);
 
     // Configuration.
     std::vector<std::string> const fileNames_;
@@ -39,8 +40,8 @@ namespace demo {
     int const max_events_;
     FragmentType primary_type_;
     std::vector<FragmentType> secondary_types_;
-    bool const size_in_words_; // To cope with malformed files.
     std::vector<artdaq::Fragment::fragment_id_t> const fragment_ids_;
+    bool const size_in_words_; // To cope with malformed files.
     V172xFragment::adc_type const seed_;
 
     // State
