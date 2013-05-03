@@ -98,7 +98,7 @@ daq: {
     first_event_builder_rank: %{total_frs}
     event_builder_count: %{total_ebs}
     generator: V172xSimulator 
-    freqs_file: \"ds50_hist.dat\" 
+    freqs_file: \"V1720_sample_freqs.dat\" 
     fragments_per_event: 1 
     nChannels: 3000 
     starting_fragment_id: %{fragment_id}

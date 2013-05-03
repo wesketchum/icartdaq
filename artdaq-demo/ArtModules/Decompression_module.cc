@@ -74,7 +74,7 @@ namespace demo {
     : compressed_label_(p.get<std::string>("compressed_label")),
       inst_name_(p.get<std::string>("instance_name")),
       table_file_(p.get<std::string>("table_file")),
-      table_file_path_(p.get<std::string>("table_file_path", "DAQ_CONFIG_PATH")),
+      table_file_path_(p.get<std::string>("table_file_path", "DAQ_INDATA_PATH")),
       table_(readAndSortTable(table_file_, table_file_path_)),
       decode_(table_)
   {

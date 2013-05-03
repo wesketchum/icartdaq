@@ -159,7 +159,7 @@ namespace demo {
     raw_label_(p.get<std::string>("raw_label","daq")),
     inst_name_(p.get<std::string>("instance_name")),
     table_file_(p.get<std::string>("table_file")),
-    table_file_path_(p.get<std::string>("table_file_path", "DAQ_CONFIG_PATH")),
+    table_file_path_(p.get<std::string>("table_file_path", "DAQ_INDATA_PATH")),
     use_diffs_(p.get<bool>("use_diffs")),
     perf_print_(p.get<bool>("perf_print",false)),
     bits_(use_diffs_?16:inst_name_=="V1724" ? 14 : inst_name_=="V1720" ? 12 : 0),

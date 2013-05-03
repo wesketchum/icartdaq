@@ -106,7 +106,7 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
   auto const fragments_per_event = fragment_ids_.size();
   content_generator_.reserve(fragments_per_event);
   read_adc_freqs(ps.get<std::string>("freqs_file"),
-                 ps.get<std::string>("freqs_path", "DAQ_CONFIG_PATH"),
+                 ps.get<std::string>("freqs_path", "DAQ_INDATA_PATH"),
                  adc_freqs_,
                  adc_bits);
 
