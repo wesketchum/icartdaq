@@ -6,7 +6,8 @@ namespace demo {
 
   namespace detail {
     enum FragmentType : artdaq::Fragment::type_t
-    { V1495,
+    { MISSED = artdaq::Fragment::FirstUserFragmentType,
+        V1495,
         V1720,
         V1724,
         V1190,

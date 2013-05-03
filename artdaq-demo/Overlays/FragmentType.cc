@@ -28,7 +28,7 @@ std::string
 demo::fragmentTypeToString(FragmentType val)
 {
   if (val < FragmentType::INVALID) {
-    return names[val - artdaq::Fragment::FirstUserFragmentType];
+    return names[val - FragmentType::MISSED];
   }
   else {
     return "INVALID/UNKNOWN";
