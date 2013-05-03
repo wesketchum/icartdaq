@@ -26,4 +26,4 @@ simple_plugin(Decompression "module"
 
 simple_plugin(DataCharacterizer "module")
 simple_plugin(EventDump "module")
-simple_plugin(DS50CompressionChecker "module" ${ARTDAQ_DAQDATA})
+simple_plugin(CompressionChecker "module" ${ARTDAQ_DAQDATA})

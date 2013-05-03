@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////
-// Class:       DS50CompressionChecker
+// Class:       CompressionChecker
 // Module Type: analyzer
-// File:        DS50CompressionChecker_module.cc
+// File:        CompressionChecker_module.cc
 //
 // Generated at Mon Apr 16 11:46:47 2012 by Christopher Green using artmod
 // from art v0_00_02.
@@ -16,14 +16,14 @@
 
 #include <algorithm>
 
-namespace ds50test {
-  class DS50CompressionChecker;
+namespace demo {
+  class CompressionChecker;
 }
 
-class ds50test::DS50CompressionChecker : public art::EDAnalyzer {
+class demo::CompressionChecker : public art::EDAnalyzer {
 public:
-  explicit DS50CompressionChecker(fhicl::ParameterSet const & p);
-  virtual ~DS50CompressionChecker();
+  explicit CompressionChecker(fhicl::ParameterSet const & p);
+  virtual ~CompressionChecker();
 
   virtual void analyze(art::Event const & e);
 
@@ -35,7 +35,7 @@ private:
 };
 
 
-ds50test::DS50CompressionChecker::DS50CompressionChecker(fhicl::ParameterSet const & p)
+demo::CompressionChecker::CompressionChecker(fhicl::ParameterSet const & p)
   :
   raw_label_(p.get<std::string>("raw_label")),
   uncompressed_label_(p.get<std::string>("uncompressed_label")),
@@ -43,11 +43,11 @@ ds50test::DS50CompressionChecker::DS50CompressionChecker(fhicl::ParameterSet con
 {
 }
 
-ds50test::DS50CompressionChecker::~DS50CompressionChecker()
+demo::CompressionChecker::~CompressionChecker()
 {
 }
 
-void ds50test::DS50CompressionChecker::analyze(art::Event const & e)
+void demo::CompressionChecker::analyze(art::Event const & e)
 {
   art::Handle<artdaq::Fragments> raw, uncomp;
   if (!e.getByLabel(raw_label_, inst_, raw)) {
@@ -101,4 +101,4 @@ void ds50test::DS50CompressionChecker::analyze(art::Event const & e)
   }
 }
 
-DEFINE_ART_MODULE(ds50test::DS50CompressionChecker)
+DEFINE_ART_MODULE(demo::CompressionChecker)
