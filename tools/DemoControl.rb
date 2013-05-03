@@ -148,7 +148,8 @@ class ConfigGen
       ebConfig.gsub!(/\%\{drop_uncompressed\}/, "#")
     end
     currentTime = Time.now
-    fileName = "artdaqdemo_run%06d_eb%02d_" % [Integer(runNumber), ebIndex]
+    #fileName = "artdaqdemo_run%06d_eb%02d_" % [Integer(runNumber), ebIndex]
+    fileName = "artdaqdemo_eb%02d_" % [ebIndex]
     fileName += "%d%02d%02d-%02d%02d%02d" % [currentTime.year, currentTime.month,
                                              currentTime.day, currentTime.hour,
                                              currentTime.min, currentTime.sec]
