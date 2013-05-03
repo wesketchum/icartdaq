@@ -11,6 +11,18 @@ BEGIN_PROLOG
   unhuff_1724.compressed_label: huffdiffV1724
   unhuff_1724.table_file: "table_daqV1724_huff_diff.txt"
   unhuff_1724.table_file_path: "DAQ_INDATA_PATH"
+
+  checker: {
+    module_type: CompressionChecker
+    raw_label: daq
+  }
+
+  checker_1720: @local::checker
+  checker_1720.instance: V1720
+  checker_1720.uncompressed_label: unhuffV1720
+  checker_1724: @local::checker
+  checker_1724.instance: V1724
+  checker_1724.uncompressed_label: unhuffV1724
 END_PROLOG
 
 physics:
@@ -31,15 +43,21 @@ physics:
       uncompressed_V1720_label: unhuffV1720
       uncompressed_V1724_label: unhuffV1724
     }
+
+    # check decompression
+    checkerV1720: @local::checker_1720
+    checkerV1724: @local::checker_1724
   }
 
-  a1: [ evtDump ]
+  a1: [ evtDump, checkerV1720 ]
+  #a1: [ evtDump, checkerV1720, checkerV1724 ]
 
+  f1: [ unhuffV1720 ]
   #f1: [ unhuffV1720, unhuffV1724 ]
 
   e1: [ out1 ]
 
-  #trigger_paths: [ f1 ]
+  trigger_paths: [ f1 ]
   end_paths: [ a1, e1 ]
 }
 
@@ -55,7 +73,7 @@ outputs:
 source:
 {
   module_type: RootInput
-  fileNames: [ "/tmp/artdaqdemo_run000301_eb00_20130213155852.root" ]
+  fileNames: [ "/tmp/artdaqdemo_run000101_eb00_20130501000000.root" ]
 }
 
 process_name: EVTDUMP
