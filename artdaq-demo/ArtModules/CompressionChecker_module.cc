@@ -36,7 +36,7 @@ private:
 
 
 demo::CompressionChecker::CompressionChecker(fhicl::ParameterSet const & p)
-  :
+    : EDAnalyzer(p),
   raw_label_(p.get<std::string>("raw_label")),
   uncompressed_label_(p.get<std::string>("uncompressed_label")),
   inst_(p.get<std::string>("instance"))

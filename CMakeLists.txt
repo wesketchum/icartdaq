@@ -26,7 +26,7 @@ include(CetCMakeEnv)
 cet_cmake_env()
 
 cet_set_compiler_flags(DIAGS VIGILANT WERROR NO_UNDEFINED EXTRA_FLAGS -pedantic)
-cet_have_qual( e2 )
+cet_have_qual( e4 )
 if ( ${CET_HAVE_QUAL} )
   cet_add_compiler_flags(CXX -std=c++11 -D_GLIBCXX_USE_NANOSLEEP )
 endif()

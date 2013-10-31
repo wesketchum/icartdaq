@@ -40,7 +40,8 @@ private:
 };
 
 
-demo::EventDump::EventDump(fhicl::ParameterSet const & pset) :
+demo::EventDump::EventDump(fhicl::ParameterSet const & pset)
+    : EDAnalyzer(pset),
   raw_data_label_(pset.get<std::string>("raw_data_label")),
   uncompressed_V1720_label_(pset.get<std::string>("uncompressed_V1720_label")),
   uncompressed_V1724_label_(pset.get<std::string>("uncompressed_V1724_label"))
