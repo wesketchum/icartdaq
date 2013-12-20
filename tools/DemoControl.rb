@@ -102,6 +102,8 @@ daq: {
     fragments_per_event: 1 
     nChannels: 3000 
     starting_fragment_id: %{fragment_id}
+    board_id: %{board_id}
+    fragment_id: %{fragment_id}
     rt_priority: 2
   }
 }"
@@ -159,7 +161,7 @@ class ConfigGen
     return ebConfig
   end
 
-  def generateV1720(fragmentID, totalEBs, totalFRs)
+  def generateV1720(fragmentID, totalEBs, totalFRs, v1720Index)
     # Do the substitutions in the V1720 configuration given the options that 
     # were passed in from the command line.
     v1720Config = String.new(V1720_SIM_CONFIG)
@@ -168,6 +170,7 @@ class ConfigGen
     v1720Config.gsub!(/\%\{total_frs\}/, String(totalFRs))
     v1720Config.gsub!(/\%\{fragment_id\}/, String(fragmentID))
     v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*10))
+    v1720Config.gsub!(/\%\{board_id\}/, String(v1720Index))
     return v1720Config
   end
 end
@@ -358,7 +361,7 @@ class CommandLineParser
                                               totalV1720s, totalv1724s)
         ebIndex += 1
       when "v1720", "v1724"
-        cfg = @configGen.generateV1720(proc.fragment_id, totalEBs, totalFRs)
+        cfg = @configGen.generateV1720(proc.fragment_id, totalEBs, totalFRs, v1720Index)
         v1720Index += 1
       end
       handle.write(cfg)
@@ -417,7 +420,7 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(v1720Options.host, "/RPC2",
                                           v1720Options.port)
         cfg = @configGen.generateV1720(v1720Options.fragment_id,
-                                       totalEBs, totalFRs)
+                                       totalEBs, totalFRs, v1720Index)
         result = xmlrpcClient.call("daq.init", cfg)
         puts "V1720 FragmentReceiver on %s:%d result: %s" % [v1720Options.host, 
                                                              v1720Options.port,

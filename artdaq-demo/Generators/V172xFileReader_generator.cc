@@ -34,7 +34,7 @@ namespace {
 
 demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   :
-  FragmentGenerator(),
+  CommandableFragmentGenerator(ps),
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib",
                                      14.0) * 1024 * 1024 * 1024),

@@ -85,7 +85,7 @@ namespace {
 
 demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
   :
-  FragmentGenerator(),
+  CommandableFragmentGenerator(ps),
   nChannels_(ps.get<size_t>("nChannels", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "V1720"))),
   fragment_ids_(),
