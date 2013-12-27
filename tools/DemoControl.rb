@@ -152,9 +152,10 @@ class ConfigGen
     currentTime = Time.now
     #fileName = "artdaqdemo_run%06d_eb%02d_" % [Integer(runNumber), ebIndex]
     fileName = "artdaqdemo_eb%02d_" % [ebIndex]
-    fileName += "%d%02d%02d-%02d%02d%02d" % [currentTime.year, currentTime.month,
-                                             currentTime.day, currentTime.hour,
-                                             currentTime.min, currentTime.sec]
+    #fileName += "%d%02d%02d-%02d%02d%02d" % [currentTime.year, currentTime.month,
+    #                                         currentTime.day, currentTime.hour,
+    #                                         currentTime.min, currentTime.sec]
+    fileName += "r%06r_sr%02s_%to"
     fileName += ".root"
     outputFile = File.join(dataDir, fileName)
     ebConfig.gsub!(/\%\{output_file\}/, outputFile)
