@@ -158,4 +158,4 @@ fragmentIDs_()
 {
   return fragment_ids_;
 }
-DEFINE_ARTDAQ_APPLICATION_GENERATOR(demo::V172xSimulator)
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::V172xSimulator)

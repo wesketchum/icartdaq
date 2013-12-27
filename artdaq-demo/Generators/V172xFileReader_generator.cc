@@ -253,4 +253,4 @@ convertFragment_(artdaq::Fragment const & source,
   }
   return std::move(result);
 }
-DEFINE_ARTDAQ_APPLICATION_GENERATOR(demo::V172xFileReader)
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::V172xFileReader)
