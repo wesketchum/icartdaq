@@ -1,7 +1,7 @@
 #include "artdaq-demo/Generators/V172xSimulator.hh"
 
 #include "art/Utilities/Exception.h"
-#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
@@ -158,4 +158,4 @@ fragmentIDs_()
 {
   return fragment_ids_;
 }
-DEFINE_ARTDAQ_GENERATOR(demo::V172xSimulator)
+DEFINE_ARTDAQ_APPLICATION_GENERATOR(demo::V172xSimulator)

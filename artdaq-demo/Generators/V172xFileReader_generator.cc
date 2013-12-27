@@ -4,7 +4,7 @@
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
 #include "artdaq/DAQdata/Debug.hh"
-#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -253,4 +253,4 @@ convertFragment_(artdaq::Fragment const & source,
   }
   return std::move(result);
 }
-DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)
+DEFINE_ARTDAQ_APPLICATION_GENERATOR(demo::V172xFileReader)
