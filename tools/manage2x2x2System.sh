@@ -36,6 +36,8 @@ function launch() {
     --v1720 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1 \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[0]},$ebComp \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[1]},$ebComp \
+    --ag `hostname`,${ARTDAQDEMO_AG_PORT[0]},1,$agComp \
+    --ag `hostname`,${ARTDAQDEMO_AG_PORT[1]},1,$agComp \
     --data-dir ${5} --online-monitoring $4 \
     --write-data ${7} --run-event-count ${8} \
     --run-duration ${9} --file-size ${10} \

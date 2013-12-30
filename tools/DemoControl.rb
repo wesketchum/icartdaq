@@ -1,13 +1,162 @@
 #!/usr/bin/env ruby
 
+require 'date'
 require "optparse"
 require "ostruct"
 require "xmlrpc/client"
 
-# It'd be nice if we were using a newer version of ruby (1.9.3) that had
+# PLEASE NOTE: If/when there comes a time that we want to add more board
+# types to this script, we should go back to the ds50MasterControl script
+# and use it as an example since it may not be obvious how to add boards
+# from what currently exists in this script.  KAB, 28-Dec-2013
+
+# [SCF] It'd be nice if we were using a newer version of ruby (1.9.3) that had
 # better string format substitution.  For the time being we'll setup our
-# string constants using the newer convention and do the substitutions.
-EB_DISK_CONFIG = "\
+# string constants using the newer convention and do the ugly substitutions.
+
+# 17-Sep-2013, KAB - provide a way to fetch the online monitoring
+# configuration from a separate file
+if ENV['ARTDAQ_CONFIG_PATH']
+  @cfgPathArray = ENV['ARTDAQ_CONFIG_PATH'].split(':')
+  @cfgPathArray = @cfgPathArray.reverse
+  (@cfgPathArray).each do |path|
+    $LOAD_PATH.unshift path
+  end
+end
+begin
+  require 'onmon_config'
+rescue Exception => msg
+end
+
+# Please NOTE that this assignment for the ONMON_CFG will only
+# be used if it wasn't included from the external file already
+if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
+  PHYS_ANAL_ONMON_CFG = "\
+    app: {
+      module_type: RootApplication
+      force_new: true
+    }
+    wf: {
+      module_type: WFViewer
+      prescale: 20
+      digital_sum_only: false
+    }
+    baseline: {
+      module_type: MonitorBaseline
+      random_only: false
+    }
+    trigger: {
+      module_type: MonitorTrigger
+    }
+    ser: {
+      module_type: MonitorSer
+      start_us: 0.100
+      stop_us: 0.180
+      laser_only: true
+      #single_channel: 0
+      range: [ -1200, 100 ]
+    }"
+end
+# And, this assignment for the prescale will only
+# be used if it wasn't included from the external file already
+if (defined?(ONMON_EVENT_PRESCALE)).nil? || (ONMON_EVENT_PRESCALE).nil?
+  ONMON_EVENT_PRESCALE = 1
+end
+# ditto, the online monitoring modules that are run
+if (defined?(ONMON_MODULES)).nil? || (ONMON_MODULES).nil?
+  ONMON_MODULES = "[ app, wf, trigger, ser ]"
+end
+
+EB_CONFIG = "\
+BEGIN_PROLOG
+  huff:
+  {
+    module_type: Compression
+    raw_label: daq
+    want_bins: false
+    perf_print: false
+    use_diffs: true
+    record_compression: false
+  }
+
+  huffdiff_1720: @local::huff
+  huffdiff_1720.instance_name: V1720
+  huffdiff_1720.table_file: \"table_daqV1720_huff_diff.txt\"
+  huffdiff_1724: @local::huff
+  huffdiff_1724.instance_name: V1724
+  huffdiff_1724.table_file: \"table_daqV1724_huff_diff.txt\"
+END_PROLOG
+services: {
+  scheduler: {
+    fileMode: NOMERGE
+  }
+  user: {
+    NetMonTransportServiceInterface: {
+      service_provider: NetMonTransportService
+      first_data_receiver_rank: %{ag_rank}
+      mpi_buffer_count: %{netmonout_buffer_count}
+      max_fragment_size_words: %{size_words}
+      data_receiver_count: 1 # %{ag_count}
+      #broadcast_sends: true
+    }
+  }
+  Timing: { summaryOnly: true }
+  #SimpleMemoryCheck: { }
+}
+daq: {
+  max_fragment_size_words: %{size_words}
+  event_builder: {
+    mpi_buffer_count: %{buffer_count}
+    first_fragment_receiver_rank: 0
+    fragment_receiver_count: %{total_frs}
+    expected_fragments_per_event: %{total_fragments}
+    use_art: true
+    print_event_store_stats: true
+  }
+}
+outputs: {
+  %{netmon_output}netMonOutput: {
+  %{netmon_output}  module_type: NetMonOutput
+  %{netmon_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
+  %{netmon_output}}
+  %{root_output}normalOutput: {
+  %{root_output}  module_type: RootOutput
+  %{root_output}  fileName: \"%{output_file}\"
+  %{root_output}  compressionLevel: 0
+  %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
+  %{root_output}}
+}
+
+physics: {
+  analyzers: {
+%{phys_anal_onmon_cfg}
+  }
+
+  producers: {
+    # compress the raw
+    %{enable_1720_compression}huffdiffV1720: @local::huffdiff_1720  
+    %{enable_1724_compression}huffdiffV1724: @local::huffdiff_1724 
+    %{enable_172x_compression}huffdiffV1720: @local::huffdiff_1720  
+    %{enable_172x_compression}huffdiffV1724: @local::huffdiff_1724 
+  }
+  %{enable_1720_compression}p1: [ huffdiffV1720 ]
+  %{enable_1724_compression}p1: [ huffdiffV1724 ]
+  %{enable_172x_compression}p1: [ huffdiffV1720, huffdiffV1724 ]
+
+  %{enable_onmon}a1: [ app, wf, trigger, baseline, ser ]
+
+  %{netmon_output}my_output_modules: [ netMonOutput ]
+  %{root_output}my_output_modules: [ normalOutput ]
+}
+source: {
+  module_type: RawInput
+  waiting_time: 900
+  resume_after_timeout: true
+  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"]]
+}
+process_name: DAQ"
+
+AG_CONFIG = "\
 BEGIN_PROLOG
   huff:
   {
@@ -44,135 +193,370 @@ services: {
   scheduler: {
     fileMode: NOMERGE
   }
+  user: {
+    NetMonTransportServiceInterface: {
+      service_provider: NetMonTransportService
+      max_fragment_size_words: %{size_words}
+    }
+  }
+  Timing: { summaryOnly: true }
+  #SimpleMemoryCheck: { }
 }
 daq: {
-  max_fragment_size_words: 524288
-  event_builder: {
+  max_fragment_size_words: %{size_words}
+  aggregator: {
     mpi_buffer_count: %{buffer_count}
-    first_fragment_receiver_rank: 0
-    fragment_receiver_count: %{total_frs}
-    expected_fragments_per_event: %{total_frs}
-    use_art: true
+    first_event_builder_rank: %{total_frs}
+    event_builder_count: %{total_ebs}
+    expected_events_per_bunch: %{bunch_size}
     print_event_store_stats: true
-  }
-}
-outputs: {
-  normalOutput: {
-    module_type: RootOutput
-    fileName: \"%{output_file}\"
-    compressionLevel: 0
-    %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
+    event_queue_depth: %{queue_depth}
+    event_queue_wait_time: %{queue_timeout}
+    onmon_event_prescale: %{onmon_event_prescale}
+    xmlrpc_client_list: \"%{xmlrpc_client_list}\"
+    file_size_MB: %{file_size}
+    file_duration: %{file_duration}
+    file_event_count: %{file_event_count}
   }
 }
 source: {
-  module_type: RawInput
-  waiting_time: 20
-  resume_after_timeout: true
-  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"]]
+  module_type: NetMonInput
+}
+outputs: {
+  %{root_output}normalOutput: {
+  %{root_output}  module_type: RootOutput
+  %{root_output}  fileName: \"%{output_file}\"
+  %{root_output}  compressionLevel: 0
+  %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
+  %{root_output}}
 }
 physics: {
+  analyzers: {
+%{phys_anal_onmon_cfg}
+  }
+
   producers: {
     # compress the raw
-    huffdiffV1720: @local::huffdiff_1720  
-    huffdiffV1724: @local::huffdiff_1724 
+    %{enable_1720_compression}huffdiffV1720: @local::huffdiff_1720  
+    %{enable_1724_compression}huffdiffV1724: @local::huffdiff_1724 
+    %{enable_172x_compression}huffdiffV1720: @local::huffdiff_1720  
+    %{enable_172x_compression}huffdiffV1724: @local::huffdiff_1724 
 
-    # uncompress the raw
-    dunhuffV1720: @local::dunhuff_1720
-    dunhuffV1724: @local::dunhuff_1724
+    ## uncompress the raw
+    #dunhuffV1720: @local::dunhuff_1720
+    #dunhuffV1724: @local::dunhuff_1724
   }
   %{enable_1720_compression}p1: [ huffdiffV1720 ]
   %{enable_1724_compression}p1: [ huffdiffV1724 ]
   %{enable_172x_compression}p1: [ huffdiffV1720, huffdiffV1724 ]
-  %{enable_compression}trigger_paths: [ p1 ]
-  my_output_modules: [ normalOutput ]
-  end_paths: [ my_output_modules ]
+
+  %{enable_onmon}a1: %{onmon_modules}
+
+  %{root_output}my_output_modules: [ normalOutput ]
 }
-process_name: DAQ"
+process_name: DAQAG"
+
+COMPOSITE_GENERATOR_CONFIG = "\
+%{prolog}
+daq: {
+  max_fragment_size_words: %{size_words}
+  fragment_receiver: {
+    mpi_buffer_count: %{buffer_count}
+    first_event_builder_rank: %{total_frs}
+    event_builder_count: %{total_ebs}
+    generator: CompositeDriver
+    fragment_id: 999
+    board_id: 999
+    generator_config_list:
+    [
+      # the format of this list is {daq:<paramSet},{daq:<paramSet>},...
+      %{generator_list}
+    ]
+  }
+}"
 
 V1720_SIM_CONFIG = "\
 daq: {
-  max_fragment_size_words: 524288 
+  max_fragment_size_words: %{size_words}
   fragment_receiver: {
     mpi_buffer_count: %{buffer_count}
     mpi_sync_interval: 50
     first_event_builder_rank: %{total_frs}
     event_builder_count: %{total_ebs}
-    generator: V172xSimulator 
-    freqs_file: \"V1720_sample_freqs.dat\" 
-    fragments_per_event: 1 
-    nChannels: 3000 
-    starting_fragment_id: %{fragment_id}
-    board_id: %{board_id}
+    generator: V172xSimulator
+    freqs_file: \"V1720_sample_freqs.dat\"
+    fragments_per_event: 1
+    nChannels: 80000
     fragment_id: %{fragment_id}
+    board_id: %{board_id}
     rt_priority: 2
   }
 }"
 
 class ConfigGen
-  def generateEventBuilder(ebIndex, totalFRs, dataDir, runNumber,
-                           compressionLevel, totalv1720s, totalv1724s)
+  def generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs, compressionLevel, 
+                           totalv1720s, totalv1724s, dataDir, onmonEnable,
+                           diskWritingEnable, fragSizeWords, totalFragments)
     # Do the substitutions in the event builder configuration given the options
     # that were passed in from the command line.  
-    ebConfig = String.new(EB_DISK_CONFIG)
+    ebConfig = String.new(EB_CONFIG)
     ebConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    ebConfig.gsub!(/\%\{buffer_count\}/, String(totalFRs*10))
-    if Integer(compressionLevel) > 0
+    ebConfig.gsub!(/\%\{total_fragments\}/, String(totalFragments))
+    ebConfig.gsub!(/\%\{ag_rank\}/, String(totalFRs + totalEBs))
+    ebConfig.gsub!(/\%\{ag_count\}/, String(totalAGs))
+    ebConfig.gsub!(/\%\{buffer_count\}/, String(totalFRs*8))
+    ebConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
+    ebConfig.gsub!(/\%\{netmonout_buffer_count\}/, String(totalAGs*4))
+    if Integer(compressionLevel) > 0 && Integer(compressionLevel) < 3
       if Integer(totalv1720s) > 0 and Integer(totalv1724s) > 0
         ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
         ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
         ebConfig.gsub!(/\%\{enable_172x_compression\}/, "")
-        ebConfig.gsub!(/\%\{enable_compression\}/, "")
       elsif Integer(totalv1720s) > 0
         ebConfig.gsub!(/\%\{enable_1720_compression\}/, "")
         ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
         ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_compression\}/, "")
       elsif Integer(totalv1724s) > 0
         ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
         ebConfig.gsub!(/\%\{enable_1724_compression\}/, "")
         ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_compression\}/, "")
       else
         ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
         ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
         ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_compression\}/, "#")
       end
     else
       ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
       ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
       ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      ebConfig.gsub!(/\%\{enable_compression\}/, "#")
     end
     if Integer(compressionLevel) > 1
       ebConfig.gsub!(/\%\{drop_uncompressed\}/, "")
     else
       ebConfig.gsub!(/\%\{drop_uncompressed\}/, "#")
     end
+    if Integer(totalAGs) >= 1
+      ebConfig.gsub!(/\%\{netmon_output\}/, "")
+      ebConfig.gsub!(/\%\{root_output\}/, "#")
+      ebConfig.gsub!(/\%\{enable_onmon\}/, "#")
+      ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
+    else
+      ebConfig.gsub!(/\%\{netmon_output\}/, "#")
+      if Integer(diskWritingEnable) != 0
+        ebConfig.gsub!(/\%\{root_output\}/, "")
+      else
+        ebConfig.gsub!(/\%\{root_output\}/, "#")
+      end
+      if Integer(onmonEnable) != 0
+        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, PHYS_ANAL_ONMON_CFG)
+        ebConfig.gsub!(/\%\{enable_onmon\}/, "")
+      else
+        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
+        ebConfig.gsub!(/\%\{enable_onmon\}/, "#")
+      end
+    end
+
     currentTime = Time.now
-    #fileName = "artdaqdemo_run%06d_eb%02d_" % [Integer(runNumber), ebIndex]
-    fileName = "artdaqdemo_eb%02d_" % [ebIndex]
-    #fileName += "%d%02d%02d-%02d%02d%02d" % [currentTime.year, currentTime.month,
-    #                                         currentTime.day, currentTime.hour,
-    #                                         currentTime.min, currentTime.sec]
+    fileName = "artdaqdemo_eb%02d_" % ebIndex
     fileName += "r%06r_sr%02s_%to"
     fileName += ".root"
     outputFile = File.join(dataDir, fileName)
     ebConfig.gsub!(/\%\{output_file\}/, outputFile)
+
     return ebConfig
   end
 
-  def generateV1720(fragmentID, totalEBs, totalFRs, v1720Index)
-    # Do the substitutions in the V1720 configuration given the options that 
-    # were passed in from the command line.
+  def generateAggregator(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
+                         compressionLevel, totalv1720s, totalv1724s, onmonEnable,
+                         diskWritingEnable, agIndex, totalAGs, fragSizeWords,
+                         xmlrpcClientList, fileSizeThreshold, fileDuration,
+                         fileEventCount)
+    puts "Initial aggregator " + String(agIndex) + " disk writing setting = " +
+      String(diskWritingEnable)
+    # Do the substitutions in the aggregator configuration given the options
+    # that were passed in from the command line.  Assure that files written out
+    # by each AG are unique by including a timestamp in the file name.
+    currentTime = Time.now
+    fileName = "artdaqdemo_"
+    fileName += "r%06r_sr%02s_%to"
+    fileName += ".root"
+    outputFile = File.join(dataDir, fileName)
+    agConfig = String.new(AG_CONFIG)
+    agConfig.gsub!(/\%\{output_file\}/, outputFile)
+    agConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
+    agConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
+    agConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*4))
+    agConfig.gsub!(/\%\{bunch_size\}/, String(bunchSize))
+    agConfig.gsub!(/\%\{onmon_event_prescale\}/, String(ONMON_EVENT_PRESCALE))
+    agConfig.gsub!(/\%\{onmon_modules\}/, String(ONMON_MODULES))
+    agConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
+    agConfig.gsub!(/\%\{xmlrpc_client_list\}/, String(xmlrpcClientList))
+    agConfig.gsub!(/\%\{file_size\}/, String(fileSizeThreshold))
+    agConfig.gsub!(/\%\{file_duration\}/, String(fileDuration))
+    agConfig.gsub!(/\%\{file_event_count\}/, String(fileEventCount))
+    if Integer(compressionLevel) > 0 && Integer(compressionLevel) < 3
+      if Integer(totalv1720s) > 0 and Integer(totalv1724s) > 0
+        agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
+        agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
+        agConfig.gsub!(/\%\{enable_172x_compression\}/, "")
+      elsif Integer(totalv1720s) > 0
+        agConfig.gsub!(/\%\{enable_1720_compression\}/, "")
+        agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
+        agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
+      elsif Integer(totalv1724s) > 0
+        agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
+        agConfig.gsub!(/\%\{enable_1724_compression\}/, "")
+        agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
+      else
+        agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
+        agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
+        agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
+      end
+    else
+      agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
+      agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
+      agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
+    end
+    if Integer(compressionLevel) > 1
+      agConfig.gsub!(/\%\{drop_uncompressed\}/, "")
+    else
+      agConfig.gsub!(/\%\{drop_uncompressed\}/, "#")
+    end
+
+    if agIndex == 0
+      if totalAGs > 1
+        onmonEnable = 0
+      end
+      agConfig.gsub!(/\%\{queue_depth\}/, "20")
+      agConfig.gsub!(/\%\{queue_timeout\}/, "5.0")
+    else
+      diskWritingEnable = 0
+      agConfig.gsub!(/\%\{queue_depth\}/, "2")
+      agConfig.gsub!(/\%\{queue_timeout\}/, "1.0")
+    end
+
+    puts "Final aggregator " + String(agIndex) + " disk writing setting = " +
+      String(diskWritingEnable)
+    if Integer(diskWritingEnable) != 0
+      agConfig.gsub!(/\%\{root_output\}/, "")
+    else
+      agConfig.gsub!(/\%\{root_output\}/, "#")
+    end
+    if Integer(onmonEnable) != 0
+      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, PHYS_ANAL_ONMON_CFG)
+      agConfig.gsub!(/\%\{enable_onmon\}/, "")
+    else
+      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
+      agConfig.gsub!(/\%\{enable_onmon\}/, "#")
+    end
+
+    return agConfig  
+  end
+  
+  def generateV1720(fragmentId, totalEBs, totalFRs,
+                    fragSizeWords, boardId)
     v1720Config = String.new(V1720_SIM_CONFIG)
     
     v1720Config.gsub!(/\%\{total_ebs\}/, String(totalEBs))
     v1720Config.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    v1720Config.gsub!(/\%\{fragment_id\}/, String(fragmentID))
-    v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*10))
-    v1720Config.gsub!(/\%\{board_id\}/, String(v1720Index))
+    v1720Config.gsub!(/\%\{fragment_id\}/, String(fragmentId))
+    v1720Config.gsub!(/\%\{board_id\}/, String(boardId))
+    v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
+    v1720Config.gsub!(/\%\{size_words\}/, String(fragSizeWords))
     return v1720Config
+  end
+  
+  def generateComposite(totalEBs, totalFRs, configStringArray)
+    compositeConfig = String.new(COMPOSITE_GENERATOR_CONFIG)
+    compositeConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
+    compositeConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
+    compositeConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
+
+    # The complications here are A) determining the largest buffer size that
+    # has been requested by the child configurations and using that for the
+    # composite buffers size and B) moving any PROLOG declarations from the
+    # individual configuration strings to the front of the full CFG string.
+    prologList = []
+    fragSizeWords = 0
+    configString = ""
+    first = true
+    configStringArray.each do |cfg|
+      my_match = /(.*)BEGIN_PROLOG(.*)END_PROLOG(.*)/im.match(cfg)
+      if my_match
+        thisProlog = my_match[2]
+        cfg = my_match[1] + my_match[3]
+
+        found = false
+        prologList.each do |savedProlog|
+          if thisProlog == savedProlog
+            found = true
+            break
+          end
+        end
+        if ! found
+          prologList << thisProlog
+        end
+      end
+
+      if first
+        first = false
+      else
+        configString += ", "
+      end
+      configString += "{" + cfg + "}"
+
+      my_match = /max_fragment_size_words\s*\:\s*(\d+)/.match(cfg)
+      if my_match
+        begin
+          sizeWords = Integer(my_match[1])
+          if sizeWords > fragSizeWords
+            fragSizeWords = sizeWords
+          end
+        rescue Exception => msg
+          puts "Warning: exception parsing size_words in composite child configuration: " + my_match[1] + " " + msg
+        end
+      end
+    end
+    compositeConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
+    compositeConfig.gsub!(/\%\{generator_list\}/, configString)
+
+    prologString = ""
+    if prologList.length > 0
+      prologList.each do |savedProlog|
+        prologString += "\n"
+        prologString += savedProlog
+      end
+      prologString = "BEGIN_PROLOG" + prologString + "\nEND_PROLOG"
+    end
+    compositeConfig.gsub!(/\%\{prolog\}/, prologString)
+
+    return compositeConfig
+  end
+
+  def generateXmlRpcClientList(cmdLineOptions)
+    xmlrpcClients = ""
+    (cmdLineOptions.v1720s).each do |proc|
+      br = cmdLineOptions.boardReaders[proc.board_reader_index]
+      if br.hasBeenIncludedInXMLRPCList
+        next
+      else
+        br.hasBeenIncludedInXMLRPCList = true
+        xmlrpcClients += ";http://" + proc.host + ":" +
+          String(proc.port) + "/RPC2"
+        xmlrpcClients += ",3"  # group number
+      end
+    end
+    (cmdLineOptions.eventBuilders).each do |proc|
+      xmlrpcClients += ";http://" + proc.host + ":" +
+        String(proc.port) + "/RPC2"
+      xmlrpcClients += ",4"  # group number
+    end
+    (cmdLineOptions.aggregators).each do |proc|
+      xmlrpcClients += ";http://" + proc.host + ":" +
+        String(proc.port) + "/RPC2"
+      xmlrpcClients += ",5"  # group number
+    end
+    return xmlrpcClients
   end
 end
 
@@ -180,13 +564,22 @@ class CommandLineParser
   def initialize(configGen)
     @configGen = configGen
     @options = OpenStruct.new
+    @options.aggregators = []
     @options.eventBuilders = []
     @options.v1720s = []
+    @options.boardReaders = []
     @options.dataDir = nil
     @options.command = nil
     @options.summary = false
     @options.runNumber = "0101"
     @options.serialize = false
+    @options.runOnmon = 0
+    @options.writeData = 1
+    @options.runDurationSeconds = -1
+    @options.eventsInRun = -1
+    @options.fileSizeThreshold = 0
+    @options.fileDurationSeconds = 0
+    @options.eventsInFile = 0
 
     @optParser = OptionParser.new do |opts|
       opts.banner = "Usage: DemoControl.rb [options]"
@@ -195,14 +588,10 @@ class CommandLineParser
 
       opts.on("--eb [host,port,compression_level]", Array,
               "Add an event builder that runs on the",
-              "specified host and port using the specified",
-              "compression level. Compression levels:",
-              "  0: no compression",
-              "  1: compress ADC data and keep everything",
-              "  2: compress ADC data and discard uncompressed data") do |eb|
+              "specified host and port and optionally",
+              "compresses ADC data.") do |eb|
         if eb.length != 3
-          puts "You must specifiy a host, port, and compression level"
-          puts "for the event builder."
+          puts "You must specifiy a host, port, and compression level."
           exit
         end
         ebConfig = OpenStruct.new
@@ -214,34 +603,59 @@ class CommandLineParser
         @options.eventBuilders << ebConfig
       end
 
-      opts.on("--v1720 [host,port,fragment_id]", Array, 
-              "Add a V1720 fragment receiver that runs on",
-              "the specified host, port and fragment ID.") do |v1720|
+      opts.on("--ag [host,port,bunch_size,compression_level]", Array,
+              "Add an aggregator that runs on the",
+              "specified host and port.  Also specify the",
+              "number of events to pass to art per bunch,",
+              "and the compression level.") do |ag|
+        if ag.length != 4
+          puts "You must specifiy a host, port, bunch size, and"
+          puts "compression level."
+          exit
+        end
+        agConfig = OpenStruct.new
+        agConfig.host = ag[0]
+        agConfig.port = Integer(ag[1])
+        agConfig.kind = "ag"
+        agConfig.bunch_size = Integer(ag[2])
+        agConfig.compression_level = Integer(ag[3])
+        agConfig.index = @options.aggregators.length
+        @options.aggregators << agConfig
+      end
+    
+      opts.on("--v1720 [host,port,board_id]", Array, 
+              "Add a V1720 fragment receiver that runs on the specified host and port, ",
+              "and has the specified board ID.") do |v1720|
         if v1720.length != 3
-          puts "You must specifiy a host, port, and fragment ID."
+          puts "You must specifiy a host, port, and board ID."
           exit
         end
         v1720Config = OpenStruct.new
         v1720Config.host = v1720[0]
         v1720Config.port = Integer(v1720[1])
-        v1720Config.fragment_id = Integer(v1720[2])
-        v1720Config.kind = "v1720"
+        v1720Config.board_id = Integer(v1720[2])
+        v1720Config.kind = "V1720"
         v1720Config.index = @options.v1720s.length
+        v1720Config.board_reader_index = addToBoardReaderList(v1720Config.host, v1720Config.port,
+                                                              v1720Config.kind, v1720Config.index)
         @options.v1720s << v1720Config
       end
 
-      opts.on("--v1724 [host,port,fragment_id]", Array, 
-              "Add a V1724 fragment receiver that runs on",
-              "the specified host, port and fragment ID.") do |v1724|
+      opts.on("--v1724 [host,port,board_id]", Array, 
+              "Add a V1724 fragment receiver that runs on the specified host, port, ",
+              "and board ID.") do |v1724|
         if v1724.length != 3
-          puts "You must specifiy a host, port, and fragment ID."
+          puts "You must specifiy a host, port, and board ID."
           exit
         end
         v1724Config = OpenStruct.new
         v1724Config.host = v1724[0]
         v1724Config.port = Integer(v1724[1])
-        v1724Config.fragment_id = Integer(v1724[2])
-        v1724Config.kind = "v1724"
+        v1724Config.board_id = Integer(v1724[2])
+        v1724Config.kind = "V1724"
+        v1724Config.index = @options.v1720s.length
+        v1724Config.board_reader_index = addToBoardReaderList(v1724Config.host, v1724Config.port,
+                                                              v1724Config.kind, v1724Config.index)
         # NOTE that we're simply adding this to the 1720 list...
         @options.v1720s << v1724Config
       end
@@ -251,13 +665,48 @@ class CommandLineParser
         @options.dataDir = dataDir
       end
 
+      opts.on("-m", "--online-monitoring [enable flag (0 or 1)]", 
+              "Whether to run the online monitoring modules.") do |runOnmon|
+        @options.runOnmon = runOnmon
+      end
+
+      opts.on("-w", "--write-data [enable flag (0 or 1)]", 
+              "Whether to write data to disk.") do |writeData|
+        @options.writeData = writeData
+      end
+
       opts.on("-c", "--command [command]", 
-              "Execute a command: start, stop, init, shutdown, pause, resume.") do |command|
+              "Execute a command: start, stop, init, shutdown, pause, resume, status, get-legal-commands.") do |command|
         @options.command = command
       end
 
       opts.on("-r", "--run-number [number]", "Specify the run number.") do |run|
         @options.runNumber = run
+      end
+
+      opts.on("-t", "--run-duration [minutes]",
+              "Stop the run after the specified amount of time (minutes).") do |timeInMinutes|
+        @options.runDurationSeconds = Integer(timeInMinutes) * 60
+      end
+
+      opts.on("-n", "--run-event-count [number]",
+              "Stop the run after the specified number of events have been collected.") do |eventCount|
+        @options.eventsInRun = Integer(eventCount)
+      end
+
+      opts.on("-f", "--file-size [number of MB]",
+              "Close each data file when the specified size is reached (MB).") do |fileSize|
+        @options.fileSizeThreshold = Float(fileSize)
+      end
+
+      opts.on("--file-duration [minutes]",
+              "Closes each file after the specified amount of time (minutes).") do |timeInMinutes|
+        @options.fileDurationSeconds = Integer(timeInMinutes) * 60
+      end
+
+      opts.on("--file-event-count [number]",
+              "Close each file after the specified number of events have been written.") do |eventCount|
+        @options.eventsInFile = Integer(eventCount)
       end
 
       opts.on("-s", "--summary", "Summarize the configuration.") do
@@ -290,13 +739,44 @@ class CommandLineParser
     return nil
   end
 
+  def addToBoardReaderList(host, port, kind, boardIndex)
+    # check for an existing boardReader with the same host and port
+    brIndex = 0
+    @options.boardReaders.each do |br|
+      if host == br.host && port == br.port
+        br.kindList << kind
+        br.boardIndexList << boardIndex
+        br.cfgList << ""
+        br.boardCount += 1
+        return brIndex
+      end
+      brIndex += 1
+    end
+
+    # if needed, create a new boardReader
+    br = OpenStruct.new
+    br.host = host
+    br.port = port
+    br.kindList = [kind]
+    br.boardIndexList = [boardIndex]
+    br.cfgList = [""]
+    br.boardCount = 1
+    br.commandHasBeenSent = false
+    br.hasBeenIncludedInXMLRPCList = false
+    br.kind = "multi-board"
+
+    brIndex = @options.boardReaders.length
+    @options.boardReaders << br
+    return brIndex
+  end
+
   def summarize()
     # Print out a summary of the configuration that was passed in from the
     # the command line.  Everything will be printed in terms of what process
     # is running on which host.
     puts "Configuration Summary:"
     hostMap = {}
-    (@options.eventBuilders + @options.v1720s).each do |proc|
+    (@options.eventBuilders + @options.v1720s + @options.aggregators).each do |proc|
       if not hostMap.keys.include?(proc.host)
         hostMap[proc.host] = []
       end
@@ -309,12 +789,15 @@ class CommandLineParser
         x.port <=> y.port
       }
 
-      totalFRs = @options.v1720s.length
+      totalEBs = @options.eventBuilders.length
+      totalFRs = @options.boardReaders.length
       hostMap[host].each do |item|
         case item.kind
         when "eb"
           puts "    EventBuilder, port %d, rank %d" % [item.port, totalFRs + item.index]
-        when "v1720", "v1724"
+        when "ag"
+          puts "    Aggregator, port %d, rank %d" % [item.port, totalEBs + totalFRs + item.index]
+        when "V1720", "V1724"
           puts "    FragmentReceiver, Simulated %s, port %d, rank %d" % [item.kind.upcase,
                                                                          item.port,
                                                                          item.index]
@@ -322,52 +805,8 @@ class CommandLineParser
       end
       puts ""
     }
+    STDOUT.flush
     return nil
-  end
-
-  def serialize()
-    # The current system control pulls the FHCL config to initialize DAQ
-    # processes from a series of files on disk.  The files are named as follows:
-    #  initorder#hostname#port#description#on.fcl
-    # 
-    # This method will generate configurations given the command line options
-    # and write out files for System Control.
-    puts "Serializing config:"
-    procIndex = 1
-    v1720Index = 0
-    ebIndex = 0
-    totalv1720s = 0
-    totalv1724s = 0
-    @options.v1720s.each do |proc|
-      case proc.kind
-      when "v1720"
-        totalv1720s += 1
-      when "v1724"
-        totalv1724s += 1
-      end
-    end
-    totalFRs = @options.v1720s.length
-    totalEBs = @options.eventBuilders.length
-    desc = "%dx%d" % [totalFRs, totalEBs]
-    (@options.eventBuilders + @options.v1720s).each do |proc|
-      fileName = "%d#%s#%d#%s#on.fcl" % [procIndex, proc.host, proc.port, desc]
-      procIndex += 1
-      puts "  writing %s..." % fileName
-      handle = File.open(fileName, "w")
-      case proc.kind
-      when "eb"
-        cfg = @configGen.generateEventBuilder(ebIndex, totalFRs, @options.dataDir,
-                                              @options.runNumber,
-                                              proc.compression_level,
-                                              totalV1720s, totalv1724s)
-        ebIndex += 1
-      when "v1720", "v1724"
-        cfg = @configGen.generateV1720(proc.fragment_id, totalEBs, totalFRs, v1720Index)
-        v1720Index += 1
-      end
-      handle.write(cfg)
-      handle.close()
-    end
   end
 
   def getOptions()
@@ -382,116 +821,394 @@ class SystemControl
   end
 
   def init()
-    # The DAQ components need to be initialized in parallel as this is the step
-    # in which connections are made between the various components.  The XMLRPC
-    # call will block until all connections have been made which means that the
-    # configurations need to be posted to all processes at the same time.
-    threads = []
     ebIndex = 0
+    agIndex = 0
     totalv1720s = 0
     totalv1724s = 0
     @options.v1720s.each do |proc|
       case proc.kind
-      when "v1720"
+      when "V1720"
         totalv1720s += 1
-      when "v1724"
+      when "V1724"
         totalv1724s += 1
       end
     end
-    totalFRs = @options.v1720s.length
+    totalBoards = @options.v1720s.length
+    totalFRs = @options.boardReaders.length
     totalEBs = @options.eventBuilders.length
+    totalAGs = @options.aggregators.length
+    inputBuffSizeWords = 2097152
+    #if Integer(totalv1720s) > 0
+    #  inputBuffSizeWords = 8192 * @options.v1720s[0].gate_width
+    #end
+    xmlrpcClients = @configGen.generateXmlRpcClientList(@options)
+
+    # 02-Dec-2013, KAB - loop over the front-end boards and build the configurations
+    # that we will send to them.  These configurations are stored in the associated
+    # boardReaders list entries since there are system configurations in which
+    # multiple boards are read out by a single BoardReader, and it seems simpler to
+    # store the CFGs in the boardReader list for everything
+    @options.v1720s.each { |v1720Options|
+      br = @options.boardReaders[v1720Options.board_reader_index]
+      listIndex = 0
+      br.kindList.each do |kind|
+        if kind == v1720Options.kind && br.boardIndexList[listIndex] == v1720Options.index
+          cfg = @configGen.generateV1720(v1720Options.index,
+                                         totalEBs, totalFRs,
+                                         Integer(inputBuffSizeWords/8),
+                                         v1720Options.board_id)
+          br.cfgList[listIndex] = cfg
+          break
+        end
+        listIndex += 1
+      end
+    }
+
+    threads = []
+    @options.v1720s.each { |proc|
+      br = @options.boardReaders[proc.board_reader_index]
+      if br.boardCount > 1
+        if br.commandHasBeenSent
+          next
+        else
+          br.commandHasBeenSent = true
+          proc = br
+          cfg = @configGen.generateComposite(totalEBs, totalFRs, br.cfgList)
+        end
+      else
+        cfg = br.cfgList[0]
+      end
+
+      currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+      puts "%s: Sending the INIT command to %s:%d." %
+        [currentTime, proc.host, proc.port]
+      threads << Thread.new() do
+        xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2",
+                                          proc.port)
+        if @options.serialize
+          fileName = "BoardReader_%s_%s_%d.fcl" % [proc.kind,proc.host, proc.port]
+          puts "  writing %s..." % fileName
+          handle = File.open(fileName, "w")
+          handle.write(cfg)
+          handle.close()
+        end
+        result = xmlrpcClient.call("daq.init", cfg)
+        currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+        puts "%s: %s FragmentReceiver on %s:%d result: %s" %
+          [currentTime, proc.kind, proc.host, proc.port, result]
+        STDOUT.flush
+      end
+    }
+    STDOUT.flush
+    threads.each { |aThread|
+      aThread.join()
+    }
+
+    # 27-Jun-2013, KAB - send INIT to EBs and AG last
+    threads = []
     @options.eventBuilders.each { |ebOptions|
+      currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+      puts "%s: Sending the INIT command to %s:%d." %
+        [currentTime, ebOptions.host, ebOptions.port]
       threads << Thread.new() do
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
-        cfg = @configGen.generateEventBuilder(ebIndex, totalFRs, @options.dataDir,
-                                              @options.runNumber,
+        cfg = @configGen.generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs,
                                               ebOptions.compression_level,
-                                              totalv1720s, totalv1724s)
+                                              totalv1720s, totalv1724s,
+                                              @options.dataDir, @options.runOnmon,
+                                              @options.writeData, inputBuffSizeWords,
+                                              totalBoards)
+        if @options.serialize
+          fileName = "EventBuilder_%s_%d.fcl" % [ebOptions.host, ebOptions.port]
+          puts "  writing %s..." % fileName
+          handle = File.open(fileName, "w")
+          handle.write(cfg)
+          handle.close()
+        end
         result = xmlrpcClient.call("daq.init", cfg)
-        puts "EventBuilder on %s:%d result: %s" % [ebOptions.host, ebOptions.port,
-                                                   result]
+        currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+        puts "%s: EventBuilder on %s:%d result: %s" %
+          [currentTime, ebOptions.host, ebOptions.port, result]
+        STDOUT.flush
       end
       ebIndex += 1
     }
 
-    v1720Index = 0
-    @options.v1720s.each { |v1720Options|
+    @options.aggregators.each { |agOptions|
+      currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+      puts "%s: Sending the INIT command to %s:%d." %
+        [currentTime, agOptions.host, agOptions.port]
       threads << Thread.new() do
-        xmlrpcClient = XMLRPC::Client.new(v1720Options.host, "/RPC2",
-                                          v1720Options.port)
-        cfg = @configGen.generateV1720(v1720Options.fragment_id,
-                                       totalEBs, totalFRs, v1720Index)
+        xmlrpcClient = XMLRPC::Client.new(agOptions.host, "/RPC2", 
+                                          agOptions.port)
+        cfg = @configGen.generateAggregator(@options.dataDir, @options.runNumber,
+                                            totalFRs, totalEBs, agOptions.bunch_size,
+                                            agOptions.compression_level,
+                                            totalv1720s, totalv1724s,
+                                            @options.runOnmon, @options.writeData,
+                                            agIndex, totalAGs, inputBuffSizeWords,
+                                            xmlrpcClients, @options.fileSizeThreshold,
+                                            @options.fileDurationSeconds,
+                                            @options.eventsInFile)
+        if @options.serialize
+          fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
+          puts "  writing %s..." % fileName
+          handle = File.open(fileName, "w")
+          handle.write(cfg)
+          handle.close()
+        end
         result = xmlrpcClient.call("daq.init", cfg)
-        puts "V1720 FragmentReceiver on %s:%d result: %s" % [v1720Options.host, 
-                                                             v1720Options.port,
-                                                             result]
+        currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+        puts "%s: Aggregator on %s:%d result: %s" %
+          [currentTime, agOptions.host, agOptions.port, result]
+        STDOUT.flush
       end
-      v1720Index += 1
+      agIndex += 1
     }
-    
+    STDOUT.flush
     threads.each { |aThread|
       aThread.join()
     }
   end
 
   def start(runNumber)
-    # Starting runs is simple in that all processes are sent the same message
-    # and that can be done serially.
-    (@options.eventBuilders + @options.v1720s).each do |proc|
-      puts "Attempting to connect to %s:%d and start a run." % [proc.host, 
-                                                                proc.port]
-      xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2", proc.port)
-      result = xmlrpcClient.call("daq.start", runNumber)
-      case proc.kind
-      when "eb"
-        puts "EventBuilder on %s:%d result: %s" % [proc.host, proc.port, result]
-      when "v1720", "v1724"
-        puts "%s FragmentReceiver on %s:%d result: %s" % [proc.kind.upcase, proc.host,
-                                                          proc.port, result]
-      end
-    end
+    self.sendCommandSet("start", @options.aggregators, runNumber)
+    self.sendCommandSet("start", @options.eventBuilders, runNumber)
+    self.sendCommandSet("start", @options.v1720s, runNumber)
   end
 
-  def sendSerialCommand(commandName, procs)
+  def sendCommandSet(commandName, procs, commandArg = nil)
+    threads = []
     procs.each do |proc|
-      puts "Attempting to connect to %s:%d and %s a run." % [proc.host, 
-                                                             proc.port,
-                                                             commandName]
-      xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2", proc.port)
-      result = xmlrpcClient.call("daq.%s" % [commandName])
-      case proc.kind
-      when "eb"
-        puts "EventBuilder on %s:%d result: %s" % [proc.host, proc.port, 
-                                                   result]
-      when "v1720"
-        puts "V1720 FragmentReceiver on %s:%d result: %s" % [proc.host, proc.port,
-                                                             result]
-      when "v1170"
-        puts "V1170 FragmentReceiver on %s:%d result: %s" % [proc.host, proc.port,
-                                                             result]
+      # 02-Dec-2013, KAB - use the boardReader instance instead of the
+      # actual card when multiple cards are read out by a single BR
+      if proc.board_reader_index != nil
+        br = @options.boardReaders[proc.board_reader_index]
+        if br.boardCount > 1
+          if br.commandHasBeenSent
+            next
+          else
+            br.commandHasBeenSent = true
+            proc = br
+          end
+        end
+      end
+
+      currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+      puts "%s: Attempting to connect to %s:%d and %s a run." %
+        [currentTime, proc.host, proc.port, commandName]
+      STDOUT.flush
+      threads << Thread.new() do
+        xmlrpcClient = XMLRPC::Client.new(proc.host, "/RPC2", proc.port)
+        xmlrpcClient.timeout = 60
+        if commandName == "stop"
+          if proc.kind == "ag"
+            xmlrpcClient.timeout = 120
+          elsif proc.kind == "eb" || proc.kind == "multi-board"
+            xmlrpcClient.timeout = 45
+          else
+            xmlrpcClient.timeout = 30
+          end
+        end
+        begin
+          if commandArg != nil
+            result = xmlrpcClient.call("daq.%s" % [commandName], commandArg)
+          else
+            result = xmlrpcClient.call("daq.%s" % [commandName])
+          end
+        rescue Exception => msg
+          result = "Exception: " + msg
+        end
+        currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+        case proc.kind
+        when "eb"
+          puts "%s: EventBuilder on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
+        when "ag"
+          puts "%s: Aggregator on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
+        when "V1720"
+          puts "%s: V1720 FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
+        when "multi-board"
+          puts "%s: multi-board FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
+        end
+        STDOUT.flush
       end
     end
+    threads.each { |aThread|
+      aThread.join()
+    }
   end
 
   def shutdown()
-    self.sendSerialCommand("shutdown", @options.eventBuilders +
-                           @options.v1720s)
+    self.sendCommandSet("shutdown", @options.v1720s)
+    self.sendCommandSet("shutdown", @options.eventBuilders)
+    self.sendCommandSet("shutdown", @options.aggregators)
   end
 
   def pause()
-    self.sendSerialCommand("pause", @options.v1720s +
-                           @options.eventBuilders)
+    self.sendCommandSet("pause", @options.v1720s)
+    self.sendCommandSet("pause", @options.eventBuilders)
+    self.sendCommandSet("pause", @options.aggregators)
   end
 
   def stop()
-    self.sendSerialCommand("stop", @options.v1720s +
-                           @options.eventBuilders)
+    totalAGs = @options.aggregators.length
+    if @options.eventsInRun > 0
+      if Integer(totalAGs) > 0
+        if Integer(totalAGs) > 1
+          puts "NOTE: more than one Aggregator is running (count=%d)." % [totalAGs]
+          puts " -> The first Aggregator will be used to determine the number of events"
+          puts " -> in the current run."
+        end
+        aggregatorEventCount = 0
+        previousAGEventCount = 0
+        sleepTime = 0
+        while aggregatorEventCount >= 0 && aggregatorEventCount < @options.eventsInRun do
+          sleep(sleepTime)
+          currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+          puts "%s: Attempting to fetch the number of events from the Aggregator." %
+            [currentTime]
+          STDOUT.flush
+          xmlrpcClient = XMLRPC::Client.new(@options.aggregators[0].host, "/RPC2",
+                                            @options.aggregators[0].port)
+          xmlrpcClient.timeout = 10
+          exceptionOccurred = false
+          begin
+            result = xmlrpcClient.call("daq.report", "event_count")
+            if result == "busy" || result == "-1"
+              # support one retry
+              sleep(10)
+              result = xmlrpcClient.call("daq.report", "event_count")
+            end
+            aggregatorEventCount = Integer(result)
+          rescue Exception => msg
+            exceptionOccurred = true
+            result = "Exception: " + msg
+            aggregatorEventCount = previousAGEventCount
+          end
+          currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+          if exceptionOccurred
+            puts "%s: There was a problem communicating with the Aggregator (%s)," %
+              [currentTime, result]
+            puts "  the fetch of the number of events will be retried."
+          else
+            puts "%s: The Aggregator reports the following number of events: %s." %
+              [currentTime, result]
+          end
+          STDOUT.flush
+
+          if aggregatorEventCount > 0 && previousAGEventCount > 0 && \
+            aggregatorEventCount > previousAGEventCount && sleepTime > 0 then
+            remainingEvents = @options.eventsInRun - aggregatorEventCount
+            recentRate = (aggregatorEventCount - previousAGEventCount) / sleepTime
+            if recentRate > 0
+              sleepTime = (remainingEvents / 2) / recentRate
+            else
+              sleepTime = 10
+            end
+            if sleepTime < 10
+              sleepTime = 10;
+            end
+            if sleepTime > 900
+              sleepTime = 900;
+            end
+          else
+            sleepTime = 10
+          end
+          previousAGEventCount = aggregatorEventCount
+        end
+      else
+        puts "No Aggregator in use - Unable to determine the number of events in the current run."     
+      end
+    elsif @options.runDurationSeconds > 0
+      if Integer(totalAGs) > 0
+        if Integer(totalAGs) > 1
+          puts "NOTE: more than one Aggregator is running (count=%d)." % [totalAGs]
+          puts " -> The first Aggregator will be used to determine the run duration."
+        end
+        aggregatorRunDuration = 0
+        sleepTime = 0
+        while aggregatorRunDuration >= 0 && aggregatorRunDuration < @options.runDurationSeconds do
+          sleep(sleepTime)
+          currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+          puts "%s: Attempting to fetch the run duration from the Aggregator." %
+            [currentTime]
+          STDOUT.flush
+          xmlrpcClient = XMLRPC::Client.new(@options.aggregators[0].host, "/RPC2",
+                                            @options.aggregators[0].port)
+          xmlrpcClient.timeout = 10
+          exceptionOccurred = false
+          begin
+            result = xmlrpcClient.call("daq.report", "run_duration")
+            if result == "busy" || result == "-1"
+              # support one retry
+              sleep(10)
+              result = xmlrpcClient.call("daq.report", "run_duration")
+            end
+            aggregatorRunDuration = Float(result)
+          rescue Exception => msg
+            exceptionOccurred = true
+            result = "Exception: " + msg
+            aggregatorRunDuration = 0
+          end
+          currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
+          if exceptionOccurred
+            puts "%s: There was a problem communicating with the Aggregator (%s)," %
+              [currentTime, result]
+            puts "  the fetch of the run duration will be retried."
+          else
+            puts "%s: The Aggregator reports the following run duration: %s seconds." %
+              [currentTime, result]
+          end
+          STDOUT.flush
+
+          if aggregatorRunDuration > 0 then
+            remainingTime = @options.runDurationSeconds - aggregatorRunDuration
+            sleepTime = remainingTime / 2
+            if sleepTime < 10
+              sleepTime = 10;
+            end
+            if sleepTime > 900
+              sleepTime = 900;
+            end
+          else
+            sleepTime = 10
+          end
+        end
+      else
+        puts "No Aggregator in use - Unable to determine the duration of the current run."
+      end
+    end
+
+    self.sendCommandSet("stop", @options.v1720s)
+    self.sendCommandSet("stop", @options.eventBuilders)
+    @options.aggregators.each do |proc|
+      tmpList = []
+      tmpList << proc
+      self.sendCommandSet("stop", tmpList)
+    end
   end
 
   def resume()
-    self.sendSerialCommand("resume", @options.eventBuilders +
-                           @options.v1720s)
+    self.sendCommandSet("resume", @options.aggregators)
+    self.sendCommandSet("resume", @options.eventBuilders)
+    self.sendCommandSet("resume", @options.v1720s)
+  end
+
+  def checkStatus()
+    self.sendCommandSet("status", @options.aggregators)
+    self.sendCommandSet("status", @options.eventBuilders)
+    self.sendCommandSet("status", @options.v1720s)
+  end
+
+  def getLegalCommands()
+    self.sendCommandSet("legal_commands", @options.aggregators)
+    self.sendCommandSet("legal_commands", @options.eventBuilders)
+    self.sendCommandSet("legal_commands", @options.v1720s)
   end
 end
 
@@ -500,14 +1217,10 @@ if __FILE__ == $0
   cmdLineParser = CommandLineParser.new(cfgGen)
   cmdLineParser.parse()
   options = cmdLineParser.getOptions()
+  puts "DemoControl disk writing setting = " + options.writeData
 
   if options.summary
     cmdLineParser.summarize()
-  end
-
-  if options.serialize
-    cmdLineParser.serialize()
-    exit
   end
 
   sysCtrl = SystemControl.new(options, cfgGen)
@@ -524,5 +1237,9 @@ if __FILE__ == $0
     sysCtrl.pause()
   elsif options.command == "resume"
     sysCtrl.resume()
+  elsif options.command == "status"
+    sysCtrl.checkStatus()
+  elsif options.command == "get-legal-commands"
+    sysCtrl.getLegalCommands()
   end
 end
