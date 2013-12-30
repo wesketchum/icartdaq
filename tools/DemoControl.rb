@@ -97,6 +97,7 @@ daq: {
     expected_fragments_per_event: %{total_fragments}
     use_art: true
     print_event_store_stats: true
+    verbose: %{verbose}
   }
 }
 outputs: {
@@ -325,6 +326,7 @@ class ConfigGen
       ebConfig.gsub!(/\%\{root_output\}/, "#")
       ebConfig.gsub!(/\%\{enable_onmon\}/, "#")
       ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
+      ebConfig.gsub!(/\%\{verbose\}/, "false")
     else
       ebConfig.gsub!(/\%\{netmon_output\}/, "#")
       if Integer(diskWritingEnable) != 0
@@ -339,6 +341,7 @@ class ConfigGen
         ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
         ebConfig.gsub!(/\%\{enable_onmon\}/, "#")
       end
+      ebConfig.gsub!(/\%\{verbose\}/, "true")
     end
 
     currentTime = Time.now
