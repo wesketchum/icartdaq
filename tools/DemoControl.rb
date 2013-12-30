@@ -40,21 +40,6 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
       module_type: WFViewer
       prescale: 20
       digital_sum_only: false
-    }
-    baseline: {
-      module_type: MonitorBaseline
-      random_only: false
-    }
-    trigger: {
-      module_type: MonitorTrigger
-    }
-    ser: {
-      module_type: MonitorSer
-      start_us: 0.100
-      stop_us: 0.180
-      laser_only: true
-      #single_channel: 0
-      range: [ -1200, 100 ]
     }"
 end
 # And, this assignment for the prescale will only
@@ -64,7 +49,7 @@ if (defined?(ONMON_EVENT_PRESCALE)).nil? || (ONMON_EVENT_PRESCALE).nil?
 end
 # ditto, the online monitoring modules that are run
 if (defined?(ONMON_MODULES)).nil? || (ONMON_MODULES).nil?
-  ONMON_MODULES = "[ app, wf, trigger, ser ]"
+  ONMON_MODULES = "[ app, wf ]"
 end
 
 EB_CONFIG = "\
@@ -143,7 +128,7 @@ physics: {
   %{enable_1724_compression}p1: [ huffdiffV1724 ]
   %{enable_172x_compression}p1: [ huffdiffV1720, huffdiffV1724 ]
 
-  %{enable_onmon}a1: [ app, wf, trigger, baseline, ser ]
+  %{enable_onmon}a1: [ app, wf ]
 
   %{netmon_output}my_output_modules: [ netMonOutput ]
   %{root_output}my_output_modules: [ normalOutput ]
