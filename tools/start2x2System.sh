@@ -18,5 +18,5 @@ mkdir -p ${logroot}/boardreader
 mkdir -p ${logroot}/eventbuilder
 
 # start PMT
-pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --display :55.0
+pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --display ${DISPLAY}
 rm $tempFile

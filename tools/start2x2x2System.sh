@@ -21,5 +21,5 @@ mkdir -p ${logroot}/eventbuilder
 mkdir -p ${logroot}/aggregator
 
 # start PMT
-pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --display :55.0
+pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --display ${DISPLAY}
 rm $tempFile
