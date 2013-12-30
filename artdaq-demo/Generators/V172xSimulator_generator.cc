@@ -135,6 +135,7 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     newboard.resize(nChannels_);
     newboard.setBoardID(fragment_ids_[i]);
     newboard.setEventCounter(current_event_num_);
+    newboard.setChannelMask(1);
     std::generate_n(newboard.dataBegin(),
                     nChannels_,
                     [this, i]() {
