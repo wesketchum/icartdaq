@@ -12,10 +12,10 @@ echo "EventBuilderMain `hostname` ${ARTDAQDEMO_EB_PORT[1]}" >> $tempFile
 
 # create the logfile directories, if needed
 logroot="/tmp"
-mkdir -p ${logroot}/pmt
-mkdir -p ${logroot}/masterControl
-mkdir -p ${logroot}/boardreader
-mkdir -p ${logroot}/eventbuilder
+mkdir -p -m 0777 ${logroot}/pmt
+mkdir -p -m 0777 ${logroot}/masterControl
+mkdir -p -m 0777 ${logroot}/boardreader
+mkdir -p -m 0777 ${logroot}/eventbuilder
 
 # start PMT
 pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --display ${DISPLAY}
