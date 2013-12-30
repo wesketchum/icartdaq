@@ -27,3 +27,6 @@ simple_plugin(Decompression "module"
 simple_plugin(DataCharacterizer "module")
 simple_plugin(EventDump "module")
 simple_plugin(CompressionChecker "module" ${ARTDAQ_DAQDATA})
+
+# Subdirectories.
+add_subdirectory(DQM)
