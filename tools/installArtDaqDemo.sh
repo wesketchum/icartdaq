@@ -13,7 +13,7 @@ fi
 mkdir -p products
 mkdir -p download
 cd download
-../downloadArtDaq-v1_07_01.sh ../products e2:eth prof
+../downloadArtDaq-v1_07_01.sh ../products e4:eth prof
 
 cd ..
 mkdir -p demoBuild
@@ -45,7 +45,7 @@ echo "export DAQ_INDATA_PATH=`pwd`/artdaq-demo/test/Generators:`pwd`/artdaq-demo
 echo "" >> setupARTDAQDEMO
 echo "export ARTDAQDEMO_BUILD="`pwd`/demoBuild"" >> setupARTDAQDEMO
 echo "export ARTDAQDEMO_REPO="`pwd`/artdaq-demo"" >> setupARTDAQDEMO
-echo "cd \$ARTDAQDEMO_BUILD; source \$ARTDAQDEMO_REPO/ups/setup_for_development -p e2 eth" >> setupARTDAQDEMO
+echo "cd \$ARTDAQDEMO_BUILD; source \$ARTDAQDEMO_REPO/ups/setup_for_development -p e4 eth" >> setupARTDAQDEMO
 echo "" >> setupARTDAQDEMO
 echo "alias rawEventDump=\"art -c `pwd`/artdaq-demo/artdaq-demo/ArtModules/fcl/rawEventDump.fcl\"" >> setupARTDAQDEMO
 echo "alias compressedEventDump=\"art -c `pwd`/artdaq-demo/artdaq-demo/ArtModules/fcl/compressedEventDump.fcl\"" >> setupARTDAQDEMO
