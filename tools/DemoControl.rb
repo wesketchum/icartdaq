@@ -40,8 +40,12 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
       module_type: WFViewer
       prescale: 20
       digital_sum_only: false
+      fragments_per_board: %{fragments_per_board}
+      fragment_receiver_count: %{total_frs}
     }"
 end
+
+
 # And, this assignment for the prescale will only
 # be used if it wasn't included from the external file already
 if (defined?(ONMON_EVENT_PRESCALE)).nil? || (ONMON_EVENT_PRESCALE).nil?
@@ -271,18 +275,29 @@ daq: {
     event_builder_count: %{total_ebs}
     generator: V172xSimulator
     freqs_file: \"V1720_sample_freqs.dat\"
-    fragments_per_event: 1
-    nChannels: 80000
-    fragment_id: %{fragment_id}
+    fragments_per_board: %{fragments_per_board}
+    nChannels: 10
+    starting_fragment_id: %{starting_fragment_id}
+    fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
-    rt_priority: 2
+    random_seed: %{random_seed}
+    sleep_on_stop_us: 500000
   }
 }"
 
 class ConfigGen
+
+   def generateWFViewer(totalFRs, fragmentsPerBoard)
+     wfViewerConfig = String.new(PHYS_ANAL_ONMON_CFG)
+     wfViewerConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
+     wfViewerConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
+     return wfViewerConfig
+   end
+
+
   def generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs, compressionLevel, 
                            totalv1720s, totalv1724s, dataDir, onmonEnable,
-                           diskWritingEnable, fragSizeWords, totalFragments)
+                           diskWritingEnable, fragSizeWords, totalFragments, fragmentsPerBoard)
     # Do the substitutions in the event builder configuration given the options
     # that were passed in from the command line.  
     ebConfig = String.new(EB_CONFIG)
@@ -335,7 +350,7 @@ class ConfigGen
         ebConfig.gsub!(/\%\{root_output\}/, "#")
       end
       if Integer(onmonEnable) != 0
-        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, PHYS_ANAL_ONMON_CFG)
+        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard))
         ebConfig.gsub!(/\%\{enable_onmon\}/, "")
       else
         ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
@@ -358,7 +373,7 @@ class ConfigGen
                          compressionLevel, totalv1720s, totalv1724s, onmonEnable,
                          diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                          xmlrpcClientList, fileSizeThreshold, fileDuration,
-                         fileEventCount)
+                         fileEventCount, fragmentsPerBoard)
     puts "Initial aggregator " + String(agIndex) + " disk writing setting = " +
       String(diskWritingEnable)
     # Do the substitutions in the aggregator configuration given the options
@@ -431,7 +446,7 @@ class ConfigGen
       agConfig.gsub!(/\%\{root_output\}/, "#")
     end
     if Integer(onmonEnable) != 0
-      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, PHYS_ANAL_ONMON_CFG)
+      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard))
       agConfig.gsub!(/\%\{enable_onmon\}/, "")
     else
       agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
@@ -442,18 +457,21 @@ class ConfigGen
   end
   
   def generateV1720(fragmentId, totalEBs, totalFRs,
-                    fragSizeWords, boardId)
+                    fragSizeWords, boardId, fragmentsPerBoard)
     v1720Config = String.new(V1720_SIM_CONFIG)
     
     v1720Config.gsub!(/\%\{total_ebs\}/, String(totalEBs))
     v1720Config.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    v1720Config.gsub!(/\%\{fragment_id\}/, String(fragmentId))
+#    v1720Config.gsub!(/\%\{fragment_id\}/, String(fragmentId))
+    v1720Config.gsub!(/\%\{starting_fragment_id\}/, String(fragmentId))
+    v1720Config.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
     v1720Config.gsub!(/\%\{board_id\}/, String(boardId))
     v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
     v1720Config.gsub!(/\%\{size_words\}/, String(fragSizeWords))
+    v1720Config.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
     return v1720Config
   end
-  
+
   def generateComposite(totalEBs, totalFRs, configStringArray)
     compositeConfig = String.new(COMPOSITE_GENERATOR_CONFIG)
     compositeConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
@@ -705,6 +723,8 @@ class CommandLineParser
         @options.serialize = true
       end
 
+#      wfViewerConfig = OpenStruct.new
+
       opts.on_tail("-h", "--help", "Show this message.") do
         puts opts
         exit
@@ -786,9 +806,11 @@ class CommandLineParser
         when "ag"
           puts "    Aggregator, port %d, rank %d" % [item.port, totalEBs + totalFRs + item.index]
         when "V1720", "V1724"
-          puts "    FragmentReceiver, Simulated %s, port %d, rank %d" % [item.kind.upcase,
-                                                                         item.port,
-                                                                         item.index]
+          puts "    FragmentReceiver, Simulated %s, port %d, rank %d, board_id %d" % 
+            [item.kind.upcase,
+             item.port,
+             item.index,
+             item.board_id]
         end
       end
       puts ""
@@ -826,6 +848,9 @@ class SystemControl
     totalEBs = @options.eventBuilders.length
     totalAGs = @options.aggregators.length
     inputBuffSizeWords = 2097152
+
+    fragmentsPerBoard = 1
+
     #if Integer(totalv1720s) > 0
     #  inputBuffSizeWords = 8192 * @options.v1720s[0].gate_width
     #end
@@ -841,10 +866,12 @@ class SystemControl
       listIndex = 0
       br.kindList.each do |kind|
         if kind == v1720Options.kind && br.boardIndexList[listIndex] == v1720Options.index
-          cfg = @configGen.generateV1720(v1720Options.index,
+          cfg = @configGen.generateV1720(1+v1720Options.index*fragmentsPerBoard,
                                          totalEBs, totalFRs,
                                          Integer(inputBuffSizeWords/8),
-                                         v1720Options.board_id)
+                                         v1720Options.board_id, fragmentsPerBoard)
+          puts "JOHN: FHICL CODE"
+          puts cfg
           br.cfgList[listIndex] = cfg
           break
         end
@@ -906,7 +933,10 @@ class SystemControl
                                               totalv1720s, totalv1724s,
                                               @options.dataDir, @options.runOnmon,
                                               @options.writeData, inputBuffSizeWords,
-                                              totalBoards)
+                                              totalBoards*fragmentsPerBoard, fragmentsPerBoard)
+        puts "JOHN: EVENTBUILDER FHICL CODE"
+        puts cfg
+
         if @options.serialize
           fileName = "EventBuilder_%s_%d.fcl" % [ebOptions.host, ebOptions.port]
           puts "  writing %s..." % fileName
@@ -938,7 +968,7 @@ class SystemControl
                                             agIndex, totalAGs, inputBuffSizeWords,
                                             xmlrpcClients, @options.fileSizeThreshold,
                                             @options.fileDurationSeconds,
-                                            @options.eventsInFile)
+                                            @options.eventsInFile, fragmentsPerBoard)
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
           puts "  writing %s..." % fileName
@@ -954,6 +984,14 @@ class SystemControl
       end
       agIndex += 1
     }
+    
+    # John F., 1/3/14 -- configure the WFViewer module to reflect the
+    # number of boardreaders and the number of fragments per boardreader
+    # generated in an event
+
+    #cfg = @configGen.generateWFViewer(totalFRs, fragmentsPerBoard)
+
+
     STDOUT.flush
     threads.each { |aThread|
       aThread.join()
