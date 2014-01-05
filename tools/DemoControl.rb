@@ -38,7 +38,7 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
     }
     wf: {
       module_type: WFViewer
-      prescale: 20
+      prescale: 1000
       digital_sum_only: false
       fragments_per_board: %{fragments_per_board}
       fragment_receiver_count: %{total_frs}
@@ -276,7 +276,7 @@ daq: {
     generator: V172xSimulator
     freqs_file: \"V1720_sample_freqs.dat\"
     fragments_per_board: %{fragments_per_board}
-    nChannels: 10
+    nChannels: 20
     starting_fragment_id: %{starting_fragment_id}
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
@@ -586,6 +586,7 @@ class CommandLineParser
     @options.fileSizeThreshold = 0
     @options.fileDurationSeconds = 0
     @options.eventsInFile = 0
+    @options.fragmentsPerBoard = 1
 
     @optParser = OptionParser.new do |opts|
       opts.banner = "Usage: DemoControl.rb [options]"
@@ -723,6 +724,10 @@ class CommandLineParser
         @options.serialize = true
       end
 
+      opts.on("--fragments-per-board [N]", "Fragments each event will send to a single readout board") do |fragsPerBoard|
+        @options.fragmentsPerBoard = Integer(fragsPerBoard)
+      end
+
 #      wfViewerConfig = OpenStruct.new
 
       opts.on_tail("-h", "--help", "Show this message.") do
@@ -849,7 +854,7 @@ class SystemControl
     totalAGs = @options.aggregators.length
     inputBuffSizeWords = 2097152
 
-    fragmentsPerBoard = 1
+    fragmentsPerBoard = @options.fragmentsPerBoard
 
     #if Integer(totalv1720s) > 0
     #  inputBuffSizeWords = 8192 * @options.v1720s[0].gate_width
@@ -870,8 +875,6 @@ class SystemControl
                                          totalEBs, totalFRs,
                                          Integer(inputBuffSizeWords/8),
                                          v1720Options.board_id, fragmentsPerBoard)
-          puts "JOHN: FHICL CODE"
-          puts cfg
           br.cfgList[listIndex] = cfg
           break
         end
@@ -934,8 +937,6 @@ class SystemControl
                                               @options.dataDir, @options.runOnmon,
                                               @options.writeData, inputBuffSizeWords,
                                               totalBoards*fragmentsPerBoard, fragmentsPerBoard)
-        puts "JOHN: EVENTBUILDER FHICL CODE"
-        puts cfg
 
         if @options.serialize
           fileName = "EventBuilder_%s_%d.fcl" % [ebOptions.host, ebOptions.port]
@@ -985,13 +986,6 @@ class SystemControl
       agIndex += 1
     }
     
-    # John F., 1/3/14 -- configure the WFViewer module to reflect the
-    # number of boardreaders and the number of fragments per boardreader
-    # generated in an event
-
-    #cfg = @configGen.generateWFViewer(totalFRs, fragmentsPerBoard)
-
-
     STDOUT.flush
     threads.each { |aThread|
       aThread.join()

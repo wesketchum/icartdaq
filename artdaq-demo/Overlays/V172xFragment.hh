@@ -108,7 +108,8 @@ inline demo::V172xFragment::Header::channel_mask_t demo::V172xFragment::channel_
 
 inline demo::V172xFragment::Header::pattern_t demo::V172xFragment::pattern() const { return header_()->pattern; }
 
-inline demo::V172xFragment::Header::board_id_t demo::V172xFragment::board_id() const { return header_()->board_id; }
+inline demo::V172xFragment::Header::board_id_t demo::V172xFragment::board_id() const { 
+return header_()->board_id; }
 
 inline demo::V172xFragment::Header::event_counter_t demo::V172xFragment::event_counter() const { return header_()->event_counter; }
 

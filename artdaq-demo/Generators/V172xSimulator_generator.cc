@@ -90,13 +90,14 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "V1720"))),
   fragment_ids_(),
   current_event_num_(0ul),
-  engine_(ps.get<int64_t>("random_seed", 314159)),
   adc_freqs_(),
-  content_generator_()
+  content_generator_(),
+  should_stop_(false),
+  engine_(ps.get<int64_t>("random_seed", 314159))
 {
 
   // Initialize fragment_ids_.
-  fragment_ids_.resize(ps.get<size_t>("fragments_per_board", 5));
+  fragment_ids_.resize(ps.get<size_t>("fragments_per_board", 1));
   auto current_id = ps.get<size_t>("starting_fragment_id", 0);
   std::generate(fragment_ids_.begin(),
                 fragment_ids_.end(),
@@ -111,7 +112,7 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
                  adc_freqs_,
                  adc_bits);
 
-  // Initialize content generators.
+  // Initialize content generators and set up separate random # generators for each fragment on the board
   for (size_t i = 0; i < fragments_per_board; ++i) {
     content_generator_.emplace_back(V172xFragment::adc_range(adc_bits),
                                     -0.5,
@@ -119,7 +120,9 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
                                     [this, i](double x) -> double { return adc_freqs_[i][std::round(x)]; }
                                    );
   }
+    
 }
+
 
 bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
 
@@ -135,8 +138,6 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     frags.emplace_back(new artdaq::Fragment);
     V172xFragmentWriter newboard(*frags.back());
     newboard.resize(nChannels_);
-    //newboard.setBoardID(fragment_ids_[i]);
-    //John F., 1/3/14 -- seems like we want 1-1 between board id and process, not board id and fragment id, right?
     newboard.setBoardID( board_id() ); 
     newboard.setEventCounter(current_event_num_);
 
@@ -146,14 +147,22 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     }
 
 
-    newboard.setChannelMask(mask);
+    newboard.setChannelMask(1);
+
     std::generate_n(newboard.dataBegin(),
                     nChannels_,
                     [this, i]() {
                       return static_cast<V172xFragment::adc_type>
-                        (std::round(content_generator_[i](engine_)));
+                        (std::round(content_generator_[i]( engine_ )));
                     }
                    );
+
+    //    cout << "Fragment " << i << ", vals are: ";
+    //    for (auto it = newboard.dataBegin(); it != newboard.dataEnd(); it++) {
+    //      cout << *it << " ";
+    //    }
+    //    cout << endl;
+    
 
     artdaq::Fragment& frag = *frags.back();
     // John F., 1/3/14 -- see my comment above concerning board id vs. fragment id

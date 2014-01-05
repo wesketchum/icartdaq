@@ -25,7 +25,9 @@ void demo::V172xFragment::checkADCData(int daq_adc_bits) const {
 
 bool demo::V172xFragment::channel_present(int ch) const { 
   if (ch < 0 || ch > 7) throw cet::exception("IllegalChannel") << "requested ch #" << ch << ",";
-  return header_()->channel_mask && (1 << ch); 
+
+  return header_()->channel_mask & (1 << ch); 
+
 }
 
 unsigned int demo::V172xFragment::enabled_channels() const {

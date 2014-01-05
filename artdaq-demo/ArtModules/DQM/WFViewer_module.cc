@@ -33,24 +33,23 @@ using std::cout;
 using std::endl;
 
 namespace demo {
+
   class WFViewer : public art::EDAnalyzer {
-    public:
-      explicit WFViewer (fhicl::ParameterSet const & p);
-      virtual ~WFViewer ();
 
-      void analyze (art::Event const & e) override;
-      void beginRun(art::Run const &) override;
+  public:
+    explicit WFViewer (fhicl::ParameterSet const & p);
+    virtual ~WFViewer () = default;
 
-    private:
-      std::string board_type_;
-      std::unique_ptr<TCanvas> canvas_[2];
-      std::vector<std::unique_ptr<TGraph>> sum_graphs_;
-      std::vector<Double_t> x_;
-      std::vector<bool> normals_;
-      int prescale_;
-      bool digital_sum_only_;
-      bool sum_sums_;
-      art::RunNumber_t current_run_;
+    void analyze (art::Event const & e) override;
+    void beginRun(art::Run const &) override;
+
+  private:
+    std::string board_type_;
+    std::unique_ptr<TCanvas> canvas_[2];
+    std::vector<Double_t> x_;
+    int prescale_;
+    bool digital_sum_only_;
+    art::RunNumber_t current_run_;
 
     int fragments_per_board_;
     int fragment_receiver_count_;
@@ -65,14 +64,29 @@ namespace demo {
     int max_adc_count_;
 
   };
+
 }
 
-demo::WFViewer::WFViewer (fhicl::ParameterSet const & ps): art::EDAnalyzer(ps), board_type_(ps.get<std::string> ("board_type", "V1720")), sum_graphs_(2), prescale_(ps.get<int> ("prescale")), digital_sum_only_(ps.get<bool> ("digital_sum_only", false)), sum_sums_ (ps.get<bool> ("sum_sums", false)), current_run_(0), fragments_per_board_(ps.get<int>("fragments_per_board")), fragment_receiver_count_(ps.get<int>("fragment_receiver_count")), graphs_(fragments_per_board_*fragment_receiver_count_), histograms_(fragments_per_board_*fragment_receiver_count_), max_adc_count_(4096) {
+demo::WFViewer::WFViewer (fhicl::ParameterSet const & ps): 
+  art::EDAnalyzer(ps), 
+  board_type_(ps.get<std::string> ("board_type", "V1720")), 
+  prescale_(ps.get<int> ("prescale")), 
+  digital_sum_only_(ps.get<bool> ("digital_sum_only", false)), 
+  current_run_(0), 
+  fragments_per_board_(ps.get<int>("fragments_per_board")), 
+  fragment_receiver_count_(ps.get<int>("fragment_receiver_count")), 
+  graphs_(fragments_per_board_*fragment_receiver_count_), 
+  histograms_(fragments_per_board_*fragment_receiver_count_), 
+  max_adc_count_(4096) {
+  gStyle->SetOptStat("irm");
 }
 
-demo::WFViewer::~WFViewer() { }
 
 void demo::WFViewer::analyze (art::Event const & e) {
+
+  static int evt_cntr = -1;
+  evt_cntr++;
+
   art::Handle<artdaq::Fragments> v172x;
   e.getByLabel ("daq", board_type_, v172x);
   if (!v172x.isValid ())  {
@@ -85,128 +99,155 @@ void demo::WFViewer::analyze (art::Event const & e) {
     record_size = std::min (record_size, V172xFragment((*v172x)[i]).total_adc_values());
   }
 
+  int total_frags = fragments_per_board_*fragment_receiver_count_;
+
+  if (total_frags != static_cast<int>(v172x->size())) {
+    cout << "Warning in WFViewer: mismatch between expected and actual fragments: fragments_per_board_ = " << fragments_per_board_ << ", fragment_receiver_count_ = " << fragment_receiver_count_ << ", number of fragments = " << v172x->size() << endl;
+    //    throw;
+  }
+
+  // John F., 1/5/14 
+
+  // Here, we loop over the fragments passed to the analyze
+  // function. A warning is flashed if either (A) the fragments aren't
+  // all from the same event, or (B) there's an unexpected number of
+  // fragments given the number of boardreaders and the number of
+  // fragments per board
+
+  // For every Nth event, where N is the "prescale" setting, plot the
+  // distribution of ADC counts from each board_id / fragment_id
+  // combo. Also, if "digital_sum_only" is set to false in the FHiCL
+  // string, then plot, for the Nth event, a graph of the ADC values
+  // across all channels in each board_id / fragment_id combo
+
+  int expected_sequence_id = -1;
+  bool prescaled = false;
+
   for (size_t i = 0; i < v172x->size(); ++i) {
+
     const auto& frag((*v172x)[i]);
 
-    if (frag.sequenceID () % prescale_ ) {
-      return;
+    if (i == 0) 
+      expected_sequence_id = frag.sequenceID();
+
+    if (expected_sequence_id != static_cast<int>(frag.sequenceID())) {
+      cout << "Warning in WFViewer: expected fragment with sequence ID " << expected_sequence_id << ", received one with sequence ID " << frag.sequenceID() << endl;
     }
 
     V172xFragment b(frag);
-    size_t board_id = b.board_id ();
+    int board_id = static_cast<int>( b.board_id () );
+    int fragment_id = static_cast<int>(frag.fragmentID() );
 
-    if (x_.size () != record_size) {
-      x_.resize (record_size);
+    int lg = fragment_id - 1; // assuming fragment counting begins at 1, not 0            
+    int lg_canvas = lg % total_frags + 1;
+    int padnum = lg_canvas;
 
-      if (frag.hasMetadata()) {
-        int post_trigger = frag.metadata<V172xFragment::metadata>()->post_trigger;
-        int pre_samples = record_size * post_trigger / 100 - record_size;
+    // If a histogram doesn't exist for this board_id / fragment_id combo, create it
 
-	cout << "Fragment has metadata: post_trigger = " << post_trigger << ", pre_samples = " << pre_samples << endl;
-	std::iota (x_.begin (), x_.end (), pre_samples);
-      } else std::iota (x_.begin (), x_.end (), 0);
+    if (!histograms_[lg]) {
+
+      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Board_%d_Fragment_%d_hist", board_id, fragment_id), "", max_adc_count_, -0.5, max_adc_count_ - 0.5));
+      histograms_[lg]->SetTitle (Form ("Board %d, Fragment %d", board_id, fragment_id));
     }
 
-    for (int ch=0; ch<fragments_per_board_; ++ch) {
-      int lg = board_id * fragments_per_board_ + ch;                        
+    // For every event, fill the histogram (prescale is ignored here)
 
-      int total_frags = fragments_per_board_*fragment_receiver_count_;
+    for (auto val = b.dataBegin(); val != b.dataEnd(); ++val ) {
+      histograms_[lg]->Fill( *val );
+    }
+    
+    //    if (frag.sequenceID () % prescale_ - 1) {
+    if (evt_cntr % prescale_ - 1) {
+      prescaled = true;
+      continue;
+    } else {
+      prescaled = false;
+    }
 
-      if (!b.channel_present (ch) || lg >= total_frags) continue;
+    // If we pass the prescale, then if we're not going with
+    // digital_sum_only, plot the ADC counts for this particular event/board/fragment_id
+    
+    if (!digital_sum_only_) {
 
-      if (!digital_sum_only_) {
+      // Create the graph's x-axis
 
-	if (!graphs_[lg] || graphs_[lg]->GetN () != int(record_size)) {
-	  graphs_[lg] = std::unique_ptr<TGraph>(new TGraph (record_size));
-	  graphs_[lg]->SetTitle (Form ("Board %d, Channel %d", static_cast<int>(board_id), ch));
-	  graphs_[lg]->SetLineColor (normals_[lg] ? 4 : 1);
-	  std::copy (x_.begin (), x_.end (), graphs_[lg]->GetX ());
-	  std::fill (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size, 0);
-	}
-	std::copy (b.chDataBegin (ch), b.chDataBegin(ch) + record_size, graphs_[lg]->GetY ());
+      if (x_.size () != record_size) {
+	x_.resize (record_size);
 
-	int lg_canvas = lg % total_frags + 1;
-	int padnum = fragments_per_board_ * ((lg_canvas - 1) % fragment_receiver_count_) + int((fragments_per_board_ * lg_canvas - 1) / total_frags) + 1;
-
-	canvas_[0] -> cd(padnum);
-	TVirtualPad* pad = static_cast<TVirtualPad*>(canvas_[0]->GetPad(padnum) ); 
-
-	Double_t lo_x = graphs_[lg]->GetXaxis()->GetXmin();
-	Double_t hi_x = graphs_[lg]->GetXaxis()->GetXmax();
-	Double_t lo_y = -0.5;
-	Double_t hi_y = max_adc_count_-0.5;
-
-
-	TH1F* padframe = static_cast<TH1F*>( pad->DrawFrame( lo_x, lo_y, hi_x, hi_y ) );
-	pad->SetGrid();
-	padframe->Draw("SAME");
-
-	graphs_[lg]->GetYaxis()->SetRangeUser (*std::min_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size), *std::max_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size));
-	gStyle->SetMarkerStyle(22);
-	gStyle->SetMarkerColor(4);
-	graphs_[lg]->Draw ("PSAME");
-
-	//	std::vector<Double_t> vals(10) ; 
-	//	std::copy (b.chDataBegin (ch), b.chDataBegin(ch) + record_size, vals.begin());
-
-	//	cout << "Board " << board_id << ", channel " << ch << " , lg = " << lg << " : ";
-	//	for (auto val : vals ) {
-	//	  cout << val << " ";
-	//	}
-	//	cout << endl;
-
-	canvas_[1] -> cd( padnum );
-	if (!histograms_[lg]) {
-
-	  histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Board_%d_Channel_%d", static_cast<int>(board_id), ch), "", max_adc_count_, -0.5, max_adc_count_ - 0.5));
-	  histograms_[lg]->SetTitle (Form ("Board %d, Channel %d", static_cast<int>(board_id), ch));
-	  histograms_[lg]->SetLineColor (normals_[lg] ? 4 : 1);
-	}
-
-	// Surely there's a slicker way to extract single ADC values from a fragment...
-
-	std::vector<demo::V172xFragment::adc_type> vals(record_size);
-	std::copy (b.chDataBegin (ch), b.chDataBegin(ch) + record_size, vals.begin());
-
-	for (auto val : vals ) {
-	  histograms_[lg]->Fill(val);
-	}
-
-	histograms_[lg]->Draw();
-
+	if (frag.hasMetadata()) {
+	  cout << "Warning in WFViewer: displaying fragments with metadata has not yet been tested" << endl;
+	  int post_trigger = frag.metadata<V172xFragment::metadata>()->post_trigger;
+	  int pre_samples = record_size * post_trigger / 100 - record_size;
+	  std::iota (x_.begin (), x_.end (), pre_samples);
+	  
+	} else 
+	  std::iota (x_.begin (), x_.end (), 0);
       }
+
+      // If the graph doesn't exist, create it. Not sure whether to
+      // make it an error if the record_size is new
+
+      if (!graphs_[lg] || graphs_[lg]->GetN () != int(record_size)) {
+	graphs_[lg] = std::unique_ptr<TGraph>(new TGraph (record_size));
+	graphs_[lg]->SetName( Form ("Board_%d_Fragment_%d_graph", board_id, fragment_id));
+	graphs_[lg]->SetTitle (Form ("Board %d, Fragment %d", board_id, fragment_id));
+	graphs_[lg]->SetLineColor ( 4 );
+	std::copy (x_.begin (), x_.end (), graphs_[lg]->GetX ());
+      }
+
+      // Get the data from the fragment
+
+      std::copy (b.dataBegin (), b.dataBegin() + record_size, graphs_[lg]->GetY ());
+
+      // And now prepare the graphics without actually drawing anything yet
+      
+      canvas_[1] -> cd(padnum);
+      TVirtualPad* pad = static_cast<TVirtualPad*>(canvas_[1]->GetPad(padnum) ); 
+
+      Double_t lo_x = graphs_[lg]->GetXaxis()->GetXmin();
+      Double_t hi_x = graphs_[lg]->GetXaxis()->GetXmax();
+      Double_t lo_y = -0.5;
+      Double_t hi_y = max_adc_count_-0.5;
+
+
+      TH1F* padframe = static_cast<TH1F*>( pad->DrawFrame( lo_x, lo_y, hi_x, hi_y ) );
+      padframe->SetTitle( Form ("Board %d, Frag %d, SeqID %d", board_id, fragment_id, expected_sequence_id));
+      pad->SetGrid();
+      padframe->Draw("SAME");
+
+      graphs_[lg]->GetYaxis()->SetRangeUser (*std::min_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size), *std::max_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size));
+      gStyle->SetMarkerStyle(22);
+      gStyle->SetMarkerColor(4);
     }
+  } // End loop over fragments
+
+  // Don't draw anything if we're prescaled
+
+  if (prescaled) return;
+
+  // Draw the histograms
+
+  for (int lg = 0; lg < total_frags; ++lg) {
+    canvas_[0]->cd(lg+1);
+    histograms_[lg]->Draw();
   }
 
   canvas_[0] -> Modified();
   canvas_[0] -> Update();
 
-  canvas_[1] -> Modified();
-  canvas_[1] -> Update();
+  // And, if desired, the Nth event's ADC counts
+  
+  if (!digital_sum_only_) {
+    for (int lg = 0; lg < total_frags; ++lg) {
+      canvas_[1]->cd(lg+1);
+      graphs_[lg]->Draw("PSAME");
+    }
 
+    canvas_[1] -> Modified();
+    canvas_[1] -> Update();
+  }
 
-  // for (int i = 0; i < 2; i++) {
-  //   //    if (!y_sum[i].size ()) continue;
-  //   canvas_[2] -> cd(i + 1);
-  //   if (!sum_graphs_[i] || sum_graphs_[i]->GetN () != int(record_size)) {
-  //     sum_graphs_[i] = std::unique_ptr<TGraph>(new TGraph (record_size));
-  //     sum_graphs_[i] -> SetTitle("Sum");
-  //     //sum_graphs_[i]->SetLineColor(2);
-  //     std::copy (x_.begin (), x_.end (), sum_graphs_[i]->GetX ());
-  //     std::fill (sum_graphs_[i]->GetY (), sum_graphs_[i]->GetY () + record_size, 0);
-  //   } 
-  //   //    if (sum_sums_) std::transform (y_sum[i].begin (), y_sum[i].end (), sum_graphs_[i]->GetY (), sum_graphs_[i]->GetY (), std::plus<Double_t>());
-  //   //    else std::copy (y_sum[i].begin (), y_sum[i].end (), sum_graphs_[i]->GetY ());
-  //   //    sum_graphs_[i]->GetYaxis()->SetRangeUser (*std::min_element (sum_graphs_[i]->GetY (), sum_graphs_[i]->GetY () + y_sum[i].size ()), *std::max_element (sum_graphs_[i]->GetY (), sum_graphs_[i]->GetY () + y_sum[i].size ()));
-  //   //    sum_graphs_[i]->Draw ("AL+");
-  //   if(!digital_sum_only_) {	
-  //     canvas_[i] -> Modified();
-  //     canvas_[i] -> Update();
-  //   }
-  // }
-  // canvas_[2] -> Modified();
-  // canvas_[2] -> Update();
-}	
+}
 
 void demo::WFViewer::beginRun(art::Run const &e) { 
   if (e.run () == current_run_) return;
@@ -214,23 +255,15 @@ void demo::WFViewer::beginRun(art::Run const &e) {
 
   for (int i = 0; i < 2; i++) canvas_[i] = 0;
   for (auto &x: graphs_) x = 0;
-  for (auto &x: sum_graphs_) x = 0;
   for (auto &x: histograms_) x = 0;
 
-  for (int i = 0; i < 2 && !digital_sum_only_; i++) {
+  for (int i = 0; (i < 2 && !digital_sum_only_) || i < 1 ; i++) {
     canvas_[i] = std::unique_ptr<TCanvas>(new TCanvas(Form("wf%d",i)));
     canvas_[i]->Divide (fragments_per_board_, fragment_receiver_count_);
     canvas_[i]->Update ();
     ((TRootCanvas*)canvas_[i]->GetCanvasImp ())->DontCallClose ();
   }
 
-  // canvas_[2] = std::unique_ptr<TCanvas>(new TCanvas("digital sum"));
-  // canvas_[2] -> Divide(1,2);
-  // canvas_[2] -> Update();
-  // ((TRootCanvas*)canvas_[2]->GetCanvasImp ())->DontCallClose ();
-
-  normals_.resize (40, true);
-  normals_[38] = normals_[39] = false;
 }
 
 
