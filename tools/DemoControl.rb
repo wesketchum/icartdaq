@@ -38,7 +38,7 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
     }
     wf: {
       module_type: WFViewer
-      prescale: 1
+      prescale: 1000
       digital_sum_only: false
       fragments_per_board: %{fragments_per_board}
       fragment_receiver_count: %{total_frs}
