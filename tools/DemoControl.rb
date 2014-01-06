@@ -38,7 +38,7 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
     }
     wf: {
       module_type: WFViewer
-      prescale: 1
+      prescale: 1000
       digital_sum_only: false
       fragments_per_board: %{fragments_per_board}
       fragment_receiver_count: %{total_frs}
@@ -456,14 +456,13 @@ class ConfigGen
     return agConfig  
   end
   
-  def generateV1720(fragmentId, totalEBs, totalFRs,
+  def generateV1720(startingFragmentId, totalEBs, totalFRs,
                     fragSizeWords, boardId, fragmentsPerBoard)
     v1720Config = String.new(V1720_SIM_CONFIG)
     
     v1720Config.gsub!(/\%\{total_ebs\}/, String(totalEBs))
     v1720Config.gsub!(/\%\{total_frs\}/, String(totalFRs))
-#    v1720Config.gsub!(/\%\{fragment_id\}/, String(fragmentId))
-    v1720Config.gsub!(/\%\{starting_fragment_id\}/, String(fragmentId))
+    v1720Config.gsub!(/\%\{starting_fragment_id\}/, String(startingFragmentId))
     v1720Config.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
     v1720Config.gsub!(/\%\{board_id\}/, String(boardId))
     v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
@@ -871,10 +870,13 @@ class SystemControl
       listIndex = 0
       br.kindList.each do |kind|
         if kind == v1720Options.kind && br.boardIndexList[listIndex] == v1720Options.index
-          cfg = @configGen.generateV1720(1+v1720Options.index*fragmentsPerBoard,
+          cfg = @configGen.generateV1720(v1720Options.index*fragmentsPerBoard,
                                          totalEBs, totalFRs,
                                          Integer(inputBuffSizeWords/8),
                                          v1720Options.board_id, fragmentsPerBoard)
+          puts "John, displaying FHiCL: "
+          puts cfg
+
           br.cfgList[listIndex] = cfg
           break
         end

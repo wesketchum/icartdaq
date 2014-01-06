@@ -1,11 +1,3 @@
-////////////////////////////////////////////////////////////////////////
-// Class:       WFViewer
-// Module Type: analyzer
-// File:        WFViewer_module.cc
-//
-// Generated at Sun Dec  2 12:23:06 2012 by Alessandro Razeto & Nicola Rossi using artmod
-// from art v1_02_04.
-////////////////////////////////////////////////////////////////////////
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Principal/Handle.h"
@@ -123,6 +115,9 @@ void demo::WFViewer::analyze (art::Event const & e) {
   int expected_sequence_id = -1;
   bool prescaled = false;
 
+  // Use to check that fragment ID counting starts at 0
+  std::vector<int> fragment_ids( v172x->size() ); 
+
   for (size_t i = 0; i < v172x->size(); ++i) {
 
     const auto& frag((*v172x)[i]);
@@ -138,7 +133,9 @@ void demo::WFViewer::analyze (art::Event const & e) {
     int board_id = static_cast<int>( b.board_id () );
     int fragment_id = static_cast<int>(frag.fragmentID() );
 
-    int lg = fragment_id - 1; // assuming fragment counting begins at 1, not 0            
+    fragment_ids.emplace_back (fragment_id );
+
+    int lg = fragment_id; // assuming fragment counting begins at 0            
     int lg_canvas = lg % total_frags + 1;
     int padnum = lg_canvas;
 
@@ -148,6 +145,7 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
       histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Board_%d_Fragment_%d_hist", board_id, fragment_id), "", max_adc_count_, -0.5, max_adc_count_ - 0.5));
       histograms_[lg]->SetTitle (Form ("Board %d, Fragment %d", board_id, fragment_id));
+      histograms_[lg]->GetXaxis()->SetTitle("ADC value");
     }
 
     // For every event, fill the histogram (prescale is ignored here)
@@ -212,6 +210,7 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
       TH1F* padframe = static_cast<TH1F*>( pad->DrawFrame( lo_x, lo_y, hi_x, hi_y ) );
       padframe->SetTitle( Form ("Board %d, Frag %d, SeqID %d", board_id, fragment_id, expected_sequence_id));
+      padframe->GetXaxis()->SetTitle("Channel #");
       pad->SetGrid();
       padframe->Draw("SAME");
 
@@ -220,6 +219,10 @@ void demo::WFViewer::analyze (art::Event const & e) {
       gStyle->SetMarkerColor(4);
     }
   } // End loop over fragments
+
+  if (*std::min_element( fragment_ids.begin(), fragment_ids.end() ) != 0 ) {
+    cout << "Warning in WFViewer: expected lowest fragment_id val to be 0, instead got " << *std::min_element( fragment_ids.begin(), fragment_ids.end() ) << endl;
+  }
 
   // Don't draw anything if we're prescaled
 
@@ -264,6 +267,8 @@ void demo::WFViewer::beginRun(art::Run const &e) {
     ((TRootCanvas*)canvas_[i]->GetCanvasImp ())->DontCallClose ();
   }
 
+  canvas_[0]->SetTitle("ADC Value Distribution");
+  canvas_[1]->SetTitle("ADC Counts by Channel");
 }
 
 
