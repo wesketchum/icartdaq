@@ -1,7 +1,7 @@
 #include "artdaq-demo/Generators/V172xSimulator.hh"
 
 #include "art/Utilities/Exception.h"
-#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
@@ -85,17 +85,19 @@ namespace {
 
 demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
   :
-  FragmentGenerator(),
+  CommandableFragmentGenerator(ps),
   nChannels_(ps.get<size_t>("nChannels", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "V1720"))),
   fragment_ids_(),
   current_event_num_(0ul),
-  engine_(ps.get<int64_t>("random_seed", 314159)),
   adc_freqs_(),
-  content_generator_()
+  content_generator_(),
+  should_stop_(false),
+  engine_(ps.get<int64_t>("random_seed", 314159))
 {
+
   // Initialize fragment_ids_.
-  fragment_ids_.resize(ps.get<size_t>("fragments_per_event", 5));
+  fragment_ids_.resize(ps.get<size_t>("fragments_per_board", 1));
   auto current_id = ps.get<size_t>("starting_fragment_id", 0);
   std::generate(fragment_ids_.begin(),
                 fragment_ids_.end(),
@@ -103,25 +105,28 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
 
   // Read frequency tables.
   size_t const adc_bits = typeToADC(fragment_type_);
-  auto const fragments_per_event = fragment_ids_.size();
-  content_generator_.reserve(fragments_per_event);
+  auto const fragments_per_board = fragment_ids_.size();
+  content_generator_.reserve(fragments_per_board);
   read_adc_freqs(ps.get<std::string>("freqs_file"),
                  ps.get<std::string>("freqs_path", "DAQ_INDATA_PATH"),
                  adc_freqs_,
                  adc_bits);
 
-  // Initialize content generators.
-  for (size_t i = 0; i < fragments_per_event; ++i) {
+  // Initialize content generators and set up separate random # generators for each fragment on the board
+  for (size_t i = 0; i < fragments_per_board; ++i) {
     content_generator_.emplace_back(V172xFragment::adc_range(adc_bits),
                                     -0.5,
                                     V172xFragment::adc_range(adc_bits) - 0.5,
                                     [this, i](double x) -> double { return adc_freqs_[i][std::round(x)]; }
                                    );
   }
+    
 }
 
+
 bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
-  if (should_stop ()) {
+
+  if (should_stop()) {
     return false;
   }
 
@@ -133,18 +138,36 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     frags.emplace_back(new artdaq::Fragment);
     V172xFragmentWriter newboard(*frags.back());
     newboard.resize(nChannels_);
-    newboard.setBoardID(fragment_ids_[i]);
+    newboard.setBoardID( board_id() ); 
     newboard.setEventCounter(current_event_num_);
+
+    demo::V172xFragment::Header::channel_mask_t mask = 0;
+    for (size_t j = 0; j < fragment_ids_.size(); ++j) {
+      mask |= (1 << j);
+    }
+
+
+    newboard.setChannelMask(1);
+
     std::generate_n(newboard.dataBegin(),
                     nChannels_,
                     [this, i]() {
                       return static_cast<V172xFragment::adc_type>
-                        (std::round(content_generator_[i](engine_)));
+                        (std::round(content_generator_[i]( engine_ )));
                     }
                    );
 
+    //    cout << "Fragment " << i << ", vals are: ";
+    //    for (auto it = newboard.dataBegin(); it != newboard.dataEnd(); it++) {
+    //      cout << *it << " ";
+    //    }
+    //    cout << endl;
+    
+
     artdaq::Fragment& frag = *frags.back();
-    frag.setFragmentID (newboard.board_id());
+    // John F., 1/3/14 -- see my comment above concerning board id vs. fragment id
+    //    frag.setFragmentID (newboard.board_id());
+    frag.setFragmentID (fragment_ids_[i]); // Or should this be fragments_per_board*board_id + i ?
     frag.setSequenceID (current_event_num_);
     frag.setUserType(fragment_type_);
   }
@@ -158,4 +181,4 @@ fragmentIDs_()
 {
   return fragment_ids_;
 }
-DEFINE_ARTDAQ_GENERATOR(demo::V172xSimulator)
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::V172xSimulator)

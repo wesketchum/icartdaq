@@ -4,7 +4,7 @@
 #include "artdaq-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Overlays/V172xFragmentWriter.hh"
 #include "artdaq/DAQdata/Debug.hh"
-#include "artdaq/DAQdata/GeneratorMacros.hh"
+#include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 
@@ -34,7 +34,7 @@ namespace {
 
 demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   :
-  FragmentGenerator(),
+  CommandableFragmentGenerator(ps),
   fileNames_(ps.get<std::vector<std::string>>("fileNames")),
   max_set_size_bytes_(ps.get<double>("max_set_size_gib",
                                      14.0) * 1024 * 1024 * 1024),
@@ -253,4 +253,4 @@ convertFragment_(artdaq::Fragment const & source,
   }
   return std::move(result);
 }
-DEFINE_ARTDAQ_GENERATOR(demo::V172xFileReader)
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::V172xFileReader)

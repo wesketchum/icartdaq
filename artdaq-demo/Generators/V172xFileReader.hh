@@ -3,7 +3,7 @@
 
 #include "artdaq-demo/Overlays/FragmentType.hh"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
-#include "artdaq/DAQdata/FragmentGenerator.hh"
+#include "artdaq/Application/CommandableFragmentGenerator.hh"
 #include "artdaq/DAQdata/Fragments.hh"
 #include "fhiclcpp/fwd.h"
 
@@ -15,18 +15,13 @@
 namespace demo {
   // V172xFileReader reads DS50 events from a file or set of files.
 
-  class V172xFileReader : public artdaq::FragmentGenerator {
+  class V172xFileReader : public artdaq::CommandableFragmentGenerator {
   public:
     explicit V172xFileReader(fhicl::ParameterSet const &);
 
   private:
     bool getNext_(artdaq::FragmentPtrs & output) override;
     std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
-    bool requiresStateMachine_() const override {return true;}
-    void start_() override {should_stop_.store(false);}
-    void pause_() override {}
-    void resume_() override {}
-    void stop_() override {should_stop_.store(true);}
 
     void produceSecondaries_(artdaq::FragmentPtrs & frags);
     artdaq::FragmentPtr
@@ -50,8 +45,6 @@ namespace demo {
     std::atomic<bool> should_stop_;
     std::independent_bits_engine<std::minstd_rand, 2, V172xFragment::adc_type> twoBits_;
 
-  protected:
-    bool should_stop() {return should_stop_.load();}
   };
 }
 

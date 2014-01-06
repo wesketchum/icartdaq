@@ -49,7 +49,7 @@ private:
 
 
 demo::DataCharacterizer::DataCharacterizer(fhicl::ParameterSet const & p)
-  :
+    : EDAnalyzer(p),
   data_label_(p.get<std::string>("data_label")),
   dist_file_(p.get<std::string>("dist_file")),
   data_hist_(),

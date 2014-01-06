@@ -12,10 +12,12 @@ AGGREGATOR_NODE=`hostname`
 #  5) the data directory
 #  6) the logfile name
 #  7) whether to write data to disk [0,1]
-#  8) the desired size of each data file
-#  9) the desired number of events in each file
-# 10) the desired time duration of each file (minutes)
-# 11) whether to print out CFG information (verbose)
+#  8) the desired number of events in the run (stop command)
+#  9) the desired duration of the run (minutes, stop command)
+# 10) the desired size of each data file
+# 11) the desired number of events in each file
+# 12) the desired time duration of each file (minutes)
+# 13) whether to print out CFG information (verbose)
 function launch() {
   ebComp=$3
   agComp=$3
@@ -27,7 +29,7 @@ function launch() {
     agComp=0
   fi
   enableSerial=""
-  if [[ "${11}" == "1" ]]; then
+  if [[ "${13}" == "1" ]]; then
       enableSerial="-e"
   fi
 
@@ -36,19 +38,14 @@ function launch() {
     --v1720 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1 \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[0]},$ebComp \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[1]},$ebComp \
+    --ag `hostname`,${ARTDAQDEMO_AG_PORT[0]},1,$agComp \
+    --ag `hostname`,${ARTDAQDEMO_AG_PORT[1]},1,$agComp \
     --data-dir ${5} --online-monitoring $4 \
-    --write-data ${7} --file-size ${8} \
-    --file-event-count ${9} --file-duration ${10} \
-    --run-number $2 2>&1 | tee -a ${6}
+    --write-data ${7} --run-event-count ${8} \
+    --run-duration ${9} --file-size ${10} \
+    --file-event-count ${11} --file-duration ${12} \
+    --run-number $2  2>&1 | tee -a ${6}
 }
-
-# 30-Dec-2013, KAB - cut out from usage text below...
-#  -s <file size>: specifies the size threshold for closing data files (in MB)
-#      [default is 8000 MB (~7.8 GB); zero means that there is no file size limit]
-#  --file-events <count>: specifies the desired number of events in each file
-#      [default=0, which means no event count limit for files]
-#  --file-duration <duration>: specifies the desired duration of each file (minutes)
-#      [default=0, which means no duration limit for files]
 
 scriptName=`basename $0`
 usage () {
@@ -63,6 +60,12 @@ General options:
 Configuration options (init commands):
   -m <on|off>: specifies whether to run online monitoring [default=off]
   -D : disables the writing of data to disk
+  -s <file size>: specifies the size threshold for closing data files (in MB)
+      [default is 8000 MB (~7.8 GB); zero means that there is no file size limit]
+  --file-events <count>: specifies the desired number of events in each file
+      [default=0, which means no event count limit for files]
+  --file-duration <duration>: specifies the desired duration of each file (minutes)
+      [default=0, which means no duration limit for files]
   -c <compression level>: specifies the ADC data compression level
       0 = no compression
       1 = compression, both raw and compressed data kept [default]
@@ -70,6 +73,11 @@ Configuration options (init commands):
   -o <data dir>: specifies the directory for data files [default=/tmp]
 Begin-run options (start command):
   -N <run number>: specifies the run number
+End-run options (stop command):
+  -n, --run-events <count>: specifies the desired number of events in the run
+      [default=0, which ends the run immediately, independent of the number of events]
+  -d, --run-duration <duration>: specifies the desired length of the run (minutes)
+      [default=0, which ends the run immediately, independent of the duration of the run]
 Notes:
   The start command expects a run number to be specified (-N).
   The primary commands are the following:
@@ -107,13 +115,16 @@ onmonEnable=off
 diskWriting=1
 dataDir="/tmp"
 runNumber=""
+runEventCount=0
+runDuration=0
 fileSize=8000
 fsChoiceSpecified=0
 fileEventCount=0
 fileDuration=0
+fragmentsPerBoard=0
 verbose=0
 OPTIND=1
-while getopts "hc:N:o:t:m:Ds:w:v-:" opt; do
+while getopts "hc:N:o:t:m:Dn:d:s:w:v-:" opt; do
     if [ "$opt" = "-" ]; then
         opt=$OPTARG
     fi
@@ -137,21 +148,39 @@ while getopts "hc:N:o:t:m:Ds:w:v-:" opt; do
         D)
             diskWriting=0
             ;;
-#        file-events)
-#            fileEventCount=${!OPTIND}
-#            let OPTIND=$OPTIND+1
-#            ;;
-#        file-duration)
-#            fileDuration=${!OPTIND}
-#            let OPTIND=$OPTIND+1
-#            ;;
-#        s)
-#            fileSize=${OPTARG}
-#            fsChoiceSpecified=1
-#            ;;
+        n)
+            runEventCount=${OPTARG}
+            ;;
+        d)
+            runDuration=${OPTARG}
+            ;;
+        run-events)
+            runEventCount=${!OPTIND}
+            let OPTIND=$OPTIND+1
+            ;;
+        run-duration)
+            runDuration=${!OPTIND}
+            let OPTIND=$OPTIND+1
+            ;;
+        file-events)
+            fileEventCount=${!OPTIND}
+            let OPTIND=$OPTIND+1
+            ;;
+        file-duration)
+            fileDuration=${!OPTIND}
+            let OPTIND=$OPTIND+1
+            ;;
+        s)
+            fileSize=${OPTARG}
+            fsChoiceSpecified=1
+            ;;
         v)
             verbose=1
             ;;
+	fragments-per-board)
+	    fragmentsPerBoard=${!OPTIND}
+	    let OPTIND=$OPTIND+1
+	    ;;
         *)
             usage
             exit 1
@@ -210,6 +239,17 @@ else
     onmonEnable=0
 fi
 
+# verify that we don't have both a number of events and a time limit
+# for stopping a run
+if [[ "$command" == "stop" ]]; then
+    if [[ "$runEventCount" != "0" ]] && [[ "$runDuration" != "0" ]]; then
+        echo ""
+        echo "*** Only one of event count or run duration may be specified."
+        usage
+        exit
+    fi
+fi
+
 # build the logfile name
 TIMESTAMP=`date '+%Y%m%d%H%M%S'`
 logFile="/tmp/masterControl/dsMC-${TIMESTAMP}-${command}.log"
@@ -220,11 +260,11 @@ echo ">>> ${originalCommand} (Disk writing is ${diskWriting})"
 if [[ "$command" == "shutdown" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     # stop the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
@@ -236,11 +276,11 @@ elif [[ "$command" == "start-system" ]]; then
 elif [[ "$command" == "restart" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     # stop the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
@@ -251,11 +291,11 @@ elif [[ "$command" == "restart" ]]; then
 elif [[ "$command" == "reinit" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     # stop the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
@@ -266,11 +306,11 @@ elif [[ "$command" == "reinit" ]]; then
     # send the init command to re-initialize the system
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
 elif [[ "$command" == "exit" ]]; then
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
@@ -289,7 +329,7 @@ elif [[ "$command" == "fast-reinit" ]]; then
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.startSystem
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
 elif [[ "$command" == "fast-exit" ]]; then
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
@@ -298,6 +338,6 @@ elif [[ "$command" == "fast-exit" ]]; then
 
 else
     launch $command $runNumber $compressionLevel $onmonEnable $dataDir \
-        $logFile $diskWriting $fileSize \
+        $logFile $diskWriting $runEventCount $runDuration $fileSize \
         $fileEventCount $fileDuration $verbose
 fi

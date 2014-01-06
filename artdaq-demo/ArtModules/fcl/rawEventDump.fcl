@@ -1,0 +1,34 @@
+physics:
+{
+  analyzers:
+  {
+    evtDump:
+    {
+      module_type: EventDump
+      raw_data_label: daq
+      uncompressed_V1720_label: unhuffV1720
+      uncompressed_V1724_label: unhuffV1724
+    }
+  }
+
+  a1: [ evtDump ]
+  e1: [ out1 ]
+  end_paths: [ a1, e1 ]
+}
+
+outputs:
+{
+  out1:
+  {
+    module_type: FileDumperOutput
+    wantProductFriendlyClassName: true
+  }
+}
+
+source:
+{
+  module_type: RootInput
+  fileNames: [ "/tmp/artdaqdemo_eb00_20130501000000.root" ]
+}
+
+process_name: EVTDUMP
