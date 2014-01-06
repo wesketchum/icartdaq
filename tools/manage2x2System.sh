@@ -212,7 +212,7 @@ fi
 
 # build the logfile name
 TIMESTAMP=`date '+%Y%m%d%H%M%S'`
-logFile="/daqlogs/masterControl/dsMC-${TIMESTAMP}-${command}.log"
+logFile="/tmp/masterControl/dsMC-${TIMESTAMP}-${command}.log"
 echo "${originalCommand}" > $logFile
 echo ">>> ${originalCommand} (Disk writing is ${diskWriting})"
 
