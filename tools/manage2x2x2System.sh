@@ -68,8 +68,8 @@ Configuration options (init commands):
       [default=0, which means no duration limit for files]
   -c <compression level>: specifies the ADC data compression level
       0 = no compression
-      1 = compression, both raw and compressed data kept
-      2 = compression, only compressed data kept [default]
+      1 = compression, both raw and compressed data kept [default]
+      2 = compression, only compressed data kept
   -o <data dir>: specifies the directory for data files [default=/tmp]
 Begin-run options (start command):
   -N <run number>: specifies the run number
@@ -110,7 +110,7 @@ Examples: ${scriptName} -p 32768 init
 
 # parse the command-line options
 originalCommand="$0 $*"
-compressionLevel=2
+compressionLevel=1
 onmonEnable=off
 diskWriting=1
 dataDir="/tmp"
