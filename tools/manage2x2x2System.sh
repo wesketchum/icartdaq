@@ -44,7 +44,7 @@ function launch() {
     --write-data ${7} --run-event-count ${8} \
     --run-duration ${9} --file-size ${10} \
     --file-event-count ${11} --file-duration ${12} \
-    --run-number $2 --fragments-per-board 2 2>&1 | tee -a ${6}
+    --run-number $2  2>&1 | tee -a ${6}
 }
 
 scriptName=`basename $0`
