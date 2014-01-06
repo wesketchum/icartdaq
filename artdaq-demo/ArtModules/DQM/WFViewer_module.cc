@@ -243,7 +243,7 @@ void demo::WFViewer::analyze (art::Event const & e) {
   if (!digital_sum_only_) {
     for (int lg = 0; lg < total_frags; ++lg) {
       canvas_[1]->cd(lg+1);
-      graphs_[lg]->Draw("PSAME");
+      graphs_[lg]->Draw("*SAME");
     }
 
     canvas_[1] -> Modified();
