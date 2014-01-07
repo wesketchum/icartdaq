@@ -874,8 +874,6 @@ class SystemControl
                                          totalEBs, totalFRs,
                                          Integer(inputBuffSizeWords/8),
                                          v1720Options.board_id, fragmentsPerBoard)
-          puts "John, displaying FHiCL: "
-          puts cfg
 
           br.cfgList[listIndex] = cfg
           break
