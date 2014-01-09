@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-# downloadArtDaq.sh <product directory> <e2|e2:eth|nu:e2:eth> <debug|opt|prof>
+# downloadArtDaq.sh <product directory> <e2|e2:eth|nu:e2:eth|e4:eth> <debug|opt|prof>
 
 thisdir=`pwd`
 productdir=${1}
@@ -11,7 +11,7 @@ extraqual=${3}
 if [ -z ${basequal} ]
 then
    echo "ERROR: qualifier not specified"
-   echo "USAGE:  `basename ${0}` <product directory> <e2|e2:eth|nu:e2:eth> <debug|opt|prof>"
+   echo "USAGE:  `basename ${0}` <product directory> <e2|e2:eth|nu:e2:eth|e4:eth> <debug|opt|prof>"
    exit 1
 fi
 
@@ -26,7 +26,7 @@ then
    qualdir=${qual}.${extraqual}
 else
    echo "ERROR: please specify debug, opt, or prof"
-   echo "USAGE:  `basename ${0}` <product directory> <e2|e2:eth|nu:e2:eth> <debug|opt|prof>"
+   echo "USAGE:  `basename ${0}` <product directory> <e2|e2:eth|nu:e2:eth|e4:eth> <debug|opt|prof>"
    exit 1
 fi
 
@@ -101,22 +101,22 @@ echo "tarballs will be unwound in ${productdir}"
 
 set -x
 
-  curl -O http://oink.fnal.gov/distro/relocatable-ups/ups-upd-4.9.7-${OS}-${plat}.tar.bz2
-
-  curl -O http://oink.fnal.gov/distro/art/art_externals-0.06.05-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
-
-  curl -O http://oink.fnal.gov/distro/art/art_suite-1.07.01-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
-  curl -O http://oink.fnal.gov/distro/packages/cetpkgsupport-1.02.00-noarch.tar.gz
-
+  curl -O http://oink.fnal.gov/distro/relocatable-ups/ups-upd-5.0.1-${OS}-${plat}.tar.bz2
+  curl -O http://oink.fnal.gov/distro/art/art_externals-1.00.04-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
+  curl -O http://oink.fnal.gov/distro/art/art_suite-1.08.10-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
+  curl -O http://oink.fnal.gov/distro/packages/cetpkgsupport-1.05.02-noarch.tar.bz2
+#  wget  http://oink.fnal.gov/distro/packages/cetpkgsupport-1.05.02-noarch.tar.bz2 
+#  echo $PWD $thisdir
+#  ls -l cetpkgsupport-1.05.02-noarch.tar.bz2
 
   cd ${productdir}
 
-  tar xf $thisdir/ups-upd-4.9.7-${OS}-${plat}.tar.bz2
+  tar xf $thisdir/ups-upd-5.0.1-${OS}-${plat}.tar.bz2
 
-  tar xf $thisdir/art_externals-0.06.05-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
+  tar xf $thisdir/art_externals-1.00.04-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
 
-  tar xf $thisdir/art_suite-1.07.01-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
-  tar xf $thisdir/cetpkgsupport-1.02.00-noarch.tar.gz
+  tar xf $thisdir/art_suite-1.08.10-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
+  tar xf $thisdir/cetpkgsupport-1.05.02-noarch.tar.bz2
 
 
 set +x
@@ -150,6 +150,22 @@ then
   tar xf $thisdir/artdaq-1.00.00-${OS}-${plat}-${xqual}-${extraqual}.tar.bz2
   set +x
 fi
+
+if [ "${basequal}" = "e4:eth" ]
+then
+  set -x
+  cd ${thisdir}
+  curl -O http://oink.fnal.gov/distro/art/daq_extras-1.00.04-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
+  curl -O http://oink.fnal.gov/distro/packages/gccxml-0.9.20130621-${OS}-${plat}.tar.bz2
+#  curl -O http://oink.fnal.gov/distro/packages/artdaq/artdaq-1.05.00-${OS}-${plat}-${xqual}-${extraqual}.tar.bz2
+
+  cd ${productdir}
+  tar xf $thisdir/daq_extras-1.00.04-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
+  tar xf $thisdir/gccxml-0.9.20130621-${OS}-${plat}.tar.bz2
+#  tar xf  $thisdir/artdaq-1.05.00-${OS}-${plat}-${xqual}-${extraqual}.tar.bz2
+  set +x
+fi
+
 
 if [ "${basequal}" = "mu2e:e2:eth" ]
 then
@@ -187,7 +203,7 @@ fi
 
 #cetbuildtools
 
-for ver in v3_04_04 v3_04_05
+for ver in v3_07_03
 do
   dotver=`echo ${ver} | sed -e s%_%.%g | sed -e s%v%%`
 
