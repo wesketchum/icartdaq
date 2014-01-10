@@ -4,7 +4,7 @@
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
  # $RCSfile: xt_cmd.sh,v $
-rev='$Revision: 1.8 $$Date: 2014/01/10 15:46:56 $'
+rev='$Revision: 1.9 $$Date: 2014/01/10 17:04:19 $'
 
 # defaults
 term=xterm
@@ -54,7 +54,7 @@ while [ -n "${1-}" ];do
         -bash-opts) eval $reqarg; bash_opts=$1; shift;;
         -rcfile)    eval $reqarg; rcfile=$1;    shift;;
         g*|-geom)   eval $reqarg
-                    if expr "x$1" : 'x[0-9]*[x+-][0-9]' >/dev/null;then
+                    if expr "x$1" : 'x[0-9]*[x+-]*[0-9]' >/dev/null;then
                         term_geom="-geometry $1"
                     else
                         term_geom=$1
