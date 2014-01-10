@@ -29,11 +29,12 @@ tag=
 
 env_opts_var=`basename $0 | sed 's/\.sh$//' | tr 'a-z-' 'A-Z_'`_OPTS
 USAGE="\
-   usage: `basename $0` [demo_root]
+   usage: `basename $0` [options] [demo_root]
 examples: `basename $0` .
-          `basename $0`
+          `basename $0` --run-demo
 If the \"demo_root\" optional parameter is not supplied, the user will be
 prompted for this location.
+--run-demo    runs the demo
 "
 
 # Process script arguments and options
@@ -49,11 +50,12 @@ while [ -n "${1-}" ];do
         leq=`expr "x$op" : 'x-[^=]*\(=\)'` lev=`expr "x$op" : 'x-[^=]*=\(.*\)'`
         test -n "$leq"&&eval "set -- \"\$lev\" \"\$@\""&&op=`expr "x$op" : 'x\([^=]*\)'`
         case "$op" in
-        \?*|h*)  eval $op1chr; do_help=1;;
-        v*)      eval $op1chr; opt_v=`expr $opt_v + 1`;;
-        x*)      eval $op1chr; set -x;;
-        t*|-tag) eval $reqarg; tag=$1;    shift;;
-        *)       echo "Unknown option -$op"; do_help=1;;
+        \?*|h*)    eval $op1chr; do_help=1;;
+        v*)        eval $op1chr; opt_v=`expr $opt_v + 1`;;
+        x*)        eval $op1chr; set -x;;
+        t*|-tag)   eval $reqarg; tag=$1;    shift;;
+        -run-demo) opt_run_demo=--run-demo;;
+        *)         echo "Unknown option -$op"; do_help=1;;
         esac
     else
         aa=`echo "$1" | sed -e"s/'/'\"'\"'/g"` args="$args '$aa'"; shift
@@ -136,7 +138,7 @@ fi
 
 
 echo "About to install artdaq demo; respond to the prompt with an unquoted, lower-case y"
-$git_working_path/tools/installArtDaqDemo.sh
+$git_working_path/tools/installArtDaqDemo.sh ${opt_run_demo-}
 
 endtime=`date`
 
