@@ -1,16 +1,15 @@
 #! /bin/sh
- # This file (xt_tmp_home_cmd.sh) was created by Ron Rechenmacher <ron@fnal.gov> on
+ # This file (xt_cmd.sh) was created by Ron Rechenmacher <ron@fnal.gov> on
  # Jan  8, 2014. "TERMS AND CONDITIONS" governing this file are in the README
  # or COPYING file. If you do not have such a file, one can be obtained by
  # contacting Ron or Fermi Lab in Batavia IL, 60510, phone: 630-840-3000.
- # $RCSfile: xt_tmp_home_cmd.sh,v $
-rev='$Revision: 1.6 $$Date: 2014/01/10 03:53:32 $'
+ # $RCSfile: xt_cmd.sh,v $
+rev='$Revision: 1.8 $$Date: 2014/01/10 15:46:56 $'
 
 # defaults
 term=xterm
 term_opts=-e  # -ls   # want login shell -- NO, use -e bash (see comment below)
 term_geom=
-bash_opts=-l
 CMD_STR=
 
 env_opts_var=`basename $0 | sed 's/\.sh$//' | tr 'a-z-' 'A-Z_'`_OPTS
@@ -51,9 +50,10 @@ while [ -n "${1-}" ];do
         \?*|h*)     eval $op1chr; do_help=1;;
         v*)         eval $op1chr; opt_v=`expr $opt_v + 1`;;
         x*)         eval $op1chr; set -x;;
-        t*|-term)   eval $reqarg; term=$1; shift;;
+        t*|-term)   eval $reqarg; term=$1;      shift;;
         -bash-opts) eval $reqarg; bash_opts=$1; shift;;
-        g*)         eval $op1arg;
+        -rcfile)    eval $reqarg; rcfile=$1;    shift;;
+        g*|-geom)   eval $reqarg
                     if expr "x$1" : 'x[0-9]*[x+-][0-9]' >/dev/null;then
                         term_geom="-geometry $1"
                     else
@@ -73,16 +73,32 @@ test -n "${do_help-}" && echo "$USAGE" && exit
 
 set -u # helps development
 pseudo_home=$1
-
 if [ ! -d "$pseudo_home" ];then
     echo "creating $pseudo_home"
     mkdir -p "$pseudo_home"
 fi
+pseudo_home=`cd "$pseudo_home" >/dev/null;pwd` # convert from potentially relative to abs
 
-# if pseudo_home == real_home
-#   could check for hist injection/cmd execution signature
-#   could prompt for (or just optionally) addition (add) stuff
-#   to users bashrc
+# Normally, I handle rcfile and bash_opts automatically --
+# but if an expert user has specified BOTH, then assume he knows
+# what he is doing
+if [ -z "${rcfile+1}" -o -z "${bash_opts+1}" ];then
+    links_resolved_pseudo=`csh -fc "cd \"$pseudo_home\";pwd"`
+    links_resolved_home=`  csh -fc "cd \"$HOME\";pwd"`
+    # if pseudo_home == real_home
+    #   I normally just use a different rcfile.
+    #   could check for hist injection/cmd execution signature in
+    #   users .bash_profile (or .profile, etc)
+    #   could prompt for (or just optionally) addition (add) stuff
+    #   to users bashrc
+    if [ "$links_resolved_pseudo" = "$links_resolved_home" ];then
+        rcfile=.bashrc_xt_cmd
+        bash_opts="--rcfile $rcfile"
+    else
+        rcfile=.bash_profile
+        bash_opts="-l"
+    fi
+fi
 
 init_profile_file() # $1=profile_file
 {
@@ -143,16 +159,16 @@ append_cmd_str_support() # $1=profile_file
 }
 
 # pseudo_home_profile
-if [ ! -f $pseudo_home/.bash_profile ];then
+if [ ! -f "$pseudo_home/$rcfile" ];then
     # create new one
-    init_profile_file      $pseudo_home/.bash_profile
-    append_cmd_str_support $pseudo_home/.bash_profile
+    init_profile_file      "$pseudo_home/$rcfile"
+    append_cmd_str_support "$pseudo_home/$rcfile"
 else
     : # check if current is 
 fi
 
-# Note: bash has a "--rcfile" option which could be used
-# but, I really want login shell (not merely interactive) and
+# Note: bash has a a "-l" option and also a "--rcfile" option which could
+# be used but, I really want login shell (not merely interactive) and
 # I want to be able to do: ps aux | grep $$
 # and see "-bash" (bash with a leading "-") show up.
 # Note: it does make sense to use the --rcfile option with a "login shell"
@@ -168,19 +184,27 @@ fi
 # shell. So, the choice is between:
 #     a) a simple/short cmd line "bash -l" and messing with HOME
 # and b) a longer cmd line
-# If I experience problem with "messing with HOME", I'll switch to using
-# --rcfile
+# If I go with --rcfile, I won't have to worry about pseudo_home==HOME.
 
 # special (mainly testing)
-#  xt_tmp_home_cmd.sh xt_tmp_home -c'ps aux|grep $$' --bash-opts=
-test -z "$bash_opts" -a "$term" = xterm && bash= term_opts=-ls || bash=bash
-#  xt_tmp_home_cmd.sh xt_tmp_home -c'ps aux|grep $$' --bash-opts="--rcfile $HOME/xt_tmp_home/.bash_profile"
+#  xt_cmd.sh ~/xt_tmp_home -c'ps aux|grep $$' --bash-opts=
+test -z "$bash_opts" -a "$term" = xterm && term_opts=-ls bash= || bash=bash
+#  xt_cmd.sh ~/xt_tmp_home -c'ps aux|grep $$' -c'ls -a'
+#  xt_cmd.sh ~/xt_tmp_home -c'ps aux|grep $$' -c'ls -a'    --rcfile=.bashrc_xt_   --bash-opts="--rcfile .bashrc_xt_"
+#  xt_cmd.sh ~/xt_tmp_home -c'ps aux|grep $$' -c'ls -a' -x --rcfile=.bash_profile --bash-opts=-l
+#  xt_cmd.sh ~/xt_tmp_home -c'ps aux|grep $$' -c'ls -a' -x --rcfile=.bash_profile
 expr "x$bash_opts" : '.*--rcfile' >/dev/null && home=$HOME || home=$pseudo_home
 
-cp $HOME/.Xauthority "$pseudo_home"
+if [ -f "$HOME"/.Xauthority ];then
+    if [ -f "$pseudo_home"/.Xauthority ] && cmp -s "$pseudo_home"/.Xauthority "$HOME"/.Xauthority;then
+        : files are the same, no need to copy
+    else
+        cp $HOME/.Xauthority "$pseudo_home"
+    fi
+fi
 cd "$pseudo_home" >/dev/null
 env -i SHELL=$SHELL PATH=/usr/bin:/bin LOGNAME=$USER USER=$USER \
  DISPLAY=$DISPLAY \
  REALHOME="$HOME" HISTFILE="$HOME/.bash_history" \
  HISTTIMEFORMAT='%a %m/%d %H:%M:%S  ' \
- HOME=$PWD CMD_STR="$CMD_STR" $term $term_geom $term_opts $bash $bash_opts &
+ HOME="$home" CMD_STR="$CMD_STR" $term $term_geom $term_opts $bash $bash_opts &

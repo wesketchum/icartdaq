@@ -106,12 +106,12 @@ echo "Installation and build complete; please see https://cdcvs.fnal.gov/redmine
 if [ -n "${opt_run_demo-}" ];then
     echo doing the demo
 
-    $artdaq_demo_dir/tools/xt_tmp_home_cmd.sh $demo_dir \
+    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir \
         -c '. ./setupARTDAQDEMO' \
         -c start2x2x2System.sh
     sleep 5
 
-    $artdaq_demo_dir/tools/xt_tmp_home_cmd.sh $demo_dir \
+    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir \
         -c '. ./setupARTDAQDEMO' \
         -c 'manage2x2x2System.sh -m on init' \
         -c ':,sleep 10' \
