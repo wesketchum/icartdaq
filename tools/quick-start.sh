@@ -137,8 +137,7 @@ elif [ -n "${opt_force-}" ];then
 fi
 
 
-echo "About to install artdaq demo; respond to the prompt with an unquoted, lower-case y"
-$git_working_path/tools/installArtDaqDemo.sh ${opt_run_demo-}
+$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-}
 
 endtime=`date`
 
