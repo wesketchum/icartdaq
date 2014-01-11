@@ -106,7 +106,7 @@ echo "Installation and build complete; please see https://cdcvs.fnal.gov/redmine
 if [ -n "${opt_run_demo-}" ];then
     echo doing the demo
 
-    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132 \
+    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132x33 \
         -c '. ./setupARTDAQDEMO' \
         -c start2x2x2System.sh
     sleep 5
