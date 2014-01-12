@@ -30,10 +30,8 @@ namespace demo {
     std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_;
 
     // State.
-    std::size_t current_event_num_;
     std::vector<std::vector<size_t>> adc_freqs_;
     std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
-    std::atomic<bool> should_stop_;
     std::mt19937 engine_;
 
   };
