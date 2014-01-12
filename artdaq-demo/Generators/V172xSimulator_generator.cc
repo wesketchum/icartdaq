@@ -128,6 +128,10 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     return false;
   }
 
+  // 11-Jan-2014, KAB: sleep a short time to avoid getting ahead of
+  // the eventbuilders
+  usleep(100000);
+
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
   for (size_t i = 0; i < fragment_ids_.size(); ++i) {
