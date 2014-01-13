@@ -57,14 +57,8 @@ echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
 . ../artdaq/ups/setup_for_development -p e4 eth
 echo FINISHED ../artdaq/ups/setup_for_development
-buildtool -p
-
-cd $products_dir
-if [ ! -d artdaq ];then
-    for tarfile in $demo_dir/build_artdaq/artdaq-1.05.01-*-e4-eth-prof.tar.bz2;do
-        tar xf $tarfile
-    done
-fi
+export CETPKG_INSTALL=$products_dir
+buildtool -i
 
 cd $demo_dir >/dev/null
 if [[ ! -e ./setupARTDAQDEMO ]]; then
