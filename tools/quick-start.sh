@@ -70,6 +70,7 @@ test $# -eq 1 && root=$1
 
 #check that $0 is in a git repo
 tools_path=`dirname $0`
+tools_path=`cd "$tools_path" >/dev/null;pwd`
 tools_dir=`basename $tools_path`
 git_working_path=`dirname $tools_path`
 cd "$git_working_path" >/dev/null
