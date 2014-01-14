@@ -103,10 +103,11 @@ if [ -n "${opt_run_demo-}" ];then
     $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132x33 \
         -c '. ./setupARTDAQDEMO' \
         -c start2x2x2System.sh
-    sleep 5
+    sleep 2
 
     $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132 \
         -c '. ./setupARTDAQDEMO' \
+        -c ':,sleep 10' \
         -c 'manage2x2x2System.sh -m on init' \
         -c ':,sleep 5' \
         -c 'manage2x2x2System.sh -N 101 start' \
