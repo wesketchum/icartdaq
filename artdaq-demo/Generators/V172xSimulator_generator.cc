@@ -89,10 +89,8 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
   nChannels_(ps.get<size_t>("nChannels", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "V1720"))),
   fragment_ids_(),
-  current_event_num_(0ul),
   adc_freqs_(),
   content_generator_(),
-  should_stop_(false),
   engine_(ps.get<int64_t>("random_seed", 314159))
 {
 
@@ -130,7 +128,9 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     return false;
   }
 
-  ++current_event_num_;
+  // 11-Jan-2014, KAB: sleep a short time to avoid getting ahead of
+  // the eventbuilders
+  usleep(100000);
 
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
@@ -139,7 +139,7 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     V172xFragmentWriter newboard(*frags.back());
     newboard.resize(nChannels_);
     newboard.setBoardID( board_id() ); 
-    newboard.setEventCounter(current_event_num_);
+    newboard.setEventCounter(ev_counter());
 
     demo::V172xFragment::Header::channel_mask_t mask = 0;
     for (size_t j = 0; j < fragment_ids_.size(); ++j) {
@@ -168,9 +168,11 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     // John F., 1/3/14 -- see my comment above concerning board id vs. fragment id
     //    frag.setFragmentID (newboard.board_id());
     frag.setFragmentID (fragment_ids_[i]); // Or should this be fragments_per_board*board_id + i ?
-    frag.setSequenceID (current_event_num_);
+    frag.setSequenceID (ev_counter());
     frag.setUserType(fragment_type_);
   }
+
+  ev_counter_inc();
 
   return true;
 }
