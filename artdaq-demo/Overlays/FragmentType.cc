@@ -7,7 +7,7 @@
 
 namespace {
   static std::vector<std::string> const
-  names { "MISSED", "V1495", "V1720", "V1724", "V1190", "UNKNOWN" };
+  names { "MISSED", "V1495", "V1720", "V1724", "V1190", "TOY1", "TOY2", "UNKNOWN" };
 }
 
 demo::FragmentType
