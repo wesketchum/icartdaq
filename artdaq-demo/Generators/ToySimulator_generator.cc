@@ -96,7 +96,8 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   //  adc_freqs_(),
   //  content_generator_(),
   should_stop_(false),
-  engine_(ps.get<int64_t>("random_seed", 314159))
+  engine_(ps.get<int64_t>("random_seed", 314159)),
+  uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))
 {
 
 
@@ -171,7 +172,12 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   
   newfrag.resize(nADCcounts_);
 
-  // ... and what shall we fill the board with?
+  std::generate_n(newfrag.dataBegin(), nADCcounts_,
+  		  [&]() {
+  		    return static_cast<ToyFragment::adc_t>
+  		      ((*uniform_distn_)( engine_ ));
+  		  }
+  		  );
 
   newfrag.fastVerify( metadata.num_adc_bits );
 

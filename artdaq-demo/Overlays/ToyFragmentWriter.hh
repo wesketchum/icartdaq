@@ -27,10 +27,8 @@ public:
   // These functions form overload sets with const functions from
   // demo::ToyFragment
 
-  // Are these necessary? Let's see what happens when I comment them out...
-
-  //  adc_type * dataBegin();
-  //  adc_type * dataEnd();
+  adc_t * dataBegin();
+  adc_t * dataEnd();
 
   // We'll need to hide the const version of header in ToyFragment in
   // order to be able to perform writes
@@ -75,6 +73,17 @@ private:
   // Note that this non-const reference hides the const reference in the base class
   artdaq::Fragment & artdaq_Fragment_;
 };
+
+
+inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataBegin() {
+  assert(frag_.dataSize() > words_to_frag_words_(header_size_words()));
+  return reinterpret_cast<adc_t *>(header_() + 1);
+}
+
+inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataEnd() {
+  return dataBegin() + total_adc_values();
+}
+
 
 // {
   //}

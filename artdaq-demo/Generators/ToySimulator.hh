@@ -55,11 +55,12 @@ namespace demo {
 
     // State.
     std::size_t current_event_num_;
-    //    std::vector<std::vector<size_t>> adc_freqs_;
+
     //    std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
     std::atomic<bool> should_stop_;
-    std::mt19937 engine_;
 
+    std::mt19937 engine_;
+    std::unique_ptr<std::uniform_int_distribution<int>> uniform_distn_;
   };
 }
 
