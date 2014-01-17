@@ -21,7 +21,7 @@ class demo::ToyFragment {
 
   // The ToyFragment represents its data through the adc_t type, which
   // is a typedef of an unsigned 16-bit integer. Note that since there
-  // are two types of ToyFragment ("Toy1" and "Toy2", declared in
+  // are two types of ToyFragment ("TOY1" and "TOY2", declared in
   // FragmentType.hh), the ADC type needs to be large enough to hold
   // the ADC count with the highest number of bits.
 
@@ -85,12 +85,7 @@ class demo::ToyFragment {
   // The constructor simply sets its const private member "artdaq_Fragment_"
   // to refer to the artdaq::Fragment object
 
-  // This constructor will throw if:
-  // -There's no metadata 
-  // -The "type" field in the header isn't the expected one
-  // -Other circumstances?
-
-  ToyFragment(artdaq::Fragment const & f, std::vector<artdaq::Fragment::type_t> const & ftypes );
+  ToyFragment(artdaq::Fragment const & f ) : artdaq_Fragment_(f) {}
 
   // const getter functions for the data in the header
 
@@ -139,30 +134,6 @@ class demo::ToyFragment {
 private:
   artdaq::Fragment const & artdaq_Fragment_;
 };
-
-
-
-demo::ToyFragment::ToyFragment(artdaq::Fragment const & f, 
-			       std::vector<artdaq::Fragment::type_t> const & ftypes )  : 
-  artdaq_Fragment_(f)
-{
-
-  if (! f.hasMetadata() ) {
-    throw cet::exception("ToyFragment: artdaq::Fragment object does not contain metadata");
-  }
-
-  bool acceptedType = false;
-
-  for (auto ftype : ftypes ) {
-    if (ftype == f.type() ) {
-      acceptedType = true;
-    }
-  }
-
-  if (! acceptedType ) {
-    throw cet::exception("ToyFragment: artdaq::Fragment is not of an expected type");
-  }
-}
 
 inline demo::ToyFragment::Header const * demo::ToyFragment::header_() const {
   return reinterpret_cast<ToyFragment::Header const *>(&*artdaq_Fragment_.dataBegin());

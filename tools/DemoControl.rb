@@ -38,6 +38,7 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
     }
     wf: {
       module_type: WFViewer
+      fragment_type_label: TOY1
       prescale: 1000
       digital_sum_only: false
       fragments_per_board: %{fragments_per_board}
@@ -142,7 +143,7 @@ source: {
   module_type: RawInput
   waiting_time: 900
   resume_after_timeout: true
-  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"]]
+  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"], [6, \"TOY1\"], [7, \"TOY2\"]]
 }
 process_name: DAQ"
 
@@ -265,6 +266,25 @@ daq: {
   }
 }"
 
+TOY_SIM_CONFIG = "\
+daq: {
+  max_fragment_size_words: %{size_words}
+  fragment_receiver: {
+    mpi_buffer_count: %{buffer_count}
+    mpi_sync_interval: 50
+    first_event_builder_rank: %{total_frs}
+    event_builder_count: %{total_ebs}
+    generator: ToySimulator
+    fragments_per_board: %{fragments_per_board}
+    nADCcounts: 10
+    starting_fragment_id: %{starting_fragment_id}
+    fragment_id: %{starting_fragment_id}
+    board_id: %{board_id}
+    random_seed: %{random_seed}
+#    sleep_on_stop_us: 500000
+  }
+}"
+
 V1720_SIM_CONFIG = "\
 daq: {
   max_fragment_size_words: %{size_words}
@@ -284,6 +304,7 @@ daq: {
     sleep_on_stop_us: 500000
   }
 }"
+
 
 class ConfigGen
 
@@ -456,6 +477,21 @@ class ConfigGen
     return agConfig  
   end
   
+  def generateToy(startingFragmentId, totalEBs, totalFRs,
+                    fragSizeWords, boardId, fragmentsPerBoard)
+    toyConfig = String.new(TOY_SIM_CONFIG)
+    
+    toyConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
+    toyConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
+    toyConfig.gsub!(/\%\{starting_fragment_id\}/, String(startingFragmentId))
+    toyConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
+    toyConfig.gsub!(/\%\{board_id\}/, String(boardId))
+    toyConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
+    toyConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
+    toyConfig.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
+    return toyConfig
+  end
+
   def generateV1720(startingFragmentId, totalEBs, totalFRs,
                     fragSizeWords, boardId, fragmentsPerBoard)
     v1720Config = String.new(V1720_SIM_CONFIG)
@@ -870,10 +906,21 @@ class SystemControl
       listIndex = 0
       br.kindList.each do |kind|
         if kind == v1720Options.kind && br.boardIndexList[listIndex] == v1720Options.index
-          cfg = @configGen.generateV1720(v1720Options.index*fragmentsPerBoard,
+
+# John, 1/16/14 -- this is pretty kluge-y, and will be improved on
+# soon -- I'm "stealing" parameters intended for v172x boards at the
+# command line and using them for the "toy" board.
+
+#          cfg = @configGen.generateV1720(v1720Options.index*fragmentsPerBoard,
+#                                         totalEBs, totalFRs,
+#                                         Integer(inputBuffSizeWords/8),
+#                                         v1720Options.board_id, fragmentsPerBoard)
+          cfg = @configGen.generateToy(v1720Options.index*fragmentsPerBoard,
                                          totalEBs, totalFRs,
                                          Integer(inputBuffSizeWords/8),
                                          v1720Options.board_id, fragmentsPerBoard)
+
+
 
           br.cfgList[listIndex] = cfg
           break

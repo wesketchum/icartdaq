@@ -7,8 +7,8 @@
 // implementation
 
 // ToySimulator is designed to simulate values coming in from one of
-// two types of digitizer boards, one called "Toy1" and the other
-// called "Toy2"; the only difference between the two boards is the #
+// two types of digitizer boards, one called "TOY1" and the other
+// called "TOY2"; the only difference between the two boards is the #
 // of bits in the ADC values they send (see ToySimulator_generator.cc
 // for more)
 

@@ -21,10 +21,10 @@ namespace {
   size_t typeToADC(demo::FragmentType type)
   {
     switch (type) {
-    case demo::FragmentType::Toy1:
+    case demo::FragmentType::TOY1:
       return 12;
       break;
-    case demo::FragmentType::Toy2:
+    case demo::FragmentType::TOY2:
       return 14;
       break;
     default:
@@ -90,7 +90,7 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   :
   CommandableFragmentGenerator(ps),
   nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
-  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "Toy1"))),
+  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "TOY1"))),
   fragment_ids_(1),
   current_event_num_(0ul),
   //  adc_freqs_(),
@@ -100,6 +100,13 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))
 {
 
+  // Check and make sure that the fragment type will be one of the "toy" types
+  
+  std::vector<artdaq::Fragment::type_t> const ftypes = {demo::FragmentType::TOY1, demo::FragmentType::TOY2 };
+
+  if (std::find( ftypes.begin(), ftypes.end(), fragment_type_) == ftypes.end() ) {
+    throw cet::exception("Error in ToySimulator: unexpected fragment type supplied to constructor");
+  }
 
   auto current_id = ps.get<size_t>("starting_fragment_id", 0);
 
@@ -160,12 +167,7 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
 
   // Then any overlay-specific quantities next; will need the *Writer class for this
 
-  // ToyFragmentWriter will check in its constructor that the
-  // artdaq::Fragment header's "type" value is one of these
-
-  std::vector<artdaq::Fragment::type_t> const ftypes = {demo::FragmentType::Toy1, demo::FragmentType::Toy2 };
-
-  ToyFragmentWriter newfrag(*frags.back(), ftypes);
+  ToyFragmentWriter newfrag(*frags.back());
 
   newfrag.set_hdr_run_number(999);
   newfrag.set_hdr_event_number(current_event_num_);

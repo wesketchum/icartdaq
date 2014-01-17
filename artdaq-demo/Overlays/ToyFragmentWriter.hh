@@ -20,9 +20,8 @@ class demo::ToyFragmentWriter: public demo::ToyFragment {
 public:
 
 
-  ToyFragmentWriter(artdaq::Fragment & f, 
-		    std::vector<artdaq::Fragment::type_t> const & ftypes ) :
-    ToyFragment(f, ftypes), artdaq_Fragment_(f) {}
+  ToyFragmentWriter(artdaq::Fragment & f) :
+    ToyFragment(f), artdaq_Fragment_(f) {}
 
   // These functions form overload sets with const functions from
   // demo::ToyFragment
