@@ -256,6 +256,10 @@ logFile="/tmp/masterControl/dsMC-${TIMESTAMP}-${command}.log"
 echo "${originalCommand}" > $logFile
 echo ">>> ${originalCommand} (Disk writing is ${diskWriting})"
 
+# calculate the shmkey that should be checked
+let shmKey=1078394880+${ARTDAQDEMO_PMT_PORT}
+shmKeyString=`printf "0x%x" ${shmKey}`
+
 # invoke the requested command
 if [[ "$command" == "shutdown" ]]; then
     # first send a stop command to end the run (in case it is needed)
@@ -269,9 +273,9 @@ if [[ "$command" == "shutdown" ]]; then
     # stop the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
 elif [[ "$command" == "start-system" ]]; then
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.startSystem
 elif [[ "$command" == "restart" ]]; then
     # first send a stop command to end the run (in case it is needed)
@@ -285,7 +289,7 @@ elif [[ "$command" == "restart" ]]; then
     # stop the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
     # start the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.startSystem
 elif [[ "$command" == "reinit" ]]; then
@@ -300,7 +304,7 @@ elif [[ "$command" == "reinit" ]]; then
     # stop the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
     # start the MPI program
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.startSystem
     # send the init command to re-initialize the system
@@ -314,18 +318,18 @@ elif [[ "$command" == "exit" ]]; then
         $fileEventCount $fileDuration $verbose
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
 
 elif [[ "$command" == "fast-shutdown" ]]; then
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
 elif [[ "$command" == "fast-restart" ]]; then
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.startSystem
 elif [[ "$command" == "fast-reinit" ]]; then
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.startSystem
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
@@ -334,7 +338,7 @@ elif [[ "$command" == "fast-reinit" ]]; then
 elif [[ "$command" == "fast-exit" ]]; then
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc localhost:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
-    rsh ${AGGREGATOR_NODE} "ipcs | grep 0x4f4d4f4e | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
+    ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
 
 else
     launch $command $runNumber $compressionLevel $onmonEnable $dataDir \
