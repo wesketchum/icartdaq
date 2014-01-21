@@ -1,21 +1,29 @@
 #ifndef artdaq_demo_Overlays_ToyFragmentWriter_hh
 #define artdaq_demo_Overlays_ToyFragmentWriter_hh
+
 ////////////////////////////////////////////////////////////////////////
 // ToyFragmentWriter
 //
-// Class derived from ToyFragment which allows writes to the data (for simulation purposes)
+// Class derived from ToyFragment which allows writes to the data (for
+// simulation purposes). Note that for this reason it contains
+// non-const members which hide the const members in its parent class,
+// ToyFragment, including its reference to the artdaq::Fragment
+// object, artdaq_Fragment_, as well as its functions pointing to the
+// beginning and end of ADC values in the fragment, dataBegin() and
+// dataEnd()
 //
 ////////////////////////////////////////////////////////////////////////
 
 #include "artdaq/DAQdata/Fragment.hh"
 #include "artdaq-demo/Overlays/ToyFragment.hh"
 
+#include <iostream>
+
 namespace demo {
   class ToyFragmentWriter;
 }
 
-// Note the inheritance: order is important here (for construction
-// initialization order).
+
 class demo::ToyFragmentWriter: public demo::ToyFragment {
 public:
 
@@ -33,30 +41,12 @@ public:
   // order to be able to perform writes
 
   Header * header_() {
-    // This assert could be improved
-    // assert(frag_.dataSize() >= words_to_frag_words_(hdr_size_words()));
     return reinterpret_cast<Header *>(&*artdaq_Fragment_.dataBegin());
   }
-
-//  void setChannelMask(demo::ToyFragment::Header::channel_mask_t mask);
-//  void setPattern(demo::ToyFragment::Header::pattern_t pattern);
 
   void set_hdr_run_number(Header::run_number_t run_number) { 
     header_()->run_number = run_number;
   }
-
-  // Note that this also sets the artdaq::Fragment's sequence_id value
-
-  void set_hdr_event_number(Header::event_number_t event_number) { 
-    header_()->event_number = event_number;
-    artdaq_Fragment_.setSequenceID( event_number );
-  }
-
-
-
-  //  void setBoardID(demo::ToyFragment::Header::board_id_t id);
-  //  void setEventCounter(demo::ToyFragment::Header::event_counter_t event_counter);
-  //  void setTriggerTimeTag(demo::ToyFragment::Header::trigger_time_tag_t tag);
 
   void resize(size_t nAdcs);
 
@@ -65,9 +55,6 @@ private:
 
   static size_t adcs_to_words_(size_t nAdcs);
   static size_t words_to_frag_words_(size_t nWords);
-
-  //  demo::ToyFragment::Header * header_();
-  //  Header * header_();
 
   // Note that this non-const reference hides the const reference in the base class
   artdaq::Fragment & artdaq_Fragment_;
@@ -82,25 +69,6 @@ inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataBegin() {
 inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataEnd() {
   return dataBegin() + total_adc_values();
 }
-
-
-// {
-  //}
-  
-
-
-//inline demo::ToyFragmentWriter::ToyFragmentWriter(artdaq::Fragment & frag): ToyFragment(frag), frag_(frag) { }
-
-// Can we get away with using the parent class's const dataBegin() and dataEnd() ?
-
-// inline demo::ToyFragment::adc_type * demo::ToyFragmentWriter::dataBegin() {
-//   assert(frag_.dataSize() > words_to_frag_words_(hdr_size_words()));
-//   return reinterpret_cast<adc_type *>(header_() + 1);
-// }
-
-// inline demo::ToyFragment::adc_type * demo::ToyFragmentWriter::dataEnd() {
-//   return dataBegin() + total_adc_values();
-// }
 
 
 inline void demo::ToyFragmentWriter::resize(size_t nAdcs) {
@@ -126,10 +94,5 @@ inline size_t demo::ToyFragmentWriter::words_to_frag_words_(size_t nWords) {
     nWords / words_per_frag_word_() + 1 :
     nWords / words_per_frag_word_();
 }
-
-// inline demo::ToyFragment::Header * demo::ToyFragmentWriter::header_() {
-//   assert(frag_.dataSize() >= words_to_frag_words_(hdr_size_words()));
-//   return reinterpret_cast<demo::ToyFragment::Header *>(&*frag_.dataBegin());
-// }
 
 #endif /* artdaq_demo_Overlays_ToyFragmentWriter_hh */

@@ -281,7 +281,7 @@ daq: {
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
     random_seed: %{random_seed}
-#    sleep_on_stop_us: 500000
+    sleep_on_stop_us: 500000
   }
 }"
 

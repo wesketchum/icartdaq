@@ -1,18 +1,22 @@
 #ifndef artdaq_demo_Generators_ToySimulator_hh
 #define artdaq_demo_Generators_ToySimulator_hh
 
-// ToySimulator is a type of fragment generator used to demonstrate
-// the way in which users can implement their own fragment generators,
-// while also providing examples of "best practices" related to the
-// implementation
+// ToySimulator is a simple type of fragment generator intended to be
+// studied by new users of artdaq as an example of how to create such
+// a generator in the "best practices" manner. Derived from artdaq's
+// CommandableFragmentGenerator class, it can be used in a full DAQ
+// simulation, generating all ADC counts with equal probability via
+// the std::uniform_int_distribution class
 
 // ToySimulator is designed to simulate values coming in from one of
 // two types of digitizer boards, one called "TOY1" and the other
 // called "TOY2"; the only difference between the two boards is the #
-// of bits in the ADC values they send (see ToySimulator_generator.cc
-// for more)
+// of bits in the ADC values they send. These values are declared as
+// FragmentType enum's in artdaq-demo's
+// artdaq-demo/Overlays/FragmentType.hh header.
 
 // Some C++ conventions used:
+
 // -Append a "_" to every private member function and variable
 
 #include "fhiclcpp/fwd.h"
@@ -25,7 +29,7 @@
 #include <vector>
 #include <atomic>
 
-namespace demo {
+namespace demo {    
 
   class ToySimulator : public artdaq::CommandableFragmentGenerator {
   public:
@@ -40,24 +44,24 @@ namespace demo {
     bool getNext_(artdaq::FragmentPtrs & output) override;
 
     // Like "getNext_", "fragmentIDs_" is a mandatory override; it
-    // returns a vector of the fragment IDs the BoardReaderMain
-    // application running the object of this class is responsible for
-    // in an event
+    // returns a vector of the fragment IDs an instance of this class
+    // is responsible for (in the case of ToySimulator, this is just
+    // the fragment_id_ variable declared in the parent
+    // CommandableFragmentGenerator class)
     
-    std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
+    std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override {
+      return fragment_ids_;
+    }
 
     // FHiCL-configurable variables. Note that the C++ variable names
     // are the FHiCL variable names with a "_" appended
 
-    std::size_t const nADCcounts_;
-    FragmentType const fragment_type_;
-    std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_;  // Returned by fragmentIDs_()
+    std::size_t const nADCcounts_;     // ADC values per fragment per event
+    FragmentType const fragment_type_; // Type of fragment (see FragmentType.hh)
+    
+    std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_; 
 
-    // State.
-    std::size_t current_event_num_;
-
-    //    std::vector<std::discrete_distribution<V172xFragment::adc_type>> content_generator_;
-    std::atomic<bool> should_stop_;
+    // Members needed to generate the simulated data
 
     std::mt19937 engine_;
     std::unique_ptr<std::uniform_int_distribution<int>> uniform_distn_;

@@ -8,11 +8,13 @@
 #include <ostream>
 #include <vector>
 
-// Implementation of "ToyFragment", an artdaq::Fragment overlay class used for pedagogical purposes
+// Implementation of "ToyFragment", an artdaq::Fragment overlay class
+// used for pedagogical purposes
 
 namespace demo {
   class ToyFragment;
 
+  // Let the "<<" operator dump the ToyFragment's data to stdout
   std::ostream & operator << (std::ostream &, ToyFragment const &);
 }
 
@@ -32,32 +34,32 @@ class demo::ToyFragment {
 
   // "data_t" is a typedef of the fundamental unit of data the
   // metadata structure thinks of itself as consisting of; it can give
-  // its size via the static "size_words" variable ( ToyFragment::Metadata::size_words )
+  // its size via the static "size_words" variable (
+  // ToyFragment::Metadata::size_words )
 
   struct Metadata {
 
     typedef uint32_t data_t;
 
-    uint32_t board_serial_number : 16;
-    uint32_t num_adc_bits : 8;
-    uint32_t unused : 8; // 16 + 8 + 8 == 32 bits
+    data_t board_serial_number : 16;
+    data_t num_adc_bits : 8;
+    data_t unused : 8; // 16 + 8 + 8 == 32 bits
     
-    static size_t const size_words = 1ul;
+    static size_t const size_words = 1ul; // Units of Metadata::data_t
   };
 
-  // #if USE_MODERN_FEATURES
   static_assert (sizeof (Metadata) == Metadata::size_words * sizeof (Metadata::data_t), "ToyFragment::Metadata size changed");
-  // #endif /* USE_MODERN_FEATURES */
 
-  
+
   // The "Header" struct contains "metadata" specific to the fragment
   // which is not hardware-related
 
-  // Header::data_t describes the standard size of a data type not
-  // just for the header data, but the physics data beyond it; the
-  // size of the header in units of Header::data_t is given by
-  // "size_words", and the size of the fragment beyond the header in
-  // units of Header::data_t is given by "event_size"
+  // Header::data_t -- not to be confused with Metadata::data_t ! --
+  // describes the standard size of a data type not just for the
+  // header data, but ALSO the physics data beyond it; the size of the
+  // header in units of Header::data_t is given by "size_words", and
+  // the size of the fragment beyond the header in units of
+  // Header::data_t is given by "event_size"
 
   // Notice only the first 28 bits of the first 32-bit unsigned
   // integer in the Header is used to hold the event_size ; this means
@@ -69,15 +71,13 @@ class demo::ToyFragment {
 
     typedef uint32_t event_size_t;  
     typedef uint32_t run_number_t;
-    typedef uint32_t event_number_t;
 
     uint32_t event_size : 28;
     uint32_t unused_1   :  4;
 
-    uint32_t run_number : 32;
-    uint32_t event_number : 32;
+    run_number_t run_number;
 
-    static size_t const size_words = 3ul;
+    static size_t const size_words = 2ul;   // Units of Header::data_t
   };
 
   static_assert (sizeof (Header) == Header::size_words * sizeof (Header::data_t), "ToyFragment::Header size changed");
@@ -91,33 +91,56 @@ class demo::ToyFragment {
 
   Header::event_size_t hdr_event_size() const { return header_()->event_size; } 
   Header::run_number_t hdr_run_number() const { return header_()->run_number; }
-  Header::event_number_t hdr_event_number() const { return header_()->event_number; }
+
   static constexpr size_t hdr_size_words() { return Header::size_words; }
 
-  size_t total_adc_values() const; // The number of ADC values describing data beyond the header
+  // The number of ADC values describing data beyond the header
+  size_t total_adc_values() const {
+    return (hdr_event_size() - hdr_size_words()) * adcs_per_word_();
+  }
 
-  adc_t const * dataBegin() const; // Start of the ADC values
-  adc_t const * dataEnd() const; // End of the ADC values
+  // Start of the ADC values, returned as a pointer to the ADC type
+  adc_t const * dataBegin() const {
+    return reinterpret_cast<adc_t const *>(header_() + 1);
+  }
 
-  // Functions to check if any ADC values are corrupt.
+  // End of the ADC values, returned as a pointer to the ADC type
+  adc_t const * dataEnd() const {
+    return dataBegin() + total_adc_values();
+  }
 
-  bool fastVerify(int daq_adc_bits) const;
-  adc_t const * findBadADC(int daq_adc_bits) const;
-  void checkADCData(int daq_adc_bits) const; // Throws if ADC appears corrupt
+  // Functions to check if any ADC values are corrupt
 
-  //#if USE_MODERN_FEATURES
-  //    static constexpr size_t header_size_words();
-  //  static constexpr size_t adc_range(int daq_adc_bits);
+  // findBadADC() checks to make sure that the ADC type (adc_t) variable
+  // holding the ADC value doesn't contain bits beyond the expected
+  // range, i.e., can't be evaluated to a larger value than the max
+  // permitted ADC value
 
+  adc_t const * findBadADC(int daq_adc_bits) const {
+    return std::find_if(dataBegin(), dataEnd(), 
+			[&](adc_t const adc) -> bool { 
+			  return (adc >> daq_adc_bits); });
+  }
+
+  bool fastVerify(int daq_adc_bits) const {
+    return (findBadADC(daq_adc_bits) == dataEnd());
+  };
+
+  // Defined in ToyFragment.cc, this throws if any ADC appears corrupt
+  void checkADCData(int daq_adc_bits) const; 
+
+
+  // Largest ADC value possible
   size_t adc_range(int daq_adc_bits) {
     return (1ul << daq_adc_bits );
   }
 
-
-  //#endif /* USE_MODERN_FEATURES */
-
   protected:
-  //#if USE_MODERN_FEATURES
+
+  // Functions to translate between size (in bytes) of an ADC, size of
+  // this fragment overlay's concept of a unit of data (i.e.,
+  // Header::data_t) and size of an artdaq::Fragment's concept of a
+  // unit of data (the artdaq::Fragment::value_type).
 
   static constexpr size_t adcs_per_word_() {
     return sizeof(Header::data_t) / sizeof(adc_t);
@@ -127,57 +150,17 @@ class demo::ToyFragment {
     return sizeof(artdaq::Fragment::value_type) / sizeof(Header::data_t);
   }
 
-  //#endif /* USE_MODERN_FEATURES */
+  // header_() simply takes the address of the start of this overlay's
+  // data (i.e., where the ToyFragment::Header object begins) and
+  // casts it as a pointer to ToyFragment::Header
 
-  Header const * header_() const;
+  Header const * header_() const {
+    return reinterpret_cast<ToyFragment::Header const *>(&*artdaq_Fragment_.dataBegin());
+  }
 
 private:
+
   artdaq::Fragment const & artdaq_Fragment_;
 };
-
-inline demo::ToyFragment::Header const * demo::ToyFragment::header_() const {
-  return reinterpret_cast<ToyFragment::Header const *>(&*artdaq_Fragment_.dataBegin());
-}
-
-
-//#if USE_MODERN_FEATURES
-inline size_t demo::ToyFragment::total_adc_values() const {
-  return (hdr_event_size() - hdr_size_words()) * adcs_per_word_();
-}
-//#endif /* USE_MODERN_FEATURES */
-
-//inline size_t demo::ToyFragment::adc_values_for_channel() const { return total_adc_values() / enabled_channels(); }
-
-inline demo::ToyFragment::adc_t const * demo::ToyFragment::dataBegin() const {
-  return reinterpret_cast<adc_t const *>(header_() + 1);
-}
-
-inline demo::ToyFragment::adc_t const * demo::ToyFragment::dataEnd() const {
-  return dataBegin() + total_adc_values();
-}
-
-//#if USE_MODERN_FEATURES
-
-
-
-inline demo::ToyFragment::adc_t const * demo::ToyFragment::findBadADC(int daq_adc_bits) const {
-  return std::find_if(dataBegin(), dataEnd(), [&](adc_t const adc) -> bool { return (adc >> daq_adc_bits); });
-  //  return std::find_if(dataBegin(), dataEnd(), 
-  //		      [&](adc_t const adc) -> 
-  //		      bool { return (adc >> artdaq_Fragment_.metadata()->num_adc_bits ); } );
-}
-
-inline bool demo::ToyFragment::fastVerify(int daq_adc_bits) const {
-  return (findBadADC(daq_adc_bits) == dataEnd());
-}
-
-
-// Utility functions -- should I put these in the body of the class?
-
-// inline constexpr size_t demo::ToyFragment::adc_range() { 
-//   return (1ul << artdaq_Fragment_.metadata()->num_adc_bits ); }
-
-
-//#endif /* USE_MODERN_FEATURES */
 
 #endif /* artdaq_demo_Overlays_ToyFragment_hh */
