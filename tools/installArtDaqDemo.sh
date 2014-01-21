@@ -114,5 +114,8 @@ if [ -n "${opt_run_demo-}" ];then
         -c ':,sleep 10' \
         -c 'manage2x2x2System.sh stop' \
         -c ':,sleep 5' \
-        -c 'manage2x2x2System.sh shutdown'
+        -c 'manage2x2x2System.sh shutdown' \
+        -c ': For additional commands, see output from: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh exit'
 fi
