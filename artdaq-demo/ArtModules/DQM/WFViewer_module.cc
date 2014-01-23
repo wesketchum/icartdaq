@@ -202,6 +202,8 @@ void demo::WFViewer::analyze (art::Event const & e) {
       throw cet::exception("Error in WFViewer: unknown fragment type supplied");
     }
 
+
+
     int fragment_id = static_cast<int>(frag.fragmentID() );
 
     int lg = fragment_id; // assuming fragment counting begins at 0            
@@ -212,9 +214,9 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
     if (!histograms_[lg]) {
 
-      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Fragment_%d_hist", fragment_id), "", max_adc_count, -0.5, max_adc_count - 0.5));
+      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Fragment_%d_hist", fragment_id), "", max_adc_count, -0.5, max_adc_count + 0.5));
 
-      histograms_[lg]->SetTitle (Form ("Fragment %d, Type %s", fragment_id, 
+      histograms_[lg]->SetTitle (Form ("Frag %d, Type %s", fragment_id, 
 				       fragmentTypeToString( fragtype  ).c_str() ) );
       histograms_[lg]->GetXaxis()->SetTitle("ADC value");
     }
@@ -265,10 +267,11 @@ void demo::WFViewer::analyze (art::Event const & e) {
       if (!graphs_[lg] || graphs_[lg]->GetN () != total_adc_values) {
 	graphs_[lg] = std::unique_ptr<TGraph>(new TGraph (total_adc_values));
 	graphs_[lg]->SetName( Form ("Fragment_%d_graph", fragment_id));
-	graphs_[lg]->SetTitle (Form ("Fragment %d, Type %s", fragment_id, fragmentTypeToString( fragtype  ).c_str() ));
 	graphs_[lg]->SetLineColor ( 4 );
 	std::copy (x_.begin (), x_.end (), graphs_[lg]->GetX ());
       }
+
+      cerr << "WFViewer: total_adc_values = " << total_adc_values << ", GetN = " << graphs_[lg]->GetN() << ", last x_ = " << x_.back() << ", high-end of axis = " << graphs_[lg]->GetXaxis()->GetXmax() << endl;
 
       // Get the data from the fragment
 
@@ -300,19 +303,25 @@ void demo::WFViewer::analyze (art::Event const & e) {
       canvas_[1] -> cd(padnum);
       TVirtualPad* pad = static_cast<TVirtualPad*>(canvas_[1]->GetPad(padnum) ); 
 
-      Double_t lo_x = graphs_[lg]->GetXaxis()->GetXmin() - 0.5;
-      Double_t hi_x = graphs_[lg]->GetXaxis()->GetXmax() + 0.5;
-      Double_t lo_y = -0.5;
-      Double_t hi_y = max_adc_count-0.5;
+      Double_t lo_x, hi_x, lo_y, hi_y, dummy;
+
+      graphs_[lg]->GetPoint(0, lo_x, dummy);
+      graphs_[lg]->GetPoint( graphs_[lg]->GetN()-1, hi_x, dummy);
+
+      lo_x -= 0.5;
+      hi_x += 0.5;
+
+      lo_y = -0.5;
+      hi_y = max_adc_count+0.5;
 
 
       TH1F* padframe = static_cast<TH1F*>( pad->DrawFrame( lo_x, lo_y, hi_x, hi_y ) );
-      padframe->SetTitle( Form ("Frag %d, SeqID %d", fragment_id, expected_sequence_id));
-      padframe->GetXaxis()->SetTitle("Channel #");
+      padframe->SetTitle( Form ("Frag %d, Type %s, SeqID %d", fragment_id, 
+				fragmentTypeToString( fragtype  ).c_str(), 
+				expected_sequence_id) );
+      padframe->GetXaxis()->SetTitle("ADC #");
       pad->SetGrid();
       padframe->Draw("SAME");
-
-      graphs_[lg]->GetYaxis()->SetRangeUser (*std::min_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + total_adc_values), *std::max_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + total_adc_values));
 
     }
 
@@ -328,7 +337,7 @@ void demo::WFViewer::analyze (art::Event const & e) {
   
     if (!digital_sum_only_) {
       canvas_[1]->cd(lg+1);
-      graphs_[lg]->Draw("*SAME");
+      graphs_[lg]->Draw("PSAME");
 
       canvas_[1] -> Modified();
       canvas_[1] -> Update();
@@ -353,7 +362,7 @@ void demo::WFViewer::beginRun(art::Run const &e) {
   }
 
   canvas_[0]->SetTitle("ADC Value Distribution");
-  canvas_[1]->SetTitle("ADC Counts by Channel");
+  canvas_[1]->SetTitle("ADC Values, Event Snapshot");
 }
 
 
