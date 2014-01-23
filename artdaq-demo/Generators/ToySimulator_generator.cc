@@ -45,7 +45,7 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   :
   CommandableFragmentGenerator(ps),
   nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
-  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "TOY1"))),
+  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type"))),
   fragment_ids_{ static_cast<artdaq::Fragment::fragment_id_t>(fragment_id() ) },
   engine_(ps.get<int64_t>("random_seed", 314159)),
   uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))

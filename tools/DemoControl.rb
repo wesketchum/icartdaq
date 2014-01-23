@@ -38,11 +38,13 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
     }
     wf: {
       module_type: WFViewer
-      fragment_type_label: TOY1
+      fragment_type_label: V1720
       prescale: 1000
       digital_sum_only: false
       fragments_per_board: %{fragments_per_board}
       fragment_receiver_count: %{total_frs}
+      fragment_ids: %{fragment_ids}
+      fragment_type_labels: %{fragment_type_labels}
     }"
 end
 
@@ -275,8 +277,9 @@ daq: {
     first_event_builder_rank: %{total_frs}
     event_builder_count: %{total_ebs}
     generator: ToySimulator
+    fragment_type: %{fragment_type}
     fragments_per_board: %{fragments_per_board}
-    nADCcounts: 10
+    nADCcounts: 40
     starting_fragment_id: %{starting_fragment_id}
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
@@ -294,6 +297,7 @@ daq: {
     first_event_builder_rank: %{total_frs}
     event_builder_count: %{total_ebs}
     generator: V172xSimulator
+    fragment_type: %{fragment_type}
     freqs_file: \"V1720_sample_freqs.dat\"
     fragments_per_board: %{fragments_per_board}
     nChannels: 20
@@ -308,17 +312,20 @@ daq: {
 
 class ConfigGen
 
-   def generateWFViewer(totalFRs, fragmentsPerBoard)
+   def generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList)
      wfViewerConfig = String.new(PHYS_ANAL_ONMON_CFG)
      wfViewerConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
      wfViewerConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
+     wfViewerConfig.gsub!(/\%\{fragment_ids\}/, String(fragmentIDList))
+     wfViewerConfig.gsub!(/\%\{fragment_type_labels\}/, String(fragmentTypeList))
      return wfViewerConfig
    end
 
 
   def generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs, compressionLevel, 
                            totalv1720s, totalv1724s, dataDir, onmonEnable,
-                           diskWritingEnable, fragSizeWords, totalFragments, fragmentsPerBoard)
+                           diskWritingEnable, fragSizeWords, totalFragments, fragmentsPerBoard,
+                           fragmentIDList, fragmentTypeList)
     # Do the substitutions in the event builder configuration given the options
     # that were passed in from the command line.  
     ebConfig = String.new(EB_CONFIG)
@@ -371,7 +378,7 @@ class ConfigGen
         ebConfig.gsub!(/\%\{root_output\}/, "#")
       end
       if Integer(onmonEnable) != 0
-        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard))
+        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList))
         ebConfig.gsub!(/\%\{enable_onmon\}/, "")
       else
         ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
@@ -394,7 +401,8 @@ class ConfigGen
                          compressionLevel, totalv1720s, totalv1724s, onmonEnable,
                          diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                          xmlrpcClientList, fileSizeThreshold, fileDuration,
-                         fileEventCount, fragmentsPerBoard)
+                         fileEventCount, fragmentsPerBoard,
+                         fragmentIDList, fragmentTypeList)
     puts "Initial aggregator " + String(agIndex) + " disk writing setting = " +
       String(diskWritingEnable)
     # Do the substitutions in the aggregator configuration given the options
@@ -467,7 +475,7 @@ class ConfigGen
       agConfig.gsub!(/\%\{root_output\}/, "#")
     end
     if Integer(onmonEnable) != 0
-      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard))
+      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList))
       agConfig.gsub!(/\%\{enable_onmon\}/, "")
     else
       agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
@@ -478,7 +486,7 @@ class ConfigGen
   end
   
   def generateToy(startingFragmentId, totalEBs, totalFRs,
-                    fragSizeWords, boardId, fragmentsPerBoard)
+                    fragSizeWords, boardId, fragmentsPerBoard, fragmentType)
     toyConfig = String.new(TOY_SIM_CONFIG)
     
     toyConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
@@ -489,11 +497,12 @@ class ConfigGen
     toyConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
     toyConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
     toyConfig.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
+    toyConfig.gsub!(/\%\{fragment_type\}/, fragmentType) 
     return toyConfig
   end
 
   def generateV1720(startingFragmentId, totalEBs, totalFRs,
-                    fragSizeWords, boardId, fragmentsPerBoard)
+                    fragSizeWords, boardId, fragmentsPerBoard, fragmentType)
     v1720Config = String.new(V1720_SIM_CONFIG)
     
     v1720Config.gsub!(/\%\{total_ebs\}/, String(totalEBs))
@@ -504,6 +513,7 @@ class ConfigGen
     v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
     v1720Config.gsub!(/\%\{size_words\}/, String(fragSizeWords))
     v1720Config.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
+    v1720Config.gsub!(/\%\{fragment_type\}/, fragmentType) 
     return v1720Config
   end
 
@@ -576,7 +586,9 @@ class ConfigGen
 
   def generateXmlRpcClientList(cmdLineOptions)
     xmlrpcClients = ""
-    (cmdLineOptions.v1720s).each do |proc|
+#    boardreaders = Array.new + @options.v1720s + @options.toys
+#    boardreaders.each do |proc|
+    (cmdLineOptions.v1720s + cmdLineOptions.toys).each do |proc|
       br = cmdLineOptions.boardReaders[proc.board_reader_index]
       if br.hasBeenIncludedInXMLRPCList
         next
@@ -608,6 +620,7 @@ class CommandLineParser
     @options.aggregators = []
     @options.eventBuilders = []
     @options.v1720s = []
+    @options.toys = []
     @options.boardReaders = []
     @options.dataDir = nil
     @options.command = nil
@@ -677,7 +690,7 @@ class CommandLineParser
         v1720Config.port = Integer(v1720[1])
         v1720Config.board_id = Integer(v1720[2])
         v1720Config.kind = "V1720"
-        v1720Config.index = @options.v1720s.length
+        v1720Config.index = (@options.v1720s + @options.toys).length
         v1720Config.board_reader_index = addToBoardReaderList(v1720Config.host, v1720Config.port,
                                                               v1720Config.kind, v1720Config.index)
         @options.v1720s << v1720Config
@@ -695,12 +708,51 @@ class CommandLineParser
         v1724Config.port = Integer(v1724[1])
         v1724Config.board_id = Integer(v1724[2])
         v1724Config.kind = "V1724"
-        v1724Config.index = @options.v1720s.length
+        v1724Config.index = (@options.v1720s + @options.toys).length
         v1724Config.board_reader_index = addToBoardReaderList(v1724Config.host, v1724Config.port,
                                                               v1724Config.kind, v1724Config.index)
         # NOTE that we're simply adding this to the 1720 list...
         @options.v1720s << v1724Config
       end
+
+      opts.on("--toy1 [host,port,board_id]", Array, 
+              "Add a TOY1 fragment receiver that runs on the specified host, port, ",
+              "and board ID.") do |toy1|
+        if toy1.length != 3
+          puts "You must specifiy a host, port, and board ID."
+          exit
+        end
+        toy1Config = OpenStruct.new
+        toy1Config.host = toy1[0]
+        toy1Config.port = Integer(toy1[1])
+        toy1Config.board_id = Integer(toy1[2])
+        toy1Config.kind = "TOY1"
+        toy1Config.index = (@options.v1720s + @options.toys).length
+        toy1Config.board_reader_index = addToBoardReaderList(toy1Config.host, toy1Config.port,
+                                                              toy1Config.kind, toy1Config.index)
+        @options.toys << toy1Config
+      end
+
+
+      opts.on("--toy2 [host,port,board_id]", Array, 
+              "Add a TOY2 fragment receiver that runs on the specified host, port, ",
+              "and board ID.") do |toy2|
+        if toy2.length != 3
+          puts "You must specifiy a host, port, and board ID."
+          exit
+        end
+        toy2Config = OpenStruct.new
+        toy2Config.host = toy2[0]
+        toy2Config.port = Integer(toy2[1])
+        toy2Config.board_id = Integer(toy2[2])
+        toy2Config.kind = "TOY2"
+        toy2Config.index = (@options.v1720s + @options.toys).length
+        toy2Config.board_reader_index = addToBoardReaderList(toy2Config.host, toy2Config.port,
+                                                              toy2Config.kind, toy2Config.index)
+
+        @options.toys << toy2Config
+      end
+
 
       opts.on("-d", "--data-dir [data dir]", 
               "Directory that the event builders will", "write data to.") do |dataDir|
@@ -824,7 +876,7 @@ class CommandLineParser
     # is running on which host.
     puts "Configuration Summary:"
     hostMap = {}
-    (@options.eventBuilders + @options.v1720s + @options.aggregators).each do |proc|
+    (@options.eventBuilders + @options.v1720s + @options.toys + @options.aggregators).each do |proc|
       if not hostMap.keys.include?(proc.host)
         hostMap[proc.host] = []
       end
@@ -845,7 +897,7 @@ class CommandLineParser
           puts "    EventBuilder, port %d, rank %d" % [item.port, totalFRs + item.index]
         when "ag"
           puts "    Aggregator, port %d, rank %d" % [item.port, totalEBs + totalFRs + item.index]
-        when "V1720", "V1724"
+        when "V1720", "V1724", "TOY1", "TOY2"
           puts "    FragmentReceiver, Simulated %s, port %d, rank %d, board_id %d" % 
             [item.kind.upcase,
              item.port,
@@ -875,6 +927,8 @@ class SystemControl
     agIndex = 0
     totalv1720s = 0
     totalv1724s = 0
+    totaltoy1s = 0
+    totaltoy2s = 0
     @options.v1720s.each do |proc|
       case proc.kind
       when "V1720"
@@ -883,7 +937,15 @@ class SystemControl
         totalv1724s += 1
       end
     end
-    totalBoards = @options.v1720s.length
+    @options.toys.each do |proc|
+      case proc.kind
+      when "TOY1"
+        totaltoy1s += 1
+      when "TOY2"
+        totaltoy2s += 1
+      end
+    end
+    totalBoards = @options.v1720s.length + @options.toys.length
     totalFRs = @options.boardReaders.length
     totalEBs = @options.eventBuilders.length
     totalAGs = @options.aggregators.length
@@ -901,26 +963,26 @@ class SystemControl
     # boardReaders list entries since there are system configurations in which
     # multiple boards are read out by a single BoardReader, and it seems simpler to
     # store the CFGs in the boardReader list for everything
-    @options.v1720s.each { |v1720Options|
-      br = @options.boardReaders[v1720Options.board_reader_index]
+
+    # John F., 1/21/14 -- added the toy fragment generators
+
+    (@options.v1720s + @options.toys).each { |boardreaderOptions|
+      br = @options.boardReaders[boardreaderOptions.board_reader_index]
       listIndex = 0
       br.kindList.each do |kind|
-        if kind == v1720Options.kind && br.boardIndexList[listIndex] == v1720Options.index
+        if kind == boardreaderOptions.kind && br.boardIndexList[listIndex] == boardreaderOptions.index
 
-# John, 1/16/14 -- this is pretty kluge-y, and will be improved on
-# soon -- I'm "stealing" parameters intended for v172x boards at the
-# command line and using them for the "toy" board.
-
-#          cfg = @configGen.generateV1720(v1720Options.index*fragmentsPerBoard,
-#                                         totalEBs, totalFRs,
-#                                         Integer(inputBuffSizeWords/8),
-#                                         v1720Options.board_id, fragmentsPerBoard)
-          cfg = @configGen.generateToy(v1720Options.index*fragmentsPerBoard,
-                                         totalEBs, totalFRs,
-                                         Integer(inputBuffSizeWords/8),
-                                         v1720Options.board_id, fragmentsPerBoard)
-
-
+          if kind == "V1720" || kind == "V1724"
+            cfg = @configGen.generateV1720(boardreaderOptions.index*fragmentsPerBoard,
+                                           totalEBs, totalFRs,
+                                           Integer(inputBuffSizeWords/8),
+                                           boardreaderOptions.board_id, fragmentsPerBoard, kind)
+          elsif kind == "TOY1" || kind == "TOY2"
+            cfg = @configGen.generateToy(boardreaderOptions.index*fragmentsPerBoard,
+                                           totalEBs, totalFRs,
+                                           Integer(inputBuffSizeWords/8),
+                                           boardreaderOptions.board_id, fragmentsPerBoard, kind)
+          end
 
           br.cfgList[listIndex] = cfg
           break
@@ -929,8 +991,12 @@ class SystemControl
       end
     }
 
+
+
+
     threads = []
-    @options.v1720s.each { |proc|
+
+    (@options.v1720s + @options.toys).each { |proc|
       br = @options.boardReaders[proc.board_reader_index]
       if br.boardCount > 1
         if br.commandHasBeenSent
@@ -969,6 +1035,28 @@ class SystemControl
       aThread.join()
     }
 
+
+    # John F., 1/21/14 -- before sending FHiCL configurations to the
+    # EventBuilderMain and AggregatorMain processes, construct the
+    # strings listing fragment ids and fragment types which will be
+    # used by the WFViewer
+
+    # Notice that "board_id" is taken to be synonmyous with
+    # "fragment_id" here; this will need to change if we go with more
+    # than one fragment per event per BoardReaderMain
+
+    fragmentIDList, fragmentTypeList = "[ ", "[ "
+
+    (@options.v1720s + @options.toys).each { |proc|
+      fragmentIDList += " %d," % [ proc.board_id ]
+      fragmentTypeList += " %s," % [ proc.kind ]
+    }
+    
+    # Get rid of the trailing ","s, and replace with a close-bracket
+
+    fragmentIDList[-1], fragmentTypeList[-1] = "]", "]" 
+
+
     # 27-Jun-2013, KAB - send INIT to EBs and AG last
     threads = []
     @options.eventBuilders.each { |ebOptions|
@@ -978,12 +1066,14 @@ class SystemControl
       threads << Thread.new() do
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
+
         cfg = @configGen.generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs,
                                               ebOptions.compression_level,
                                               totalv1720s, totalv1724s,
                                               @options.dataDir, @options.runOnmon,
                                               @options.writeData, inputBuffSizeWords,
-                                              totalBoards*fragmentsPerBoard, fragmentsPerBoard)
+                                              totalBoards*fragmentsPerBoard, fragmentsPerBoard,
+                                              fragmentIDList, fragmentTypeList)
 
         if @options.serialize
           fileName = "EventBuilder_%s_%d.fcl" % [ebOptions.host, ebOptions.port]
@@ -1016,7 +1106,8 @@ class SystemControl
                                             agIndex, totalAGs, inputBuffSizeWords,
                                             xmlrpcClients, @options.fileSizeThreshold,
                                             @options.fileDurationSeconds,
-                                            @options.eventsInFile, fragmentsPerBoard)
+                                            @options.eventsInFile, fragmentsPerBoard,
+                                            fragmentIDList, fragmentTypeList)
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
           puts "  writing %s..." % fileName
@@ -1043,6 +1134,7 @@ class SystemControl
     self.sendCommandSet("start", @options.aggregators, runNumber)
     self.sendCommandSet("start", @options.eventBuilders, runNumber)
     self.sendCommandSet("start", @options.v1720s, runNumber)
+    self.sendCommandSet("start", @options.toys, runNumber)
   end
 
   def sendCommandSet(commandName, procs, commandArg = nil)
@@ -1098,6 +1190,15 @@ class SystemControl
         when "V1720"
           puts "%s: V1720 FragmentReceiver on %s:%d result: %s" %
             [currentTime, proc.host, proc.port, result]
+        when "V1724"
+          puts "%s: V1724 FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
+        when "TOY1"
+          puts "%s: TOY1 FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
+        when "TOY2"
+          puts "%s: TOY2 FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
         when "multi-board"
           puts "%s: multi-board FragmentReceiver on %s:%d result: %s" %
             [currentTime, proc.host, proc.port, result]
@@ -1112,12 +1213,14 @@ class SystemControl
 
   def shutdown()
     self.sendCommandSet("shutdown", @options.v1720s)
+    self.sendCommandSet("shutdown", @options.toys)
     self.sendCommandSet("shutdown", @options.eventBuilders)
     self.sendCommandSet("shutdown", @options.aggregators)
   end
 
   def pause()
     self.sendCommandSet("pause", @options.v1720s)
+    self.sendCommandSet("pause", @options.toys)
     self.sendCommandSet("pause", @options.eventBuilders)
     self.sendCommandSet("pause", @options.aggregators)
   end
@@ -1252,6 +1355,7 @@ class SystemControl
     end
 
     self.sendCommandSet("stop", @options.v1720s)
+    self.sendCommandSet("stop", @options.toys)
     self.sendCommandSet("stop", @options.eventBuilders)
     @options.aggregators.each do |proc|
       tmpList = []
@@ -1264,18 +1368,21 @@ class SystemControl
     self.sendCommandSet("resume", @options.aggregators)
     self.sendCommandSet("resume", @options.eventBuilders)
     self.sendCommandSet("resume", @options.v1720s)
+    self.sendCommandSet("resume", @options.toys)
   end
 
   def checkStatus()
     self.sendCommandSet("status", @options.aggregators)
     self.sendCommandSet("status", @options.eventBuilders)
     self.sendCommandSet("status", @options.v1720s)
+    self.sendCommandSet("status", @options.toys)
   end
 
   def getLegalCommands()
     self.sendCommandSet("legal_commands", @options.aggregators)
     self.sendCommandSet("legal_commands", @options.eventBuilders)
     self.sendCommandSet("legal_commands", @options.v1720s)
+    self.sendCommandSet("legal_commands", @options.toys)
   end
 end
 
