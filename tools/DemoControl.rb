@@ -38,14 +38,12 @@ if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
     }
     wf: {
       module_type: WFViewer
-      fragment_type_label: V1720
-      prescale: 1000
-      digital_sum_only: false
       fragments_per_board: %{fragments_per_board}
       fragment_receiver_count: %{total_frs}
       fragment_ids: %{fragment_ids}
-      fragment_type_labels: %{fragment_type_labels}
-    }"
+      fragment_type_labels: %{fragment_type_labels} " \
+      + File.read(ENV['FCL_DIR'] + "/WFViewer.fcl") \
+      + "    }"
 end
 
 
@@ -279,14 +277,14 @@ daq: {
     generator: ToySimulator
     fragment_type: %{fragment_type}
     fragments_per_board: %{fragments_per_board}
-    nADCcounts: 40
     starting_fragment_id: %{starting_fragment_id}
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
     random_seed: %{random_seed}
-    sleep_on_stop_us: 500000
-  }
-}"
+    sleep_on_stop_us: 500000 " \
+    + File.read(ENV['FCL_DIR'] + "/ToySimulator.fcl") \
+    + " }\
+    }"
 
 V1720_SIM_CONFIG = "\
 daq: {
@@ -300,14 +298,14 @@ daq: {
     fragment_type: %{fragment_type}
     freqs_file: \"V1720_sample_freqs.dat\"
     fragments_per_board: %{fragments_per_board}
-    nChannels: 20
     starting_fragment_id: %{starting_fragment_id}
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
     random_seed: %{random_seed}
-    sleep_on_stop_us: 500000
-  }
-}"
+    sleep_on_stop_us: 500000 "  \
+    + File.read(ENV['FCL_DIR'] + "/V172xSimulator.fcl") \
+    + " } \
+    }"
 
 
 class ConfigGen

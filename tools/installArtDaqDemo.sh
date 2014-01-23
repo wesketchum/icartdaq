@@ -77,6 +77,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	export ARTDAQDEMO_BUILD="$demo_dir/build_artdaq-demo"
 	export ARTDAQDEMO_REPO="$artdaq_demo_dir"
+        export FCL_DIR="$ARTDAQDEMO_REPO/tools/fcl"
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
