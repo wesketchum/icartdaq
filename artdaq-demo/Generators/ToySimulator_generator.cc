@@ -95,7 +95,7 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   ToyFragmentWriter newfrag(*frags.back());
 
   newfrag.set_hdr_run_number(999);
-  
+
   newfrag.resize(nADCcounts_);
 
   // And generate nADCcounts ADC values ranging from 0 to max with an

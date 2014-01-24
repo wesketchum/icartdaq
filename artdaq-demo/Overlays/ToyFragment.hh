@@ -72,12 +72,12 @@ class demo::ToyFragment {
     typedef uint32_t event_size_t;  
     typedef uint32_t run_number_t;
 
-    uint32_t event_size : 28;
-    uint32_t unused_1   :  4;
+    event_size_t event_size : 28;
+    event_size_t unused_1   :  4;
 
-    run_number_t run_number;
+    run_number_t run_number : 32;
 
-    static size_t const size_words = 2ul;   // Units of Header::data_t
+    static size_t const size_words = 2ul; // Units of Header::data_t
   };
 
   static_assert (sizeof (Header) == Header::size_words * sizeof (Header::data_t), "ToyFragment::Header size changed");
@@ -91,7 +91,6 @@ class demo::ToyFragment {
 
   Header::event_size_t hdr_event_size() const { return header_()->event_size; } 
   Header::run_number_t hdr_run_number() const { return header_()->run_number; }
-
   static constexpr size_t hdr_size_words() { return Header::size_words; }
 
   // The number of ADC values describing data beyond the header

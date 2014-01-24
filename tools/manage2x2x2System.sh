@@ -34,8 +34,8 @@ function launch() {
   fi
 
   DemoControl.rb ${enableSerial} -s -c $1 \
-    --v1720 `hostname`,${ARTDAQDEMO_BR_PORT[0]},0 \
-    --v1720 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1 \
+    --toy1 `hostname`,${ARTDAQDEMO_BR_PORT[0]},0 \
+    --toy2 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1 \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[0]},$ebComp \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[1]},$ebComp \
     --ag `hostname`,${ARTDAQDEMO_AG_PORT[0]},1,$agComp \

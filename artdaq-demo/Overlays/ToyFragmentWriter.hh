@@ -28,8 +28,7 @@ class demo::ToyFragmentWriter: public demo::ToyFragment {
 public:
 
 
-  ToyFragmentWriter(artdaq::Fragment & f) :
-    ToyFragment(f), artdaq_Fragment_(f) {}
+  ToyFragmentWriter(artdaq::Fragment & f); 
 
   // These functions form overload sets with const functions from
   // demo::ToyFragment
@@ -41,6 +40,7 @@ public:
   // order to be able to perform writes
 
   Header * header_() {
+    assert(frag_.dataSize() >= words_to_frag_words_(Header::size_words ));
     return reinterpret_cast<Header *>(&*artdaq_Fragment_.dataBegin());
   }
 
@@ -60,9 +60,39 @@ private:
   artdaq::Fragment & artdaq_Fragment_;
 };
 
+// The constructor will expect the artdaq::Fragment object it's been
+// passed to contain the artdaq::Fragment header + the
+// ToyFragment::Metadata object, otherwise it throws
+
+demo::ToyFragmentWriter::ToyFragmentWriter(artdaq::Fragment& f ) :
+  ToyFragment(f), artdaq_Fragment_(f) {
+   
+    // If this assert doesn't hold, then can't call
+    // "words_to_frag_words_" below, translating between the
+    // ToyFragment's standard data type size and the
+    // artdaq::Fragment's data type size, on the Metadata object
+
+    assert( sizeof(Metadata::data_t) == sizeof(Header::data_t) );
+
+ 
+    if (artdaq_Fragment_.size() != 
+	artdaq::detail::RawFragmentHeader::num_words() + 
+	words_to_frag_words_( Metadata::size_words ))
+      {
+	std::cerr << "artdaq_Fragment size: " << artdaq_Fragment_.size() << std::endl;
+	std::cerr << "Expected size: " << artdaq::detail::RawFragmentHeader::num_words() + 
+	  words_to_frag_words_( Metadata::size_words) << std::endl;
+
+	throw cet::exception("ToyFragmentWriter: Raw artdaq::Fragment object size suggests it does not consist of its own header + the ToyFragment::Metadata object");
+      }
+ 
+    // Allocate space for the header
+    artdaq_Fragment_.resize( words_to_frag_words_(Header::size_words) );
+}
+
 
 inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataBegin() {
-  assert(frag_.dataSize() > words_to_frag_words_(header_size_words()));
+  assert(frag_.dataSize() > words_to_frag_words_(Header::size_words));
   return reinterpret_cast<adc_t *>(header_() + 1);
 }
 

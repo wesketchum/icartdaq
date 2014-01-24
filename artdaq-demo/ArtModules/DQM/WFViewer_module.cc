@@ -110,9 +110,6 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
     art::Handle<artdaq::Fragments> fragments_with_label;
 
-    // "getByLabel()" throws if it doesn't find products with the
-    // expected label
-
     e.getByLabel ("daq", label, fragments_with_label);
     
     for (int i_l = 0; i_l < static_cast<int>(fragments_with_label->size()); ++i_l) {
@@ -270,8 +267,6 @@ void demo::WFViewer::analyze (art::Event const & e) {
 	graphs_[lg]->SetLineColor ( 4 );
 	std::copy (x_.begin (), x_.end (), graphs_[lg]->GetX ());
       }
-
-      cerr << "WFViewer: total_adc_values = " << total_adc_values << ", GetN = " << graphs_[lg]->GetN() << ", last x_ = " << x_.back() << ", high-end of axis = " << graphs_[lg]->GetXaxis()->GetXmax() << endl;
 
       // Get the data from the fragment
 
