@@ -357,7 +357,10 @@ void demo::WFViewer::beginRun(art::Run const &e) {
   }
 
   canvas_[0]->SetTitle("ADC Value Distribution");
-  canvas_[1]->SetTitle("ADC Values, Event Snapshot");
+
+  if (! digital_sum_only_) {
+    canvas_[1]->SetTitle("ADC Values, Event Snapshot");
+  }
 }
 
 
