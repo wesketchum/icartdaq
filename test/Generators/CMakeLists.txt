@@ -13,3 +13,10 @@ cet_test(V172xSimulator_t HANDBUILT
   fcl/V172xSimulator_t.fcl
   V1720_sample_freqs.dat
 )
+
+cet_test(ToySimulator_t HANDBUILT
+  TEST_EXEC genToArt
+  TEST_ARGS -c ToySimulator_t.fcl
+  DATAFILES
+  fcl/ToySimulator_t.fcl
+)

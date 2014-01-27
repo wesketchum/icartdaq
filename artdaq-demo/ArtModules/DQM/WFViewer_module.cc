@@ -5,8 +5,14 @@
 #include "art/Framework/Principal/Run.h"
 #include "art/Utilities/InputTag.h"
 #include "art/Framework/Core/ModuleMacros.h"
+
 #include "artdaq/DAQdata/Fragments.hh"
+
+#include "artdaq-demo/Overlays/FragmentType.hh"
 #include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-demo/Overlays/ToyFragment.hh"
+
+#include "cetlib/exception.h"
 
 #include "TRootCanvas.h"
 #include "TCanvas.h"
@@ -20,8 +26,12 @@
 #include <functional>
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <initializer_list>
+#include <limits>
 
 using std::cout;
+using std::cerr;
 using std::endl;
 
 namespace demo {
@@ -36,7 +46,7 @@ namespace demo {
     void beginRun(art::Run const &) override;
 
   private:
-    std::string board_type_;
+
     std::unique_ptr<TCanvas> canvas_[2];
     std::vector<Double_t> x_;
     int prescale_;
@@ -49,11 +59,7 @@ namespace demo {
     std::vector<std::unique_ptr<TGraph>> graphs_;
     std::vector<std::unique_ptr<TH1D>> histograms_;
 
-    // John F., 1/4/14 -- this should be improved; user needs to
-    // hardwire the highest ADC value in the constructor (for example,
-    // for a V1720 fragment, this would be 4096)
-
-    int max_adc_count_;
+    std::vector<std::string> fragment_types_;
 
   };
 
@@ -61,16 +67,30 @@ namespace demo {
 
 demo::WFViewer::WFViewer (fhicl::ParameterSet const & ps): 
   art::EDAnalyzer(ps), 
-  board_type_(ps.get<std::string> ("board_type", "V1720")), 
   prescale_(ps.get<int> ("prescale")), 
   digital_sum_only_(ps.get<bool> ("digital_sum_only", false)), 
   current_run_(0), 
-  fragments_per_board_(ps.get<int>("fragments_per_board")), 
+  fragments_per_board_(ps.get<int>("fragments_per_board", 1)), 
   fragment_receiver_count_(ps.get<int>("fragment_receiver_count")), 
   graphs_(fragments_per_board_*fragment_receiver_count_), 
-  histograms_(fragments_per_board_*fragment_receiver_count_), 
-  max_adc_count_(4096) {
+  histograms_(fragments_per_board_*fragment_receiver_count_),
+  fragment_types_(ps.get<std::vector<std::string>>("fragment_type_labels"))
+ {
+
+  if (fragments_per_board_ != 1) {
+    throw cet::exception("Default value of fragments_per_board == 1 must be used; contact John Freeman if you have any questions");
+  }
+
+  // Throw out any duplicate fragment_types_ ; we only care about the
+  // different types that we plan to encounter, not how many of each
+  // there are
+
+  sort( fragment_types_.begin(), fragment_types_.end() );
+  fragment_types_.erase( unique( fragment_types_.begin(), fragment_types_.end() ), fragment_types_.end() );
+
   gStyle->SetOptStat("irm");
+  gStyle->SetMarkerStyle(22);
+  gStyle->SetMarkerColor(4);
 }
 
 
@@ -79,23 +99,33 @@ void demo::WFViewer::analyze (art::Event const & e) {
   static int evt_cntr = -1;
   evt_cntr++;
 
-  art::Handle<artdaq::Fragments> v172x;
-  e.getByLabel ("daq", board_type_, v172x);
-  if (!v172x.isValid ())  {
-    e.getByLabel ("unhuff" + board_type_, board_type_, v172x);
-    if (!v172x.isValid ()) return;
-  }
+  // John F., 1/22/14 -- there's probably a more elegant way of
+  // collecting fragments of various types using ART interface code;
+  // will investigate. Right now, we're actually re-creating the
+  // fragments locally
 
-  size_t record_size = 100000000;
-  for (size_t i = 0; i < v172x->size(); ++i) {
-    record_size = std::min (record_size, V172xFragment((*v172x)[i]).total_adc_values());
+  artdaq::Fragments fragments;
+
+  for (auto label: fragment_types_) {
+
+    art::Handle<artdaq::Fragments> fragments_with_label;
+
+    e.getByLabel ("daq", label, fragments_with_label);
+    
+    for (int i_l = 0; i_l < static_cast<int>(fragments_with_label->size()); ++i_l) {
+      fragments.emplace_back( (*fragments_with_label)[i_l] );
+    }
   }
 
   int total_frags = fragments_per_board_*fragment_receiver_count_;
 
-  if (total_frags != static_cast<int>(v172x->size())) {
-    cout << "Warning in WFViewer: mismatch between expected and actual fragments: fragments_per_board_ = " << fragments_per_board_ << ", fragment_receiver_count_ = " << fragment_receiver_count_ << ", number of fragments = " << v172x->size() << endl;
-    //    throw;
+  // John F., 1/22/14 -- Changed consequences of an unexpected # of
+  // fragments from a warning to an exception throw
+
+  if (total_frags != static_cast<int>(fragments.size())) {
+    cerr << "Warning in WFViewer: mismatch between expected and actual fragments: fragments_per_board_ = " << fragments_per_board_ << ", fragment_receiver_count_ = " << fragment_receiver_count_ << ", number of fragments = " << fragments.size() << endl;
+
+    throw cet::exception("Error in WFViewer: mismatch between expected and actual fragments");
   }
 
   // John F., 1/5/14 
@@ -113,27 +143,65 @@ void demo::WFViewer::analyze (art::Event const & e) {
   // across all channels in each board_id / fragment_id combo
 
   int expected_sequence_id = -1;
-  bool prescaled = false;
 
-  // Use to check that fragment ID counting starts at 0
-  std::vector<int> fragment_ids( v172x->size() ); 
+  for (size_t i = 0; i < fragments.size(); ++i) {
 
-  for (size_t i = 0; i < v172x->size(); ++i) {
+    // Pointers to the types of fragment overlays WFViewer can handle;
+    // only one will be used per fragment, of course
 
-    const auto& frag((*v172x)[i]);
+    std::unique_ptr<V172xFragment> v172xPtr;
+    std::unique_ptr<ToyFragment> toyPtr;
+    
+    const auto& frag( fragments[i] );  // Basically a shorthand
 
     if (i == 0) 
       expected_sequence_id = frag.sequenceID();
 
     if (expected_sequence_id != static_cast<int>(frag.sequenceID())) {
-      cout << "Warning in WFViewer: expected fragment with sequence ID " << expected_sequence_id << ", received one with sequence ID " << frag.sequenceID() << endl;
+      cerr << "Warning in WFViewer: expected fragment with sequence ID " << expected_sequence_id << ", received one with sequence ID " << frag.sequenceID() << endl;
+    }
+    
+    FragmentType fragtype = static_cast<FragmentType>( frag.type() );
+    int max_adc_count = std::numeric_limits<int>::max();
+    int total_adc_values = std::numeric_limits<int>::max();
+
+    // John F., 1/22/14 -- this should definitely be improved; I'm
+    // just using the max # of bits per ADC value for a given fragment
+    // type as is currently defined for the V172x fragments (as
+    // opposed to the Toy fragment, which have this value in their
+    // metadata). Since it's not using external variables for this
+    // quantity, this would need to keep being edited should these
+    // values change.
+
+    switch ( fragtype ) {
+
+    case FragmentType::V1720:  
+      v172xPtr.reset( new V172xFragment(frag ));
+      total_adc_values = v172xPtr->total_adc_values();
+      max_adc_count = pow(2,12) -1;
+      break;
+    case FragmentType::V1724: 
+      v172xPtr.reset( new V172xFragment(frag ));
+      total_adc_values = v172xPtr->total_adc_values();
+      max_adc_count = pow(2,14) -1;
+      break;
+    case FragmentType::TOY1: 
+      toyPtr.reset( new ToyFragment(frag ));
+      total_adc_values = toyPtr->total_adc_values();
+      max_adc_count = pow(2, frag.template metadata<ToyFragment::Metadata>()->num_adc_bits) -1;
+      break;
+    case FragmentType::TOY2: 
+      toyPtr.reset( new ToyFragment(frag ));
+      total_adc_values = toyPtr->total_adc_values();
+      max_adc_count = pow(2, frag.template metadata<ToyFragment::Metadata>()->num_adc_bits) -1;
+      break;
+    default: 
+      throw cet::exception("Error in WFViewer: unknown fragment type supplied");
     }
 
-    V172xFragment b(frag);
-    int board_id = static_cast<int>( b.board_id () );
-    int fragment_id = static_cast<int>(frag.fragmentID() );
 
-    fragment_ids.emplace_back (fragment_id );
+
+    int fragment_id = static_cast<int>(frag.fragmentID() );
 
     int lg = fragment_id; // assuming fragment counting begins at 0            
     int lg_canvas = lg % total_frags + 1;
@@ -143,23 +211,38 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
     if (!histograms_[lg]) {
 
-      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Board_%d_Fragment_%d_hist", board_id, fragment_id), "", max_adc_count_, -0.5, max_adc_count_ - 0.5));
-      histograms_[lg]->SetTitle (Form ("Board %d, Fragment %d", board_id, fragment_id));
+      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Fragment_%d_hist", fragment_id), "", max_adc_count, -0.5, max_adc_count + 0.5));
+
+      histograms_[lg]->SetTitle (Form ("Frag %d, Type %s", fragment_id, 
+				       fragmentTypeToString( fragtype  ).c_str() ) );
       histograms_[lg]->GetXaxis()->SetTitle("ADC value");
     }
 
     // For every event, fill the histogram (prescale is ignored here)
 
-    for (auto val = b.dataBegin(); val != b.dataEnd(); ++val ) {
-      histograms_[lg]->Fill( *val );
+    // Is there some way to templatize an ART module? If not, we're
+    // stuck with this switch code...
+
+    switch ( fragtype ) {
+
+    case FragmentType::V1720:  
+    case FragmentType::V1724: 
+      for (auto val = v172xPtr->dataBegin(); val != v172xPtr->dataEnd(); ++val ) 
+	histograms_[lg]->Fill( *val );
+      break;
+
+    case FragmentType::TOY1: 
+    case FragmentType::TOY2: 
+      for (auto val = toyPtr->dataBegin(); val != toyPtr->dataEnd(); ++val ) 
+	histograms_[lg]->Fill( *val );
+      break;
+  
+    default: 
+      throw cet::exception("Error in WFViewer: unknown fragment type supplied");
     }
-    
-    //    if (frag.sequenceID () % prescale_ - 1) {
+
     if (evt_cntr % prescale_ - 1) {
-      prescaled = true;
       continue;
-    } else {
-      prescaled = false;
     }
 
     // If we pass the prescale, then if we're not going with
@@ -169,87 +252,93 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
       // Create the graph's x-axis
 
-      if (x_.size () != record_size) {
-	x_.resize (record_size);
+      if (x_.size () != static_cast<size_t>(total_adc_values)) {
+	x_.resize (total_adc_values);
 
-	if (frag.hasMetadata()) {
-	  cout << "Warning in WFViewer: displaying fragments with metadata has not yet been tested" << endl;
-	  int post_trigger = frag.metadata<V172xFragment::metadata>()->post_trigger;
-	  int pre_samples = record_size * post_trigger / 100 - record_size;
-	  std::iota (x_.begin (), x_.end (), pre_samples);
-	  
-	} else 
-	  std::iota (x_.begin (), x_.end (), 0);
+	std::iota (x_.begin (), x_.end (), 0);
       }
 
       // If the graph doesn't exist, create it. Not sure whether to
-      // make it an error if the record_size is new
+      // make it an error if the total_adc_values is new
 
-      if (!graphs_[lg] || graphs_[lg]->GetN () != int(record_size)) {
-	graphs_[lg] = std::unique_ptr<TGraph>(new TGraph (record_size));
-	graphs_[lg]->SetName( Form ("Board_%d_Fragment_%d_graph", board_id, fragment_id));
-	graphs_[lg]->SetTitle (Form ("Board %d, Fragment %d", board_id, fragment_id));
+      if (!graphs_[lg] || graphs_[lg]->GetN () != total_adc_values) {
+	graphs_[lg] = std::unique_ptr<TGraph>(new TGraph (total_adc_values));
+	graphs_[lg]->SetName( Form ("Fragment_%d_graph", fragment_id));
 	graphs_[lg]->SetLineColor ( 4 );
 	std::copy (x_.begin (), x_.end (), graphs_[lg]->GetX ());
       }
 
       // Get the data from the fragment
 
-      std::copy (b.dataBegin (), b.dataBegin() + record_size, graphs_[lg]->GetY ());
+      // Is there some way to templatize an ART module? If not, we're stuck with this awkward switch code...
+
+      switch ( fragtype ) {
+
+      case FragmentType::V1720:  
+      case FragmentType::V1724: 
+	{
+	  std::copy (v172xPtr->dataBegin (), v172xPtr->dataBegin() + total_adc_values, graphs_[lg]->GetY ());
+	}
+	break;
+
+      case FragmentType::TOY1: 
+      case FragmentType::TOY2: 
+	{
+	  std::copy (toyPtr->dataBegin (), toyPtr->dataBegin() + total_adc_values, graphs_[lg]->GetY ());
+	}
+	break;
+  
+      default: 
+	throw cet::exception("Error in WFViewer: unknown fragment type supplied");
+      }
+
 
       // And now prepare the graphics without actually drawing anything yet
       
       canvas_[1] -> cd(padnum);
       TVirtualPad* pad = static_cast<TVirtualPad*>(canvas_[1]->GetPad(padnum) ); 
 
-      Double_t lo_x = graphs_[lg]->GetXaxis()->GetXmin();
-      Double_t hi_x = graphs_[lg]->GetXaxis()->GetXmax();
-      Double_t lo_y = -0.5;
-      Double_t hi_y = max_adc_count_-0.5;
+      Double_t lo_x, hi_x, lo_y, hi_y, dummy;
+
+      graphs_[lg]->GetPoint(0, lo_x, dummy);
+      graphs_[lg]->GetPoint( graphs_[lg]->GetN()-1, hi_x, dummy);
+
+      lo_x -= 0.5;
+      hi_x += 0.5;
+
+      lo_y = -0.5;
+      hi_y = max_adc_count+0.5;
 
 
       TH1F* padframe = static_cast<TH1F*>( pad->DrawFrame( lo_x, lo_y, hi_x, hi_y ) );
-      padframe->SetTitle( Form ("Board %d, Frag %d, SeqID %d", board_id, fragment_id, expected_sequence_id));
-      padframe->GetXaxis()->SetTitle("Channel #");
+      padframe->SetTitle( Form ("Frag %d, Type %s, SeqID %d", fragment_id, 
+				fragmentTypeToString( fragtype  ).c_str(), 
+				expected_sequence_id) );
+      padframe->GetXaxis()->SetTitle("ADC #");
       pad->SetGrid();
       padframe->Draw("SAME");
 
-      graphs_[lg]->GetYaxis()->SetRangeUser (*std::min_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size), *std::max_element (graphs_[lg]->GetY (), graphs_[lg]->GetY () + record_size));
-      gStyle->SetMarkerStyle(22);
-      gStyle->SetMarkerColor(4);
     }
-  } // End loop over fragments
 
-  if (*std::min_element( fragment_ids.begin(), fragment_ids.end() ) != 0 ) {
-    cout << "Warning in WFViewer: expected lowest fragment_id val to be 0, instead got " << *std::min_element( fragment_ids.begin(), fragment_ids.end() ) << endl;
-  }
+    // Draw the histogram
 
-  // Don't draw anything if we're prescaled
-
-  if (prescaled) return;
-
-  // Draw the histograms
-
-  for (int lg = 0; lg < total_frags; ++lg) {
     canvas_[0]->cd(lg+1);
     histograms_[lg]->Draw();
-  }
 
-  canvas_[0] -> Modified();
-  canvas_[0] -> Update();
+    canvas_[0] -> Modified();
+    canvas_[0] -> Update();
 
-  // And, if desired, the Nth event's ADC counts
+    // And, if desired, the Nth event's ADC counts
   
-  if (!digital_sum_only_) {
-    for (int lg = 0; lg < total_frags; ++lg) {
+    if (!digital_sum_only_) {
       canvas_[1]->cd(lg+1);
-      graphs_[lg]->Draw("*SAME");
+      graphs_[lg]->Draw("PSAME");
+
+      canvas_[1] -> Modified();
+      canvas_[1] -> Update();
     }
 
-    canvas_[1] -> Modified();
-    canvas_[1] -> Update();
   }
-
 }
 
 void demo::WFViewer::beginRun(art::Run const &e) { 
@@ -268,7 +357,10 @@ void demo::WFViewer::beginRun(art::Run const &e) {
   }
 
   canvas_[0]->SetTitle("ADC Value Distribution");
-  canvas_[1]->SetTitle("ADC Counts by Channel");
+
+  if (! digital_sum_only_) {
+    canvas_[1]->SetTitle("ADC Values, Event Snapshot");
+  }
 }
 
 

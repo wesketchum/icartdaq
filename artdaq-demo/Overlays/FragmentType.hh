@@ -11,6 +11,8 @@ namespace demo {
         V1720,
         V1724,
         V1190,
+	TOY1,
+	TOY2,
         INVALID // Should always be last.
         };
 
