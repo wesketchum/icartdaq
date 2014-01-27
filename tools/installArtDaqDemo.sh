@@ -51,13 +51,14 @@ test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo"  # 
 test -d artdaq || git clone http://cdcvs.fnal.gov/projects/artdaq
 cd artdaq
 git fetch origin
-git checkout v1_05_01
+git checkout v1_05_05
 cd ../build_artdaq
 echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
 . ../artdaq/ups/setup_for_development -p e4 eth
 echo FINISHED ../artdaq/ups/setup_for_development
 export CETPKG_INSTALL=$products_dir
+export CETPKG_J=16
 buildtool -i
 
 cd $demo_dir >/dev/null
@@ -76,7 +77,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	export ARTDAQDEMO_BUILD="$demo_dir/build_artdaq-demo"
 	export ARTDAQDEMO_REPO="$artdaq_demo_dir"
-	export FHICL_FILE_PATH=.:$ARTDAQDEMO_REPO/tools/fcl
+	export FHICL_FILE_PATH=.:\$ARTDAQDEMO_REPO/tools/fcl:\$FHICL_FILE_PATH
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
