@@ -2,4 +2,6 @@
 # "nADCcounts" is the number of ADC values produced per fragment per
 #  event by the ToySimulator module
 
+# This value should be an even number
+
 nADCcounts: 40
