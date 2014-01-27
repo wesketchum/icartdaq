@@ -69,7 +69,6 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	source $products_dir/setup
 
-	export FHICL_FILE_PATH=.
 	export CETPKG_INSTALL=$products_dir
 	export CETPKG_J=16
 	#export ARTDAQDEMO_BASE_PORT=52200
@@ -77,6 +76,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	export ARTDAQDEMO_BUILD="$demo_dir/build_artdaq-demo"
 	export ARTDAQDEMO_REPO="$artdaq_demo_dir"
+	export FHICL_FILE_PATH=.:$ARTDAQDEMO_REPO/tools/fcl
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
@@ -114,5 +114,8 @@ if [ -n "${opt_run_demo-}" ];then
         -c ':,sleep 10' \
         -c 'manage2x2x2System.sh stop' \
         -c ':,sleep 5' \
-        -c 'manage2x2x2System.sh shutdown'
+        -c 'manage2x2x2System.sh shutdown' \
+        -c ': For additional commands, see output from: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh exit'
 fi
