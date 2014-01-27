@@ -69,7 +69,6 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	source $products_dir/setup
 
-	export FHICL_FILE_PATH=.
 	export CETPKG_INSTALL=$products_dir
 	export CETPKG_J=16
 	#export ARTDAQDEMO_BASE_PORT=52200
@@ -77,7 +76,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	export ARTDAQDEMO_BUILD="$demo_dir/build_artdaq-demo"
 	export ARTDAQDEMO_REPO="$artdaq_demo_dir"
-        export FCL_DIR="$ARTDAQDEMO_REPO/tools/fcl"
+	export FHICL_FILE_PATH=.:$ARTDAQDEMO_REPO/tools/fcl
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
