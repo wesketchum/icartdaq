@@ -1,0 +1,34 @@
+# FHiCL document used to run the "driver" executable. To learn more
+#  about the FHiCL language, please look at
+#  cdcvs.fnal.gov/redmine/documents/327 , the "FHiCL Quick Start Guide"
+
+events_to_generate: 10
+run_number: 101
+
+fragment_receiver: {
+
+   # Parameters defining and configuring the fragment generator to be used
+   		    
+   generator: ToySimulator 
+   fragment_type: TOY1
+   fragments_per_board: 1  
+   nADCcounts: 100
+   random_seed: 6514
+
+   # Parameters configuring the fragment generator's parent class
+   # artdaq::CommandableFragmentGenerator
+
+   fragment_id: 0
+   board_id: 0
+}  		  
+
+event_builder: {
+
+  expected_fragments_per_event: 1
+  use_art: false
+  print_event_store_stats: true
+  verbose: true
+  events_expected_in_SimpleQueueReader: @local::events_to_generate
+}
+
+
