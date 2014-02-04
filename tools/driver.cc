@@ -93,7 +93,6 @@ int main(int argc, char * argv[]) try
 
   ParameterSet fragment_receiver_pset = complete_pset.get<ParameterSet>("fragment_receiver");
   ParameterSet event_builder_pset = complete_pset.get<ParameterSet>("event_builder");
-  std::cout << "Still OK" << std::endl;
 
   // Use the "generator" parameter from the user-supplied *.fcl
   // configuration file to define our fragment generator

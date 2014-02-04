@@ -1,4 +1,4 @@
-cet_script(setupDemoEnvironment.sh DemoControl.rb start2x2System.sh manage2x2System.sh start2x2x2System.sh manage2x2x2System.sh)
+cet_script(setupDemoEnvironment.sh DemoControl.rb start2x2System.sh manage2x2System.sh start2x2x2System.sh manage2x2x2System.sh CreateNewFragmentGenerator.rb)
 
 art_make_exec(driver
   LIBRARIES
