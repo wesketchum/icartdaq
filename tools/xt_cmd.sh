@@ -116,7 +116,7 @@ init_profile_file() # $1=profile_file
 	fi
 	CMD_STR=$cmd_str_sav
 	histchars='!^#' # fix the (2nd part of the) strangeness (next line)
-	history -n      # strange: shouldn't have to do this. also, timestamps show up.
+	builtin history -n      # strange: shouldn't have to do this. also, timestamps show up.
 	EOF
     #
 }
@@ -125,7 +125,7 @@ append_cmd_str_support() # $1=profile_file
 {
     cat >>$1 <<-'EOF'
 	# CMD_STR support
-	hcmd() { history -s "$@"; echo "$@"; eval "$@"; }
+	hcmd() { builtin history -s "$@"; echo "$@"; eval "$@"; }
 	process_cmd_str()
 	{   cpltcmd=
 	    IFSsav=$IFS IFS='
@@ -136,7 +136,7 @@ append_cmd_str_support() # $1=profile_file
 	            cpltcmd="$cpltcmd$cmd_"
 	        fi
 	        if   histonly=`expr "x$cpltcmd" : 'x::\(.*\)'`;then
-	            history -s "$histonly"
+	            builtin history -s "$histonly"
 	        elif nohist=`expr   "x$cpltcmd" : 'x:,\(.*\)'`;then
 	            echo "$nohist"; eval "$nohist"
 	        elif file=`expr     "x$cpltcmd" : 'x:!\(.*\)'`;then

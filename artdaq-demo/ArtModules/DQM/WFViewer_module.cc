@@ -170,8 +170,8 @@ void demo::WFViewer::analyze (art::Event const & e) {
     // type as is currently defined for the V172x fragments (as
     // opposed to the Toy fragment, which have this value in their
     // metadata). Since it's not using external variables for this
-    // quantity, this would need to keep being edited should these
-    // values change.
+    // quantity, this would need to be edited should these values
+    // change.
 
     switch ( fragtype ) {
 
@@ -211,7 +211,7 @@ void demo::WFViewer::analyze (art::Event const & e) {
 
     if (!histograms_[lg]) {
 
-      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Fragment_%d_hist", fragment_id), "", max_adc_count, -0.5, max_adc_count + 0.5));
+      histograms_[lg] = std::unique_ptr<TH1D>(new TH1D( Form ("Fragment_%d_hist", fragment_id), "", max_adc_count+1, -0.5, max_adc_count + 0.5));
 
       histograms_[lg]->SetTitle (Form ("Frag %d, Type %s", fragment_id, 
 				       fragmentTypeToString( fragtype  ).c_str() ) );
