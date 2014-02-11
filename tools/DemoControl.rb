@@ -24,9 +24,12 @@ require File.join( File.dirname(__FILE__), 'demo_utilities' )
 
 require File.join( File.dirname(__FILE__), 'generateToy' )
 require File.join( File.dirname(__FILE__), 'generateV1720' )
+require File.join( File.dirname(__FILE__), 'generateWFViewer' )
+
+require File.join( File.dirname(__FILE__), 'generateBoardReaderMain' )
 require File.join( File.dirname(__FILE__), 'generateEventBuilderMain' )
 require File.join( File.dirname(__FILE__), 'generateAggregatorMain' )
-require File.join( File.dirname(__FILE__), 'generateWFViewer' )
+
 
 
 # PLEASE NOTE: If/when there comes a time that we want to add more board
@@ -541,16 +544,16 @@ class SystemControl
         if kind == boardreaderOptions.kind && br.boardIndexList[listIndex] == boardreaderOptions.index
 
           if kind == "V1720" || kind == "V1724"
-            cfg = generateV1720(boardreaderOptions.index*fragmentsPerBoard,
-                                totalEBs, totalFRs,
-                                Integer(inputBuffSizeWords/8),
-                                boardreaderOptions.board_id, fragmentsPerBoard, kind)
+            generatorCode = generateV1720(boardreaderOptions.index*fragmentsPerBoard,
+                                          boardreaderOptions.board_id, fragmentsPerBoard, kind)
           elsif kind == "TOY1" || kind == "TOY2"
-            cfg = generateToy(boardreaderOptions.index*fragmentsPerBoard,
-                              totalEBs, totalFRs,
-                              Integer(inputBuffSizeWords/8),
-                              boardreaderOptions.board_id, fragmentsPerBoard, kind)
+            generatorCode = generateToy(boardreaderOptions.index*fragmentsPerBoard,
+                                        boardreaderOptions.board_id, fragmentsPerBoard, kind)
           end
+
+          cfg = generateBoardReaderMain(totalEBs, totalFRs,
+                                        Integer(inputBuffSizeWords/8), 
+                                        generatorCode)
 
           br.cfgList[listIndex] = cfg
           break

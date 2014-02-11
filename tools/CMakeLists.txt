@@ -1,4 +1,4 @@
-cet_script(setupDemoEnvironment.sh DemoControl.rb start2x2System.sh manage2x2System.sh start2x2x2System.sh manage2x2x2System.sh CreateNewFragmentGenerator.rb  generateEventBuilderMain.rb  generateWFViewer.rb generateEventBuilder.rb ToyControl.rb demo_utilities.rb generateToy.rb generateAggregator.rb generateAggregatorMain.rb generateV1720.rb generateCompression.rb)
+cet_script(setupDemoEnvironment.sh DemoControl.rb start2x2System.sh manage2x2System.sh start2x2x2System.sh manage2x2x2System.sh CreateNewFragmentGenerator.rb  generateEventBuilderMain.rb  generateWFViewer.rb generateEventBuilder.rb demo_utilities.rb generateToy.rb generateAggregator.rb generateAggregatorMain.rb generateV1720.rb generateCompression.rb generateBoardReaderMain.rb )
 
 
 art_make_exec(driver
