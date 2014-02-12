@@ -16,7 +16,8 @@
 # Here, we simply create a FHiCL script designed to run the new
 # "ToyDump" module so as to print ADC values from fragments of type
 # TOY1 or TOY2 to screen (see the artdaq-demo/Overlays/ToyFragment.hh
-# file for more, or look at the online Wiki)
+# file for more, and/or look at the online Wiki,
+# cdcvs.fnal.gov/redmine/projects/artdaq-demo/wiki
 
 require File.join( File.dirname(__FILE__), 'generateToy' )
 
@@ -27,22 +28,41 @@ require File.join( File.dirname(__FILE__), 'generateToy' )
 
 def main
 
-  # More sophisticated programs also use the "OptionParser" class for command line processing
+  # More sophisticated programs also use the "OptionParser" class for
+  # command line processing
+
+  if ! ARGV.length.between?(2,4)
+    puts "Usage: " + __FILE__.split("/")[-1] + " <fragment type = TOY1, TOY2> "  + " <# of events> (saveFHiCL) (nADCcounts) "
+    exit 1
+  end
 
   fragtype = ARGV[0]
   nEvents = ARGV[1]
 
-  if ARGV.length != 2 
-    raise "Usage: " + __FILE__ + " <fragment type = TOY1, TOY2> <# of events>"
+  if ARGV.length >= 3
+    saveFHiCL = ARGV[2]
+  else
+    saveFHiCL = false
   end
+  
+  # We'll pass "nADCcounts" to the generateToy function. If nADCcounts
+  # is "nil", generateToy will search for a FHiCL file called
+  # "ToySimulator.fcl" for the definition of nADCcounts
 
+  if ARGV.length == 4
+    nADCcounts = ARGV[3]
+  else
+    nADCcounts = nil
+  end
 
   if fragtype == "TOY1" || fragtype == "TOY2"
 
     # From generateToy.rb :
-    # def generateToy(startingFragmentId, boardId, fragmentsPerBoard, fragmentType)
 
-    generatorCode = generateToy(0, 0, 1, fragtype)
+    # def generateToy(startingFragmentId, boardId, fragmentsPerBoard,
+    # fragmentType, nADCcounts = nil)
+
+    generatorCode = generateToy(0, 0, 1, fragtype, nADCcounts)
   
   else
 
@@ -52,10 +72,13 @@ def main
 
   driverCode = generateDriver( generatorCode, nEvents)
 
-  # Backticks can be used to make system calls in Ruby. Here, we create a unique filename
+  # Backticks can be used to make system calls in Ruby. Here, we
+  # create a unique filename, and strip the trailing newline returned
+  # by the shell
+
   filename = `uuidgen`.strip
 
-  # And dump the driver's FHiCL code to the new file
+  # Now dump the driver's FHiCL code to the new file
   
   handle = File.open( filename, "w")
   handle.write( driverCode )
@@ -64,14 +87,19 @@ def main
   # And now we call the "driver" program with the temporary FHiCL file
 
   # Note that since the backticks return stdout, we just stick the
-  # call in front of a "puts" command
+  # call in front of a "puts" command to see the driver's output
 
   cmd = "driver -c " + filename
   puts `#{cmd}`
 
-  # Clean up -- comment out this line if you wish to see the FHiCL script run by "driver"
+  # Either remove or save the FHiCL file
+  
+  if saveFHiCL
+    cmd = "mv " + filename + " renameme.fcl"
+  else
+    cmd = "rm -f " + filename
+  end
 
-  cmd = "rm -f " + filename
   `#{cmd}`
 
 end
