@@ -5,6 +5,33 @@ require "optparse"
 require "ostruct"
 require "xmlrpc/client"
 
+# To summarize this script in one sentence, it is designed to send
+# basic DAQ transition commands provided at the command line (init,
+# start, stop) to running artdaq processes. The most complex of these
+# commands is "init", which involves taking arguments supplied at the
+# command line and using them to create FHiCL configuration scripts
+# read in by the processes. Note that the actual program flow (i.e.,
+# the equivalent of C/C++'s "main") begins at the bottom of this
+# script, at the line "if __FILE__ == $0"; when first examining this
+# script it's a good idea to begin there.
+
+
+require File.join( File.dirname(__FILE__), 'demo_utilities' )
+
+# The following includes bring in ruby functions which, given a set of
+# arguments, will generate FHiCL code usable by the artdaq processes
+# (BoardReaderMain, EventBuilderMain, AggregatorMain)
+
+require File.join( File.dirname(__FILE__), 'generateToy' )
+require File.join( File.dirname(__FILE__), 'generateV1720' )
+require File.join( File.dirname(__FILE__), 'generateWFViewer' )
+
+require File.join( File.dirname(__FILE__), 'generateBoardReaderMain' )
+require File.join( File.dirname(__FILE__), 'generateEventBuilderMain' )
+require File.join( File.dirname(__FILE__), 'generateAggregatorMain' )
+
+
+
 # PLEASE NOTE: If/when there comes a time that we want to add more board
 # types to this script, we should go back to the ds50MasterControl script
 # and use it as an example since it may not be obvious how to add boards
@@ -28,49 +55,6 @@ begin
 rescue Exception => msg
 end
 
-# 27-Jan_2014, JCF - will be loading in FHiCL code from files located
-# in directories referred to by the FHICL_FILE_PATH variable; supply
-# only the basename of the file (e.g., read_fcl("WFViewer.fcl"), not
-# read_fcl("/my/full/path/WFViewer.fcl")
-
-def read_fcl( filename )
-  paths = ENV['FHICL_FILE_PATH'].split(':')
-
-  paths.each do |path|                                                                            
-
-    fullname = path + "/" + filename
-
-    if File.file?( fullname )
-      return File.read( fullname )
-    end
-  end
-
-  raise Exception.new("Unable to locate desired file " + 
-                      filename + 
-                      " in any of the directories referred to by the " +
-                      "FHICL_FILE_PATH environment variable")
-end
-
-
-# Please NOTE that this assignment for the ONMON_CFG will only
-# be used if it wasn't included from the external file already
-if (defined?(PHYS_ANAL_ONMON_CFG)).nil? || (PHYS_ANAL_ONMON_CFG).nil?
-  PHYS_ANAL_ONMON_CFG = "\
-    app: {
-      module_type: RootApplication
-      force_new: true
-    }
-    wf: {
-      module_type: WFViewer
-      fragments_per_board: %{fragments_per_board}
-      fragment_receiver_count: %{total_frs}
-      fragment_ids: %{fragment_ids}
-      fragment_type_labels: %{fragment_type_labels} " \
-      + read_fcl("WFViewer.fcl") \
-      + "    }"
-end
-
-
 # And, this assignment for the prescale will only
 # be used if it wasn't included from the external file already
 if (defined?(ONMON_EVENT_PRESCALE)).nil? || (ONMON_EVENT_PRESCALE).nil?
@@ -81,463 +65,17 @@ if (defined?(ONMON_MODULES)).nil? || (ONMON_MODULES).nil?
   ONMON_MODULES = "[ app, wf ]"
 end
 
-EB_CONFIG = "\
-BEGIN_PROLOG
-  huff:
-  {
-    module_type: Compression
-    raw_label: daq
-    want_bins: false
-    perf_print: false
-    use_diffs: true
-    record_compression: false
-  }
+# John F., 2/5/14
 
-  huffdiff_1720: @local::huff
-  huffdiff_1720.instance_name: V1720
-  huffdiff_1720.table_file: \"table_daqV1720_huff_diff.txt\"
-  huffdiff_1724: @local::huff
-  huffdiff_1724.instance_name: V1724
-  huffdiff_1724.table_file: \"table_daqV1724_huff_diff.txt\"
-END_PROLOG
-services: {
-  scheduler: {
-    fileMode: NOMERGE
-  }
-  user: {
-    NetMonTransportServiceInterface: {
-      service_provider: NetMonTransportService
-      first_data_receiver_rank: %{ag_rank}
-      mpi_buffer_count: %{netmonout_buffer_count}
-      max_fragment_size_words: %{size_words}
-      data_receiver_count: 1 # %{ag_count}
-      #broadcast_sends: true
-    }
-  }
-  Timing: { summaryOnly: true }
-  #SimpleMemoryCheck: { }
-}
-daq: {
-  max_fragment_size_words: %{size_words}
-  event_builder: {
-    mpi_buffer_count: %{buffer_count}
-    first_fragment_receiver_rank: 0
-    fragment_receiver_count: %{total_frs}
-    expected_fragments_per_event: %{total_fragments}
-    use_art: true
-    print_event_store_stats: true
-    verbose: %{verbose}
-  }
-}
-outputs: {
-  %{netmon_output}netMonOutput: {
-  %{netmon_output}  module_type: NetMonOutput
-  %{netmon_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
-  %{netmon_output}}
-  %{root_output}normalOutput: {
-  %{root_output}  module_type: RootOutput
-  %{root_output}  fileName: \"%{output_file}\"
-  %{root_output}  compressionLevel: 0
-  %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
-  %{root_output}}
-}
-
-physics: {
-  analyzers: {
-%{phys_anal_onmon_cfg}
-  }
-
-  producers: {
-    # compress the raw
-    %{enable_1720_compression}huffdiffV1720: @local::huffdiff_1720  
-    %{enable_1724_compression}huffdiffV1724: @local::huffdiff_1724 
-    %{enable_172x_compression}huffdiffV1720: @local::huffdiff_1720  
-    %{enable_172x_compression}huffdiffV1724: @local::huffdiff_1724 
-  }
-  %{enable_1720_compression}p1: [ huffdiffV1720 ]
-  %{enable_1724_compression}p1: [ huffdiffV1724 ]
-  %{enable_172x_compression}p1: [ huffdiffV1720, huffdiffV1724 ]
-
-  %{enable_onmon}a1: [ app, wf ]
-
-  %{netmon_output}my_output_modules: [ netMonOutput ]
-  %{root_output}my_output_modules: [ normalOutput ]
-}
-source: {
-  module_type: RawInput
-  waiting_time: 900
-  resume_after_timeout: true
-  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"], [6, \"TOY1\"], [7, \"TOY2\"]]
-}
-process_name: DAQ"
-
-AG_CONFIG = "\
-BEGIN_PROLOG
-  huff:
-  {
-    module_type: Compression
-    raw_label: daq
-    want_bins: false
-    perf_print: false
-    use_diffs: true
-    record_compression: false
-  }
-
-  huffdiff_1720: @local::huff
-  huffdiff_1720.instance_name: V1720
-  huffdiff_1720.table_file: \"table_daqV1720_huff_diff.txt\"
-  huffdiff_1724: @local::huff
-  huffdiff_1724.instance_name: V1724
-  huffdiff_1724.table_file: \"table_daqV1724_huff_diff.txt\"
-
-  unhuff:
-  {
-    module_type: Decompression
-  }
-
-  dunhuff_1720: @local::unhuff
-  dunhuff_1720.instance_name: V1720
-  dunhuff_1720.compressed_label: huffdiffV1720
-  dunhuff_1720.table_file: \"table_daqV1720_huff_diff.txt\"
-  dunhuff_1724: @local::unhuff
-  dunhuff_1724.instance_name: V1724
-  dunhuff_1724.compressed_label: huffdiffV1724
-  dunhuff_1724.table_file: \"table_daqV1724_huff_diff.txt\"
-END_PROLOG
-services: {
-  scheduler: {
-    fileMode: NOMERGE
-  }
-  user: {
-    NetMonTransportServiceInterface: {
-      service_provider: NetMonTransportService
-      max_fragment_size_words: %{size_words}
-    }
-  }
-  Timing: { summaryOnly: true }
-  #SimpleMemoryCheck: { }
-}
-daq: {
-  max_fragment_size_words: %{size_words}
-  aggregator: {
-    mpi_buffer_count: %{buffer_count}
-    first_event_builder_rank: %{total_frs}
-    event_builder_count: %{total_ebs}
-    expected_events_per_bunch: %{bunch_size}
-    print_event_store_stats: true
-    event_queue_depth: %{queue_depth}
-    event_queue_wait_time: %{queue_timeout}
-    onmon_event_prescale: %{onmon_event_prescale}
-    xmlrpc_client_list: \"%{xmlrpc_client_list}\"
-    file_size_MB: %{file_size}
-    file_duration: %{file_duration}
-    file_event_count: %{file_event_count}
-  }
-}
-source: {
-  module_type: NetMonInput
-}
-outputs: {
-  %{root_output}normalOutput: {
-  %{root_output}  module_type: RootOutput
-  %{root_output}  fileName: \"%{output_file}\"
-  %{root_output}  compressionLevel: 0
-  %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
-  %{root_output}}
-}
-physics: {
-  analyzers: {
-%{phys_anal_onmon_cfg}
-  }
-
-  producers: {
-    # compress the raw
-    %{enable_1720_compression}huffdiffV1720: @local::huffdiff_1720  
-    %{enable_1724_compression}huffdiffV1724: @local::huffdiff_1724 
-    %{enable_172x_compression}huffdiffV1720: @local::huffdiff_1720  
-    %{enable_172x_compression}huffdiffV1724: @local::huffdiff_1724 
-
-    ## uncompress the raw
-    #dunhuffV1720: @local::dunhuff_1720
-    #dunhuffV1724: @local::dunhuff_1724
-  }
-  %{enable_1720_compression}p1: [ huffdiffV1720 ]
-  %{enable_1724_compression}p1: [ huffdiffV1724 ]
-  %{enable_172x_compression}p1: [ huffdiffV1720, huffdiffV1724 ]
-
-  %{enable_onmon}a1: %{onmon_modules}
-
-  %{root_output}my_output_modules: [ normalOutput ]
-}
-process_name: DAQAG"
-
-COMPOSITE_GENERATOR_CONFIG = "\
-%{prolog}
-daq: {
-  max_fragment_size_words: %{size_words}
-  fragment_receiver: {
-    mpi_buffer_count: %{buffer_count}
-    first_event_builder_rank: %{total_frs}
-    event_builder_count: %{total_ebs}
-    generator: CompositeDriver
-    fragment_id: 999
-    board_id: 999
-    generator_config_list:
-    [
-      # the format of this list is {daq:<paramSet},{daq:<paramSet>},...
-      %{generator_list}
-    ]
-  }
-}"
-
-TOY_SIM_CONFIG = "\
-daq: {
-  max_fragment_size_words: %{size_words}
-  fragment_receiver: {
-    mpi_buffer_count: %{buffer_count}
-    mpi_sync_interval: 50
-    first_event_builder_rank: %{total_frs}
-    event_builder_count: %{total_ebs}
-    generator: ToySimulator
-    fragment_type: %{fragment_type}
-    fragments_per_board: %{fragments_per_board}
-    starting_fragment_id: %{starting_fragment_id}
-    fragment_id: %{starting_fragment_id}
-    board_id: %{board_id}
-    random_seed: %{random_seed}
-    sleep_on_stop_us: 500000 " \
-    + read_fcl("ToySimulator.fcl") \
-    + " }\
-    }"
-
-V1720_SIM_CONFIG = "\
-daq: {
-  max_fragment_size_words: %{size_words}
-  fragment_receiver: {
-    mpi_buffer_count: %{buffer_count}
-    mpi_sync_interval: 50
-    first_event_builder_rank: %{total_frs}
-    event_builder_count: %{total_ebs}
-    generator: V172xSimulator
-    fragment_type: %{fragment_type}
-    freqs_file: \"V1720_sample_freqs.dat\"
-    fragments_per_board: %{fragments_per_board}
-    starting_fragment_id: %{starting_fragment_id}
-    fragment_id: %{starting_fragment_id}
-    board_id: %{board_id}
-    random_seed: %{random_seed}
-    sleep_on_stop_us: 500000 "  \
-    + read_fcl("V172xSimulator.fcl") \
-    + " } \
-    }"
+# ConfigGen, a class designed to generate the FHiCL configuration
+# scripts which configure the artdaq processes, has had many of its
+# functions moved into separate *.rb files, the logic being that
+# there's nothing specific to this control script about a function
+# which generates FHiCL configuration scripts for components which can
+# be used in multiple contexts (e.g., V172x simulators).
 
 
 class ConfigGen
-
-   def generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList)
-     wfViewerConfig = String.new(PHYS_ANAL_ONMON_CFG)
-     wfViewerConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-     wfViewerConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
-     wfViewerConfig.gsub!(/\%\{fragment_ids\}/, String(fragmentIDList))
-     wfViewerConfig.gsub!(/\%\{fragment_type_labels\}/, String(fragmentTypeList))
-     return wfViewerConfig
-   end
-
-
-  def generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs, compressionLevel, 
-                           totalv1720s, totalv1724s, dataDir, onmonEnable,
-                           diskWritingEnable, fragSizeWords, totalFragments, fragmentsPerBoard,
-                           fragmentIDList, fragmentTypeList)
-    # Do the substitutions in the event builder configuration given the options
-    # that were passed in from the command line.  
-    ebConfig = String.new(EB_CONFIG)
-    ebConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    ebConfig.gsub!(/\%\{total_fragments\}/, String(totalFragments))
-    ebConfig.gsub!(/\%\{ag_rank\}/, String(totalFRs + totalEBs))
-    ebConfig.gsub!(/\%\{ag_count\}/, String(totalAGs))
-    ebConfig.gsub!(/\%\{buffer_count\}/, String(totalFRs*8))
-    ebConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
-    ebConfig.gsub!(/\%\{netmonout_buffer_count\}/, String(totalAGs*4))
-    if Integer(compressionLevel) > 0 && Integer(compressionLevel) < 3
-      if Integer(totalv1720s) > 0 and Integer(totalv1724s) > 0
-        ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_172x_compression\}/, "")
-      elsif Integer(totalv1720s) > 0
-        ebConfig.gsub!(/\%\{enable_1720_compression\}/, "")
-        ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      elsif Integer(totalv1724s) > 0
-        ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_1724_compression\}/, "")
-        ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      else
-        ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-        ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      end
-    else
-      ebConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-      ebConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-      ebConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-    end
-    if Integer(compressionLevel) > 1
-      ebConfig.gsub!(/\%\{drop_uncompressed\}/, "")
-    else
-      ebConfig.gsub!(/\%\{drop_uncompressed\}/, "#")
-    end
-    if Integer(totalAGs) >= 1
-      ebConfig.gsub!(/\%\{netmon_output\}/, "")
-      ebConfig.gsub!(/\%\{root_output\}/, "#")
-      ebConfig.gsub!(/\%\{enable_onmon\}/, "#")
-      ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
-      ebConfig.gsub!(/\%\{verbose\}/, "false")
-    else
-      ebConfig.gsub!(/\%\{netmon_output\}/, "#")
-      if Integer(diskWritingEnable) != 0
-        ebConfig.gsub!(/\%\{root_output\}/, "")
-      else
-        ebConfig.gsub!(/\%\{root_output\}/, "#")
-      end
-      if Integer(onmonEnable) != 0
-        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList))
-        ebConfig.gsub!(/\%\{enable_onmon\}/, "")
-      else
-        ebConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
-        ebConfig.gsub!(/\%\{enable_onmon\}/, "#")
-      end
-      ebConfig.gsub!(/\%\{verbose\}/, "true")
-    end
-
-    currentTime = Time.now
-    fileName = "artdaqdemo_eb%02d_" % ebIndex
-    fileName += "r%06r_sr%02s_%to"
-    fileName += ".root"
-    outputFile = File.join(dataDir, fileName)
-    ebConfig.gsub!(/\%\{output_file\}/, outputFile)
-
-    return ebConfig
-  end
-
-  def generateAggregator(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
-                         compressionLevel, totalv1720s, totalv1724s, onmonEnable,
-                         diskWritingEnable, agIndex, totalAGs, fragSizeWords,
-                         xmlrpcClientList, fileSizeThreshold, fileDuration,
-                         fileEventCount, fragmentsPerBoard,
-                         fragmentIDList, fragmentTypeList)
-    puts "Initial aggregator " + String(agIndex) + " disk writing setting = " +
-      String(diskWritingEnable)
-    # Do the substitutions in the aggregator configuration given the options
-    # that were passed in from the command line.  Assure that files written out
-    # by each AG are unique by including a timestamp in the file name.
-    currentTime = Time.now
-    fileName = "artdaqdemo_"
-    fileName += "r%06r_sr%02s_%to"
-    fileName += ".root"
-    outputFile = File.join(dataDir, fileName)
-    agConfig = String.new(AG_CONFIG)
-    agConfig.gsub!(/\%\{output_file\}/, outputFile)
-    agConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
-    agConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    agConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*4))
-    agConfig.gsub!(/\%\{bunch_size\}/, String(bunchSize))
-    agConfig.gsub!(/\%\{onmon_event_prescale\}/, String(ONMON_EVENT_PRESCALE))
-    agConfig.gsub!(/\%\{onmon_modules\}/, String(ONMON_MODULES))
-    agConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
-    agConfig.gsub!(/\%\{xmlrpc_client_list\}/, String(xmlrpcClientList))
-    agConfig.gsub!(/\%\{file_size\}/, String(fileSizeThreshold))
-    agConfig.gsub!(/\%\{file_duration\}/, String(fileDuration))
-    agConfig.gsub!(/\%\{file_event_count\}/, String(fileEventCount))
-    if Integer(compressionLevel) > 0 && Integer(compressionLevel) < 3
-      if Integer(totalv1720s) > 0 and Integer(totalv1724s) > 0
-        agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-        agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-        agConfig.gsub!(/\%\{enable_172x_compression\}/, "")
-      elsif Integer(totalv1720s) > 0
-        agConfig.gsub!(/\%\{enable_1720_compression\}/, "")
-        agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-        agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      elsif Integer(totalv1724s) > 0
-        agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-        agConfig.gsub!(/\%\{enable_1724_compression\}/, "")
-        agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      else
-        agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-        agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-        agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-      end
-    else
-      agConfig.gsub!(/\%\{enable_1720_compression\}/, "#")
-      agConfig.gsub!(/\%\{enable_1724_compression\}/, "#")
-      agConfig.gsub!(/\%\{enable_172x_compression\}/, "#")
-    end
-    if Integer(compressionLevel) > 1
-      agConfig.gsub!(/\%\{drop_uncompressed\}/, "")
-    else
-      agConfig.gsub!(/\%\{drop_uncompressed\}/, "#")
-    end
-
-    if agIndex == 0
-      if totalAGs > 1
-        onmonEnable = 0
-      end
-      agConfig.gsub!(/\%\{queue_depth\}/, "20")
-      agConfig.gsub!(/\%\{queue_timeout\}/, "5.0")
-    else
-      diskWritingEnable = 0
-      agConfig.gsub!(/\%\{queue_depth\}/, "2")
-      agConfig.gsub!(/\%\{queue_timeout\}/, "1.0")
-    end
-
-    puts "Final aggregator " + String(agIndex) + " disk writing setting = " +
-      String(diskWritingEnable)
-    if Integer(diskWritingEnable) != 0
-      agConfig.gsub!(/\%\{root_output\}/, "")
-    else
-      agConfig.gsub!(/\%\{root_output\}/, "#")
-    end
-    if Integer(onmonEnable) != 0
-      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList))
-      agConfig.gsub!(/\%\{enable_onmon\}/, "")
-    else
-      agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
-      agConfig.gsub!(/\%\{enable_onmon\}/, "#")
-    end
-
-    return agConfig  
-  end
-  
-  def generateToy(startingFragmentId, totalEBs, totalFRs,
-                    fragSizeWords, boardId, fragmentsPerBoard, fragmentType)
-    toyConfig = String.new(TOY_SIM_CONFIG)
-    
-    toyConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
-    toyConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    toyConfig.gsub!(/\%\{starting_fragment_id\}/, String(startingFragmentId))
-    toyConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
-    toyConfig.gsub!(/\%\{board_id\}/, String(boardId))
-    toyConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
-    toyConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
-    toyConfig.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
-    toyConfig.gsub!(/\%\{fragment_type\}/, fragmentType) 
-    return toyConfig
-  end
-
-  def generateV1720(startingFragmentId, totalEBs, totalFRs,
-                    fragSizeWords, boardId, fragmentsPerBoard, fragmentType)
-    v1720Config = String.new(V1720_SIM_CONFIG)
-    
-    v1720Config.gsub!(/\%\{total_ebs\}/, String(totalEBs))
-    v1720Config.gsub!(/\%\{total_frs\}/, String(totalFRs))
-    v1720Config.gsub!(/\%\{starting_fragment_id\}/, String(startingFragmentId))
-    v1720Config.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
-    v1720Config.gsub!(/\%\{board_id\}/, String(boardId))
-    v1720Config.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
-    v1720Config.gsub!(/\%\{size_words\}/, String(fragSizeWords))
-    v1720Config.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
-    v1720Config.gsub!(/\%\{fragment_type\}/, fragmentType) 
-    return v1720Config
-  end
 
   def generateComposite(totalEBs, totalFRs, configStringArray)
     compositeConfig = String.new(COMPOSITE_GENERATOR_CONFIG)
@@ -634,6 +172,12 @@ class ConfigGen
     return xmlrpcClients
   end
 end
+
+# As its name would suggest, "CommandLineParser" is a class designed
+# to take the arguments passed to the script and to store them in the
+# "options" member structure; the information in this structure will
+# in turn be used to direct the generation of FHiCL configuration
+# scripts used to control the artdaq processes
 
 class CommandLineParser
   def initialize(configGen)
@@ -837,8 +381,6 @@ class CommandLineParser
         @options.fragmentsPerBoard = Integer(fragsPerBoard)
       end
 
-#      wfViewerConfig = OpenStruct.new
-
       opts.on_tail("-h", "--help", "Show this message.") do
         puts opts
         exit
@@ -938,6 +480,13 @@ class CommandLineParser
   end
 end
 
+# "SystemControl" is a class whose member functions bear a 1-to-1
+# correspondence with the standard commands which can be passed to
+# this script: init, start, etc. As you might expect, its most complex
+# function is "init", as it is here that the full FHiCL strings used
+# to configure the artdaq processes are configured
+
+
 class SystemControl
   def initialize(cmdLineOptions, configGen)
     @options = cmdLineOptions
@@ -995,16 +544,16 @@ class SystemControl
         if kind == boardreaderOptions.kind && br.boardIndexList[listIndex] == boardreaderOptions.index
 
           if kind == "V1720" || kind == "V1724"
-            cfg = @configGen.generateV1720(boardreaderOptions.index*fragmentsPerBoard,
-                                           totalEBs, totalFRs,
-                                           Integer(inputBuffSizeWords/8),
-                                           boardreaderOptions.board_id, fragmentsPerBoard, kind)
+            generatorCode = generateV1720(boardreaderOptions.index*fragmentsPerBoard,
+                                          boardreaderOptions.board_id, fragmentsPerBoard, kind)
           elsif kind == "TOY1" || kind == "TOY2"
-            cfg = @configGen.generateToy(boardreaderOptions.index*fragmentsPerBoard,
-                                           totalEBs, totalFRs,
-                                           Integer(inputBuffSizeWords/8),
-                                           boardreaderOptions.board_id, fragmentsPerBoard, kind)
+            generatorCode = generateToy(boardreaderOptions.index*fragmentsPerBoard,
+                                        boardreaderOptions.board_id, fragmentsPerBoard, kind)
           end
+
+          cfg = generateBoardReaderMain(totalEBs, totalFRs,
+                                        Integer(inputBuffSizeWords/8), 
+                                        generatorCode)
 
           br.cfgList[listIndex] = cfg
           break
@@ -1058,27 +607,6 @@ class SystemControl
     }
 
 
-    # John F., 1/21/14 -- before sending FHiCL configurations to the
-    # EventBuilderMain and AggregatorMain processes, construct the
-    # strings listing fragment ids and fragment types which will be
-    # used by the WFViewer
-
-    # Notice that "board_id" is taken to be synonmyous with
-    # "fragment_id" here; this will need to change if we go with more
-    # than one fragment per event per BoardReaderMain
-
-    fragmentIDList, fragmentTypeList = "[ ", "[ "
-
-    (@options.v1720s + @options.toys).each { |proc|
-      fragmentIDList += " %d," % [ proc.board_id ]
-      fragmentTypeList += " %s," % [ proc.kind ]
-    }
-    
-    # Get rid of the trailing ","s, and replace with a close-bracket
-
-    fragmentIDList[-1], fragmentTypeList[-1] = "]", "]" 
-
-
     # 27-Jun-2013, KAB - send INIT to EBs and AG last
     threads = []
     @options.eventBuilders.each { |ebOptions|
@@ -1089,13 +617,21 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
 
-        cfg = @configGen.generateEventBuilder(ebIndex, totalFRs, totalEBs, totalAGs,
-                                              ebOptions.compression_level,
-                                              totalv1720s, totalv1724s,
-                                              @options.dataDir, @options.runOnmon,
-                                              @options.writeData, inputBuffSizeWords,
-                                              totalBoards*fragmentsPerBoard, fragmentsPerBoard,
-                                              fragmentIDList, fragmentTypeList)
+        fclWFViewer = generateWFViewer(totalFRs, fragmentsPerBoard, 
+                                       (@options.v1720s + @options.toys).map { |board| board.board_id },
+                                       (@options.v1720s + @options.toys).map { |board| board.kind }
+                                       )
+
+        puts "HAVE %d v1720s and %d v1724s" % [ totalv1720s, totalv1724s ]
+
+        cfg = generateEventBuilderMain(ebIndex, totalFRs, totalEBs, totalAGs,
+                                   ebOptions.compression_level,
+                                   totalv1720s, totalv1724s,
+                                   @options.dataDir, @options.runOnmon,
+                                   @options.writeData, inputBuffSizeWords,
+                                   totalBoards*fragmentsPerBoard, 
+                                   fclWFViewer
+                                   )
 
         if @options.serialize
           fileName = "EventBuilder_%s_%d.fcl" % [ebOptions.host, ebOptions.port]
@@ -1115,21 +651,27 @@ class SystemControl
 
     @options.aggregators.each { |agOptions|
       currentTime = DateTime.now.strftime("%Y/%m/%d %H:%M:%S")
-      puts "%s: Sending the INIT command to %s:%d." %
-        [currentTime, agOptions.host, agOptions.port]
-      threads << Thread.new() do
+      puts "%s: Sending the INIT command to %s:%d" %
+        [currentTime, agOptions.host, agOptions.port, agIndex]
+      threads << Thread.new( agIndex ) do |agIndexThread|
         xmlrpcClient = XMLRPC::Client.new(agOptions.host, "/RPC2", 
                                           agOptions.port)
-        cfg = @configGen.generateAggregator(@options.dataDir, @options.runNumber,
-                                            totalFRs, totalEBs, agOptions.bunch_size,
-                                            agOptions.compression_level,
-                                            totalv1720s, totalv1724s,
-                                            @options.runOnmon, @options.writeData,
-                                            agIndex, totalAGs, inputBuffSizeWords,
-                                            xmlrpcClients, @options.fileSizeThreshold,
-                                            @options.fileDurationSeconds,
-                                            @options.eventsInFile, fragmentsPerBoard,
-                                            fragmentIDList, fragmentTypeList)
+
+        fclWFViewer = generateWFViewer(totalFRs, fragmentsPerBoard, 
+                                       (@options.v1720s + @options.toys).map { |board| board.board_id },
+                                       (@options.v1720s + @options.toys).map { |board| board.kind }
+                                       )
+
+        cfg = generateAggregatorMain(@options.dataDir, @options.runNumber,
+                                 totalFRs, totalEBs, agOptions.bunch_size,
+                                 agOptions.compression_level,
+                                 totalv1720s, totalv1724s,
+                                 @options.runOnmon, @options.writeData,
+                                 agIndexThread, totalAGs, inputBuffSizeWords,
+                                 xmlrpcClients, @options.fileSizeThreshold,
+                                 @options.fileDurationSeconds,
+                                 @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE)
+
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
           puts "  writing %s..." % fileName
@@ -1143,6 +685,7 @@ class SystemControl
           [currentTime, agOptions.host, agOptions.port, result]
         STDOUT.flush
       end
+
       agIndex += 1
     }
     
@@ -1409,15 +952,27 @@ class SystemControl
 end
 
 if __FILE__ == $0
+
+  # Create an instance of the class charged with generating FHiCL configuration scripts
   cfgGen = ConfigGen.new
+
+  # And pass it, to be filled, to an instance of the class used to
+  # parse the arguments passed to the command line
+
   cmdLineParser = CommandLineParser.new(cfgGen)
   cmdLineParser.parse()
+
+  # Obtain the structure containing the command line options
   options = cmdLineParser.getOptions()
   puts "DemoControl disk writing setting = " + options.writeData
 
   if options.summary
     cmdLineParser.summarize()
   end
+
+
+  # Create an instance of the class used to implement the transition
+  # command passed to this script as an argument
 
   sysCtrl = SystemControl.new(options, cfgGen)
 
