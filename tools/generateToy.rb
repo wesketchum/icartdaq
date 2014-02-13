@@ -1,7 +1,7 @@
 
 # Generate the FHiCL document which configures the demo::ToySimulator class
 
-# Note that if "nADCcounts" is not supplied as an argument, its FHiCL
+# Note that if "nADCcounts" is set to nil, its FHiCL
 # setting is defined in a separate file called ToySimulator.fcl,
 # searched for via "read_fcl"
 
@@ -26,7 +26,7 @@ def generateToy(startingFragmentId, boardId, fragmentsPerBoard,
   toyConfig.gsub!(/\%\{fragment_type\}/, String(fragmentType)) 
 
 
-  if nADCcounts
+  if ! nADCcounts.nil?
     toyConfig += "\nnADCcounts: %d\n" % [ nADCcounts ]
   else
     toyConfig += read_fcl("ToySimulator.fcl")

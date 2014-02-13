@@ -67,6 +67,8 @@ void demo::ToyDump::analyze(art::Event const & evt)
   evt.getByLabel(raw_data_label_, frag_type_, raw);
 
   if (raw.isValid()) {
+    std::cout << "######################################################################" << std::endl;
+    std::cout << std::endl;
     std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
               << ", event " << eventNumber << " has " << raw->size()
               << " fragment(s) of type " << frag_type_ << std::endl;

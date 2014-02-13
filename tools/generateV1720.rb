@@ -2,7 +2,7 @@
 
 # Generate the FHiCL document which configures the demo::V172xSimulator class
 
-# Note that "nChannels", if not supplied as an argument, is defined in
+# Note that if "nChannels" is set to nil, it is defined in
 # a separate file called V172xSimulator.fcl, searched for via "read_fcl"
 
 
@@ -30,7 +30,7 @@ v1720Config = String.new( "\
   v1720Config.gsub!(/\%\{fragment_type\}/, fragmentType) 
 
 
-  if nChannels
+  if ! nChannels.nil?
     v1720Config += "\nnChannels: %d\n" % [ nChannels ]
   else
     v1720Config +=  read_fcl("V172xSimulator.fcl")
