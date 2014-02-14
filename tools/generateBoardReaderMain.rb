@@ -1,4 +1,6 @@
-
+# This function will generate the FHiCL code used to control the
+# BoardReaderMain application by configuring its
+# artdaq::BoardReaderCore object
   
 def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode)
 

@@ -1,3 +1,6 @@
+# This function will generate the FHiCL code used to control the
+# AggregatorMain application by configuring its
+# artdaq::AggregatorCore object
 
 require File.join( File.dirname(__FILE__), 'generateAggregator' )
 require File.join( File.dirname(__FILE__), 'generateCompression' )
