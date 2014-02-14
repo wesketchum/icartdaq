@@ -60,9 +60,9 @@ def main
     # From generateToy.rb :
 
     # def generateToy(startingFragmentId, boardId, fragmentsPerBoard,
-    # fragmentType, nADCcounts = nil)
+    # fragmentType, throttleUsecs, nADCcounts = nil)
 
-    generatorCode = generateToy(0, 0, 1, fragtype, nADCcounts)
+    generatorCode = generateToy(0, 0, 1, fragtype, 0, nADCcounts)
   
   else
 

@@ -1,7 +1,7 @@
 
 # "prescale: N" means, update the plots every Nth event 
 
-prescale: 1000
+prescale: 200
 
 
 # If "digital_sum_only" is "true" as opposed to "false", only show the

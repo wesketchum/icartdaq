@@ -46,6 +46,7 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   CommandableFragmentGenerator(ps),
   nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type"))),
+  throttle_usecs_(ps.get<size_t>("throttle_usecs", 0)),
   fragment_ids_{ static_cast<artdaq::Fragment::fragment_id_t>(fragment_id() ) },
   engine_(ps.get<int64_t>("random_seed", 314159)),
   uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))
@@ -68,6 +69,8 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   if (should_stop()) {
     return false;
   }
+
+  usleep( throttle_usecs_ );
 
   // Set fragment's metadata
 

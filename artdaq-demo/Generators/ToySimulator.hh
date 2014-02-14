@@ -58,6 +58,7 @@ namespace demo {
 
     std::size_t const nADCcounts_;     // ADC values per fragment per event
     FragmentType const fragment_type_; // Type of fragment (see FragmentType.hh)
+    std::size_t const throttle_usecs_;
     
     std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_; 
 
