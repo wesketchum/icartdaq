@@ -35,6 +35,8 @@ examples: `basename $0` .
 If the \"demo_root\" optional parameter is not supplied, the user will be
 prompted for this location.
 --run-demo    runs the demo
+-f            force download
+--skip-check  skip the free diskspace check
 "
 
 # Process script arguments and options
@@ -50,12 +52,14 @@ while [ -n "${1-}" ];do
         leq=`expr "x$op" : 'x-[^=]*\(=\)'` lev=`expr "x$op" : 'x-[^=]*=\(.*\)'`
         test -n "$leq"&&eval "set -- \"\$lev\" \"\$@\""&&op=`expr "x$op" : 'x\([^=]*\)'`
         case "$op" in
-        \?*|h*)    eval $op1chr; do_help=1;;
-        v*)        eval $op1chr; opt_v=`expr $opt_v + 1`;;
-        x*)        eval $op1chr; set -x;;
-        t*|-tag)   eval $reqarg; tag=$1;    shift;;
-        -run-demo) opt_run_demo=--run-demo;;
-        *)         echo "Unknown option -$op"; do_help=1;;
+        \?*|h*)     eval $op1chr; do_help=1;;
+        v*)         eval $op1chr; opt_v=`expr $opt_v + 1`;;
+        x*)         eval $op1chr; set -x;;
+        f*)         eval $op1chr; opt_force=1;;
+        t*|-tag)    eval $reqarg; tag=$1;    shift;;
+        -skip-check)opt_skip_check=1;;
+        -run-demo)  opt_run_demo=--run-demo;;
+        *)          echo "Unknown option -$op"; do_help=1;;
         esac
     else
         aa=`echo "$1" | sed -e"s/'/'\"'\"'/g"` args="$args '$aa'"; shift
@@ -103,10 +107,10 @@ fi
 test -d "$root" || mkdir -p "$root"
 cd $root
 
-free_disk_G=`df -B1G . | awk '/[0-9]%/{print$4}'`
-if [ -z "${opt_force-}" -a "$free_disk_G" -lt 13 ];then
-    echo "Error: insufficient free disk space ($free_disk_G). Min. require = 13"
-    echo "Use the -f (force) option to skip free space check."
+free_disk_G=`df -B1G . | awk '/[0-9]%/{print$(NF-2)}'`
+if [ -z "${opt_skip_check-}" -a "$free_disk_G" -lt 15 ];then
+    echo "Error: insufficient free disk space ($free_disk_G). Min. require = 15"
+    echo "Use the --skip-check option to skip free space check."
     exit 1
 fi
 

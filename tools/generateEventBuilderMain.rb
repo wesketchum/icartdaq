@@ -1,3 +1,6 @@
+# This function will generate the FHiCL code used to control the
+# EventBuilderMain application by configuring its
+# artdaq::EventBuilderCore object
 
 require File.join( File.dirname(__FILE__), 'generateCompression' )
 require File.join( File.dirname(__FILE__), 'generateEventBuilder' )

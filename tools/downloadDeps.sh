@@ -104,7 +104,7 @@ set -x
   curl -O http://oink.fnal.gov/distro/relocatable-ups/ups-upd-5.0.1-${OS}-${plat}.tar.bz2
   curl -O http://oink.fnal.gov/distro/art/art_externals-1.00.04-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
   curl -O http://oink.fnal.gov/distro/art/art_suite-1.08.10-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
-  curl -O http://oink.fnal.gov/distro/packages/cetpkgsupport-1.05.02-noarch.tar.bz2
+  curl -O http://oink.fnal.gov/distro/packages/cetpkgsupport/cetpkgsupport-1.05.02-noarch.tar.bz2
 #  wget  http://oink.fnal.gov/distro/packages/cetpkgsupport-1.05.02-noarch.tar.bz2 
 #  echo $PWD $thisdir
 #  ls -l cetpkgsupport-1.05.02-noarch.tar.bz2
@@ -156,7 +156,7 @@ then
   set -x
   cd ${thisdir}
   curl -O http://oink.fnal.gov/distro/art/daq_extras-1.00.04-${OS}-${plat}-${xqual2}-${extraqual}.tar.bz2
-  curl -O http://oink.fnal.gov/distro/packages/gccxml-0.9.20130621-${OS}-${plat}.tar.bz2
+  curl -O http://oink.fnal.gov/distro/packages/gccxml/gccxml-0.9.20130621-${OS}-${plat}.tar.bz2
 #  curl -O http://oink.fnal.gov/distro/packages/artdaq/artdaq-1.05.00-${OS}-${plat}-${xqual}-${extraqual}.tar.bz2
 
   cd ${productdir}
@@ -209,7 +209,7 @@ do
 
   set -x
   cd $thisdir
-  curl -O http://oink.fnal.gov/distro/packages/cetbuildtools-${dotver}-noarch.tar.bz2
+  curl -O http://oink.fnal.gov/distro/packages/cetbuildtools/cetbuildtools-${dotver}-noarch.tar.bz2
   cd ${productdir}
   tar xf $thisdir/cetbuildtools-${dotver}-noarch.tar.bz2
   set +x

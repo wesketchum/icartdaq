@@ -8,7 +8,7 @@
 require File.join( File.dirname(__FILE__), 'demo_utilities' )
   
 def generateToy(startingFragmentId, boardId, fragmentsPerBoard, 
-                fragmentType, nADCcounts = nil)
+                fragmentType, throttleUsecs = nil, nADCcounts = nil)
 
   toyConfig = String.new( "\
     generator: ToySimulator
@@ -17,7 +17,8 @@ def generateToy(startingFragmentId, boardId, fragmentsPerBoard,
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
     random_seed: %{random_seed}
-    sleep_on_stop_us: 500000 ")
+    sleep_on_stop_us: 500000 " \
+                          + read_fcl("ToySimulator.fcl") )
   
   toyConfig.gsub!(/\%\{starting_fragment_id\}/, String(startingFragmentId))
   toyConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
@@ -25,11 +26,12 @@ def generateToy(startingFragmentId, boardId, fragmentsPerBoard,
   toyConfig.gsub!(/\%\{random_seed\}/, String(rand(10000))) 
   toyConfig.gsub!(/\%\{fragment_type\}/, String(fragmentType)) 
 
-
   if ! nADCcounts.nil?
-    toyConfig += "\nnADCcounts: %d\n" % [ nADCcounts ]
-  else
-    toyConfig += read_fcl("ToySimulator.fcl")
+    toyConfig.gsub!(/.*nADCcounts.*\:.*/, "nADCcounts: %d" % [nADCcounts])
+  end
+
+  if ! throttleUsecs.nil?
+    toyConfig.gsub!(/.*throttle_usecs.*\:.*/, "throttle_usecs: %d" % [throttleUsecs])
   end
 
   return toyConfig
