@@ -78,7 +78,27 @@ end
 class ConfigGen
 
   def generateComposite(totalEBs, totalFRs, configStringArray)
-    compositeConfig = String.new(COMPOSITE_GENERATOR_CONFIG)
+
+
+    compositeConfig = String.new( "\
+%{prolog}
+daq: {
+  max_fragment_size_words: %{size_words}
+  fragment_receiver: {
+    mpi_buffer_count: %{buffer_count}
+    first_event_builder_rank: %{total_frs}
+    event_builder_count: %{total_ebs}
+    generator: CompositeDriver
+    fragment_id: 999
+    board_id: 999
+    generator_config_list:
+    [
+      # the format of this list is {daq:<paramSet},{daq:<paramSet>},...
+      %{generator_list}
+    ]
+  }
+}" )
+
     compositeConfig.gsub!(/\%\{total_ebs\}/, String(totalEBs))
     compositeConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
     compositeConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
