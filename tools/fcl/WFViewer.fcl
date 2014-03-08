@@ -8,3 +8,9 @@ prescale: 200
 #  histograms, not the event snapshots
 
 digital_sum_only: false
+
+# Can set the "num_x_plots" and "num_y_plots" variables to define the
+#  layout of plots within the canvas
+
+#num_x_plots: 3
+#num_y_plots: 1

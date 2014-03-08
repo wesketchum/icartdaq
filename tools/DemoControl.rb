@@ -220,7 +220,6 @@ class CommandLineParser
     @options.fileSizeThreshold = 0
     @options.fileDurationSeconds = 0
     @options.eventsInFile = 0
-    @options.fragmentsPerBoard = 1
 
     @optParser = OptionParser.new do |opts|
       opts.banner = "Usage: DemoControl.rb [options]"
@@ -397,10 +396,6 @@ class CommandLineParser
         @options.serialize = true
       end
 
-      opts.on("--fragments-per-board [N]", "Fragments each event will send to a single readout board") do |fragsPerBoard|
-        @options.fragmentsPerBoard = Integer(fragsPerBoard)
-      end
-
       opts.on_tail("-h", "--help", "Show this message.") do
         puts opts
         exit
@@ -542,8 +537,6 @@ class SystemControl
     totalAGs = @options.aggregators.length
     inputBuffSizeWords = 2097152
 
-    fragmentsPerBoard = @options.fragmentsPerBoard
-
     #if Integer(totalv1720s) > 0
     #  inputBuffSizeWords = 8192 * @options.v1720s[0].gate_width
     #end
@@ -564,11 +557,11 @@ class SystemControl
         if kind == boardreaderOptions.kind && br.boardIndexList[listIndex] == boardreaderOptions.index
 
           if kind == "V1720" || kind == "V1724"
-            generatorCode = generateV1720(boardreaderOptions.index*fragmentsPerBoard,
-                                          boardreaderOptions.board_id, fragmentsPerBoard, kind)
+            generatorCode = generateV1720(boardreaderOptions.index,
+                                          boardreaderOptions.board_id, kind)
           elsif kind == "TOY1" || kind == "TOY2"
-            generatorCode = generateToy(boardreaderOptions.index*fragmentsPerBoard,
-                                        boardreaderOptions.board_id, fragmentsPerBoard, kind)
+            generatorCode = generateToy(boardreaderOptions.index,
+                                        boardreaderOptions.board_id, kind)
           end
 
           cfg = generateBoardReaderMain(totalEBs, totalFRs,
@@ -637,9 +630,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
 
-        fclWFViewer = generateWFViewer(totalFRs, fragmentsPerBoard, 
-                                       (@options.v1720s + @options.toys).map { |board| board.board_id },
-                                       (@options.v1720s + @options.toys).map { |board| board.kind }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys).map { |board| board.kind }
                                        )
 
         puts "HAVE %d v1720s and %d v1724s" % [ totalv1720s, totalv1724s ]
@@ -649,7 +641,7 @@ class SystemControl
                                    totalv1720s, totalv1724s,
                                    @options.dataDir, @options.runOnmon,
                                    @options.writeData, inputBuffSizeWords,
-                                   totalBoards*fragmentsPerBoard, 
+                                   totalBoards, 
                                    fclWFViewer
                                    )
 
@@ -677,10 +669,9 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(agOptions.host, "/RPC2", 
                                           agOptions.port)
 
-        fclWFViewer = generateWFViewer(totalFRs, fragmentsPerBoard, 
-                                       (@options.v1720s + @options.toys).map { |board| board.board_id },
-                                       (@options.v1720s + @options.toys).map { |board| board.kind }
-                                       )
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys).map { |board| board.kind }
+                                        )
 
         cfg = generateAggregatorMain(@options.dataDir, @options.runNumber,
                                  totalFRs, totalEBs, agOptions.bunch_size,
