@@ -10,7 +10,7 @@
 
 require File.join( File.dirname(__FILE__), 'demo_utilities' )
 
-def generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeList, prescale = nil, digital_sum_only = nil)
+def generateWFViewer(fragmentIDList, fragmentTypeList, prescale = nil, digital_sum_only = nil)
 
   wfViewerConfig = String.new( "\
     app: {
@@ -19,8 +19,6 @@ def generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeLi
     }
     wf: {
       module_type: WFViewer
-      fragments_per_board: %{fragments_per_board}
-      fragment_receiver_count: %{total_frs}
       fragment_ids: %{fragment_ids}
       fragment_type_labels: %{fragment_type_labels} " \
       + read_fcl("WFViewer.fcl") \
@@ -39,8 +37,8 @@ def generateWFViewer(totalFRs, fragmentsPerBoard, fragmentIDList, fragmentTypeLi
 
     fragmentIDListString[-1], fragmentTypeListString[-1] = "]", "]" 
 
-  wfViewerConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-  wfViewerConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
+#  wfViewerConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
+#  wfViewerConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
   wfViewerConfig.gsub!(/\%\{fragment_ids\}/, String(fragmentIDListString))
   wfViewerConfig.gsub!(/\%\{fragment_type_labels\}/, String(fragmentTypeListString))
 
