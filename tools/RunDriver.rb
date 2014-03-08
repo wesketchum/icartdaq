@@ -32,37 +32,41 @@ def main
   # command line processing
 
   if ! ARGV.length.between?(2,4)
-    puts "Usage: " + __FILE__.split("/")[-1] + " <fragment type = TOY1, TOY2> "  + " <# of events> (saveFHiCL) (nADCcounts) "
+    puts "Usage: " + __FILE__.split("/")[-1] + " <fragment type = TOY1, TOY2> "  + " <# of events> (nADCcounts) (saveFHiCL)"
     exit 1
   end
 
   fragtype = ARGV[0]
   nEvents = ARGV[1]
 
-  if ARGV.length >= 3
-    saveFHiCL = ARGV[2]
-  else
-    saveFHiCL = false
-  end
-  
   # We'll pass "nADCcounts" to the generateToy function. If nADCcounts
   # is "nil", generateToy will search for a FHiCL file called
   # "ToySimulator.fcl" for the definition of nADCcounts
 
-  if ARGV.length == 4
+
+  if ARGV.length >= 3
+    if (ARGV[2] != "0" && ARGV[2] != "false" && ARGV[2] != "nil")
+      saveFHiCL = true
+    end
+  else
+    saveFHiCL = false
+  end
+
+  if ARGV.length >= 4
     nADCcounts = ARGV[3]
   else
     nADCcounts = nil
   end
 
+
   if fragtype == "TOY1" || fragtype == "TOY2"
 
     # From generateToy.rb :
 
-    # def generateToy(startingFragmentId, boardId, fragmentsPerBoard,
+    # def generateToy(startingFragmentId, boardId, 
     # fragmentType, throttleUsecs, nADCcounts = nil)
 
-    generatorCode = generateToy(0, 0, 1, fragtype, 0, nADCcounts)
+    generatorCode = generateToy(0, 0, fragtype, 0, nADCcounts)
   
   else
 

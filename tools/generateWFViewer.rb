@@ -30,10 +30,20 @@ def generateWFViewer(fragmentIDList, fragmentTypeList, prescale = nil, digital_s
     # strings listing fragment ids and fragment types which will be
     # used by the WFViewer
 
+    # John F., 3/8/14 -- adding a feature whereby the fragments are
+    # sorted in ascending order of ID
+
     fragmentIDListString, fragmentTypeListString = "[ ", "[ "
 
-    fragmentIDList.each { |id| fragmentIDListString += " %d," % [ id ] }
-    fragmentTypeList.each { |type| fragmentTypeListString += "%s," % [type ] }
+    typemap = Hash.new
+
+    0.upto(fragmentIDList.length-1) do |i|
+      typemap[ fragmentIDList[i]  ] = fragmentTypeList[i]
+    end
+
+    fragmentIDList.sort.each { |id| fragmentIDListString += " %d," % [ id ] }
+    fragmentIDList.sort.each { |id| fragmentTypeListString += "%s," % [ typemap[ id ] ] }
+#    fragmentTypeList.each { |type| fragmentTypeListString += "%s," % [type ] }
 
     fragmentIDListString[-1], fragmentTypeListString[-1] = "]", "]" 
 
