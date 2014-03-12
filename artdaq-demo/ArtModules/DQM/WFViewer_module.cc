@@ -258,7 +258,7 @@ void demo::WFViewer::analyze (art::Event const & e) {
       throw cet::exception("Error in WFViewer: unknown fragment type supplied");
     }
 
-    if (evt_cntr % prescale_ - 1) {
+    if (evt_cntr % prescale_ - 1 && prescale_ > 1) {
       continue;
     }
 
