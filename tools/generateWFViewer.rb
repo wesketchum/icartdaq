@@ -43,12 +43,9 @@ def generateWFViewer(fragmentIDList, fragmentTypeList, prescale = nil, digital_s
 
     fragmentIDList.sort.each { |id| fragmentIDListString += " %d," % [ id ] }
     fragmentIDList.sort.each { |id| fragmentTypeListString += "%s," % [ typemap[ id ] ] }
-#    fragmentTypeList.each { |type| fragmentTypeListString += "%s," % [type ] }
 
     fragmentIDListString[-1], fragmentTypeListString[-1] = "]", "]" 
 
-#  wfViewerConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
-#  wfViewerConfig.gsub!(/\%\{fragments_per_board\}/, String(fragmentsPerBoard))
   wfViewerConfig.gsub!(/\%\{fragment_ids\}/, String(fragmentIDListString))
   wfViewerConfig.gsub!(/\%\{fragment_type_labels\}/, String(fragmentTypeListString))
 

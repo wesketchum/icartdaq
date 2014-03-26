@@ -88,22 +88,14 @@ demo::V172xSimulator::V172xSimulator(fhicl::ParameterSet const & ps)
   CommandableFragmentGenerator(ps),
   nChannels_(ps.get<size_t>("nChannels", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "V1720"))),
-  fragment_ids_(),
   adc_freqs_(),
   content_generator_(),
   engine_(ps.get<int64_t>("random_seed", 314159))
 {
 
-  // Initialize fragment_ids_.
-  fragment_ids_.resize(ps.get<size_t>("fragments_per_board", 1));
-  auto current_id = ps.get<size_t>("starting_fragment_id", 0);
-  std::generate(fragment_ids_.begin(),
-                fragment_ids_.end(),
-                [&current_id]() { return current_id++; });
-
   // Read frequency tables.
   size_t const adc_bits = typeToADC(fragment_type_);
-  auto const fragments_per_board = fragment_ids_.size();
+  auto const fragments_per_board = fragmentIDs().size();
   content_generator_.reserve(fragments_per_board);
   read_adc_freqs(ps.get<std::string>("freqs_file"),
                  ps.get<std::string>("freqs_path", "DAQ_INDATA_PATH"),
@@ -134,7 +126,7 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
 
 // #pragma omp parallel for shared(fragID, frags)
 // TODO: Allow parallel operation by having multiple engines (with different seeds, of course).
-  for (size_t i = 0; i < fragment_ids_.size(); ++i) {
+  for (size_t i = 0; i < fragmentIDs().size(); ++i) {
     frags.emplace_back(new artdaq::Fragment);
     V172xFragmentWriter newboard(*frags.back());
     newboard.resize(nChannels_);
@@ -142,7 +134,7 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     newboard.setEventCounter(ev_counter());
 
     demo::V172xFragment::Header::channel_mask_t mask = 0;
-    for (size_t j = 0; j < fragment_ids_.size(); ++j) {
+    for (size_t j = 0; j < fragmentIDs().size(); ++j) {
       mask |= (1 << j);
     }
 
@@ -165,9 +157,8 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
     
 
     artdaq::Fragment& frag = *frags.back();
-    // John F., 1/3/14 -- see my comment above concerning board id vs. fragment id
-    //    frag.setFragmentID (newboard.board_id());
-    frag.setFragmentID (fragment_ids_[i]); // Or should this be fragments_per_board*board_id + i ?
+
+    frag.setFragmentID (fragmentIDs()[i]); 
     frag.setSequenceID (ev_counter());
     frag.setUserType(fragment_type_);
   }
@@ -177,10 +168,4 @@ bool demo::V172xSimulator::getNext_(artdaq::FragmentPtrs & frags) {
   return true;
 }
 
-std::vector<artdaq::Fragment::fragment_id_t>
-demo::V172xSimulator::
-fragmentIDs_()
-{
-  return fragment_ids_;
-}
 DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::V172xSimulator)
