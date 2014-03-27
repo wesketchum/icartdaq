@@ -91,7 +91,6 @@ class demo::V172xFragment {
 protected:
 #if USE_MODERN_FEATURES
   static constexpr size_t adcs_per_word_();
-  static constexpr size_t words_per_frag_word_();
 #endif /* USE_MODERN_FEATURES */
 
   Header const * header_() const;
@@ -153,12 +152,8 @@ inline constexpr size_t demo::V172xFragment:: adcs_per_word_() {
   return sizeof(V172xFragment::Header::data_t) / sizeof(adc_type);
 }
 
-inline constexpr size_t demo::V172xFragment:: words_per_frag_word_() {
-  return sizeof(artdaq::Fragment::value_type) / sizeof(V172xFragment::Header::data_t);
-}
-
 inline demo::V172xFragment::Header const * demo::V172xFragment::header_() const {
-  return reinterpret_cast<V172xFragment::Header const *>(&*data_.dataBegin());
+  return reinterpret_cast<V172xFragment::Header const *>(data_.dataBeginBytes());
 }
 
 #endif /* USE_MODERN_FEATURES */

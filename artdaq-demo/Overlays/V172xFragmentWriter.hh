@@ -40,7 +40,6 @@ private:
   size_t calc_event_size_words_(size_t nAdcs);
 
   static size_t adcs_to_words_(size_t nAdcs);
-  static size_t words_to_frag_words_(size_t nWords);
 
   demo::V172xFragment::Header * header_();
 
@@ -50,7 +49,8 @@ private:
 inline demo::V172xFragmentWriter::V172xFragmentWriter(artdaq::Fragment & frag): V172xFragment(frag), frag_(frag) { }
 
 inline demo::V172xFragment::adc_type * demo::V172xFragmentWriter::dataBegin() {
-  assert(frag_.dataSize() > words_to_frag_words_(header_size_words()));
+  // Make sure there's data past the V172xFragment header
+  assert(frag_.dataSizeBytes() >= sizeof(Header) + sizeof(artdaq::Fragment::value_type) );
   return reinterpret_cast<adc_type *>(header_() + 1);
 }
 
@@ -81,9 +81,9 @@ inline void demo::V172xFragmentWriter::setTriggerTimeTag(demo::V172xFragment::He
 }
 
 inline void demo::V172xFragmentWriter::resize(size_t nAdcs) {
-  auto es(calc_event_size_words_(nAdcs));
-  frag_.resize(words_to_frag_words_(es));
-  header_()->event_size = es;
+
+  frag_.resizeBytes( sizeof(Header::data_t) * calc_event_size_words_(nAdcs) );
+  header_()->event_size = calc_event_size_words_(nAdcs);
 }
 
 inline size_t demo::V172xFragmentWriter::calc_event_size_words_(size_t nAdcs) {
@@ -97,16 +97,9 @@ inline size_t demo::V172xFragmentWriter::adcs_to_words_(size_t nAdcs) {
     nAdcs / adcs_per_word_() + 1;
 }
 
-inline size_t demo::V172xFragmentWriter::words_to_frag_words_(size_t nWords) {
-  size_t mod = nWords % words_per_frag_word_();
-  return mod ?
-    nWords / words_per_frag_word_() + 1 :
-    nWords / words_per_frag_word_();
-}
-
 inline demo::V172xFragment::Header * demo::V172xFragmentWriter::header_() {
-  assert(frag_.dataSize() >= words_to_frag_words_(header_size_words()));
-  return reinterpret_cast<demo::V172xFragment::Header *>(&*frag_.dataBegin());
+  assert(frag_.dataSizeBytes() >= sizeof(Header));
+  return reinterpret_cast<demo::V172xFragment::Header *>(frag_.dataBeginBytes());
 }
 
 #endif /* artdaq_demo_Overlays_V172xFragmentWriter_hh */

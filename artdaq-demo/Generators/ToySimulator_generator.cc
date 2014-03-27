@@ -80,16 +80,33 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   // And use it, along with the artdaq::Fragment header information
   // (fragment id, sequence id, and user type) to create a fragment
 
-  // Constructor used is: 
+  // We'll use the static factory function 
+
+  // artdaq::Fragment::FragmentBytes(std::size_t payload_size_in_bytes, sequence_id_t sequence_id,
+  //  fragment_id_t fragment_id, type_t type, const T & metadata)
+
+  // which will then return an artdaq::Fragment object we'll use in
+  // the copy constructor of a dynamically allocated artdaq::Fragment
+  // which gets pushed onto the "frags" vector. Sound complicated? It
+  // is, or at least it's more complicated than just directly creating
+  // a dynamically allocated artdaq::Fragment object with the
+  // constructor:
 
   // Fragment(std::size_t payload_size, sequence_id_t sequence_id,
   //  fragment_id_t fragment_id, type_t type, const T & metadata);
 
-  // ...where we'll start off setting the payload (data after the
-  // header and metadata) to empty; this will be resized below
+  // ...however, the advantage of this approach is that, if we were to
+  // want to initialize the artdaq::Fragment with a nonzero-size
+  // payload (data after the artdaq::Fragment header and metadata), we
+  // could provide the size of the payload in bytes, rather than in
+  // units of the artdaq::Fragment's RawDataType (8 bytes, as of
+  // 3/26/14)
 
-  frags.emplace_back( new artdaq::Fragment(0, ev_counter(), fragment_id(),
-  					    fragment_type_, metadata) );
+  std::size_t initial_payload_size = 0;
+
+  frags.emplace_back( new artdaq::Fragment( artdaq::Fragment::FragmentBytes(initial_payload_size,  
+									    ev_counter(), fragment_id(),
+									    fragment_type_, metadata) ) );
 
   // Then any overlay-specific quantities next; will need the
   // ToyFragmentWriter class's setter-functions for this
