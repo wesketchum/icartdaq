@@ -42,8 +42,6 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
   primary_type_(toFragmentType(ps.get<std::string>("primary_fragment_type",
                                                    "V1720"))),
   secondary_types_(),
-  fragment_ids_
-  (ps.get<std::vector<artdaq::Fragment::fragment_id_t> >("fragment_ids", { 1 })),
   size_in_words_(ps.get<bool>("size_in_words", true)),
   seed_(init_seed(ps)),
   events_read_(0),
@@ -58,10 +56,10 @@ demo::V172xFileReader::V172xFileReader(ParameterSet const & ps)
                  std::back_inserter(secondary_types_),
                  &toFragmentType);
   size_t expected_ids = 1 + secondary_types_.size();
-  if (fragment_ids_.size() != expected_ids) {
+  if (fragmentIDs().size() != expected_ids) {
     throw art::Exception(art::errors::Configuration)
         << "Incorrect number of fragment IDs ("
-        << fragment_ids_.size()
+        << fragmentIDs().size()
         << ", expected "
         << expected_ids
         << "), first file "
@@ -168,7 +166,7 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags)
            bytes_left_to_read + header_size_bytes);
     read_bytes += bytes_left_to_read;
     // Update fragment header.
-    frag.setFragmentID(fragment_ids_[0]);
+    frag.setFragmentID(fragmentIDs()[0]);
     frag.setSequenceID(vHead.event_counter);
     frag.setUserType(primary_type_);
     ++events_read_;
@@ -190,13 +188,6 @@ bool demo::V172xFileReader::getNext_(artdaq::FragmentPtrs & frags)
   return true;
 }
 
-std::vector<artdaq::Fragment::fragment_id_t>
-demo::V172xFileReader::
-fragmentIDs_()
-{
-  return fragment_ids_;
-}
-
 void
 demo::V172xFileReader::
 produceSecondaries_(artdaq::FragmentPtrs & frags)
@@ -207,7 +198,7 @@ produceSecondaries_(artdaq::FragmentPtrs & frags)
        e = secondary_types_.cend();
        i != e;
        ++i, ++id_index) {
-    frags.emplace_back(convertFragment_(pFrag, *i, fragment_ids_[id_index]));
+    frags.emplace_back(convertFragment_(pFrag, *i, fragmentIDs()[id_index]));
   }
 }
 

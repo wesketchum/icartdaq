@@ -43,24 +43,12 @@ namespace demo {
 
     bool getNext_(artdaq::FragmentPtrs & output) override;
 
-    // Like "getNext_", "fragmentIDs_" is a mandatory override; it
-    // returns a vector of the fragment IDs an instance of this class
-    // is responsible for (in the case of ToySimulator, this is just
-    // the fragment_id_ variable declared in the parent
-    // CommandableFragmentGenerator class)
-    
-    std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override {
-      return fragment_ids_;
-    }
-
     // FHiCL-configurable variables. Note that the C++ variable names
     // are the FHiCL variable names with a "_" appended
 
     std::size_t const nADCcounts_;     // ADC values per fragment per event
     FragmentType const fragment_type_; // Type of fragment (see FragmentType.hh)
     std::size_t const throttle_usecs_;
-    
-    std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_; 
 
     // Members needed to generate the simulated data
 

@@ -22,12 +22,10 @@ namespace demo {
 
   private:
     bool getNext_(artdaq::FragmentPtrs & output) override;
-    std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
 
     // Configuration.
     std::size_t const nChannels_;
     FragmentType const fragment_type_;
-    std::vector<artdaq::Fragment::fragment_id_t> fragment_ids_;
 
     // State.
     std::vector<std::vector<size_t>> adc_freqs_;

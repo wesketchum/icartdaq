@@ -21,7 +21,6 @@ namespace demo {
 
   private:
     bool getNext_(artdaq::FragmentPtrs & output) override;
-    std::vector<artdaq::Fragment::fragment_id_t> fragmentIDs_() override;
 
     void produceSecondaries_(artdaq::FragmentPtrs & frags);
     artdaq::FragmentPtr
@@ -35,7 +34,7 @@ namespace demo {
     int const max_events_;
     FragmentType const primary_type_;
     std::vector<FragmentType> secondary_types_;
-    std::vector<artdaq::Fragment::fragment_id_t> const fragment_ids_;
+
     bool const size_in_words_; // To cope with malformed files.
     V172xFragment::adc_type const seed_;
 

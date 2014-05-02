@@ -40,8 +40,8 @@ public:
   // order to be able to perform writes
 
   Header * header_() {
-    assert(frag_.dataSize() >= words_to_frag_words_(Header::size_words ));
-    return reinterpret_cast<Header *>(&*artdaq_Fragment_.dataBegin());
+    assert(frag_.dataSizeBytes() >= sizeof(Header) );
+    return reinterpret_cast<Header *>(artdaq_Fragment_.dataBeginBytes());
   }
 
   void set_hdr_run_number(Header::run_number_t run_number) { 
@@ -54,7 +54,6 @@ private:
   size_t calc_event_size_words_(size_t nAdcs);
 
   static size_t adcs_to_words_(size_t nAdcs);
-  static size_t words_to_frag_words_(size_t nWords);
 
   // Note that this non-const reference hides the const reference in the base class
   artdaq::Fragment & artdaq_Fragment_;
@@ -67,32 +66,18 @@ private:
 demo::ToyFragmentWriter::ToyFragmentWriter(artdaq::Fragment& f ) :
   ToyFragment(f), artdaq_Fragment_(f) {
    
-    // If this assert doesn't hold, then can't call
-    // "words_to_frag_words_" below, translating between the
-    // ToyFragment's standard data type size and the
-    // artdaq::Fragment's data type size, on the Metadata object
-
-    assert( sizeof(Metadata::data_t) == sizeof(Header::data_t) );
-
+  if ( ! f.hasMetadata() || f.dataSizeBytes() > 0 ) {
+    throw cet::exception("Error in ToyFragmentWriter: Raw artdaq::Fragment object does not appear to consist of (and only of) its own header + the ToyFragment::Metadata object");
+  }
  
-    if (artdaq_Fragment_.size() != 
-	artdaq::detail::RawFragmentHeader::num_words() + 
-	words_to_frag_words_( Metadata::size_words ))
-      {
-	std::cerr << "artdaq_Fragment size: " << artdaq_Fragment_.size() << std::endl;
-	std::cerr << "Expected size: " << artdaq::detail::RawFragmentHeader::num_words() + 
-	  words_to_frag_words_( Metadata::size_words) << std::endl;
-
-	throw cet::exception("ToyFragmentWriter: Raw artdaq::Fragment object size suggests it does not consist of its own header + the ToyFragment::Metadata object");
-      }
- 
-    // Allocate space for the header
-    artdaq_Fragment_.resize( words_to_frag_words_(Header::size_words) );
+  // Allocate space for the header
+  artdaq_Fragment_.resizeBytes( sizeof(Header) );
 }
 
 
 inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataBegin() {
-  assert(frag_.dataSize() > words_to_frag_words_(Header::size_words));
+  // Make sure there's data past the ToyFragment header
+  assert(frag_.dataSizeBytes() >= sizeof(Header) + sizeof(artdaq::Fragment::value_type) );
   return reinterpret_cast<adc_t *>(header_() + 1);
 }
 
@@ -102,9 +87,9 @@ inline demo::ToyFragment::adc_t * demo::ToyFragmentWriter::dataEnd() {
 
 
 inline void demo::ToyFragmentWriter::resize(size_t nAdcs) {
-  auto es(calc_event_size_words_(nAdcs));
-  artdaq_Fragment_.resize(words_to_frag_words_(es));
-  header_()->event_size = es;
+
+  artdaq_Fragment_.resizeBytes(sizeof(Header::data_t) * calc_event_size_words_(nAdcs) );
+  header_()->event_size = calc_event_size_words_(nAdcs);
 }
 
 inline size_t demo::ToyFragmentWriter::calc_event_size_words_(size_t nAdcs) {
@@ -116,13 +101,6 @@ inline size_t demo::ToyFragmentWriter::adcs_to_words_(size_t nAdcs) {
   return (mod == 0) ?
     nAdcs / adcs_per_word_() :
     nAdcs / adcs_per_word_() + 1;
-}
-
-inline size_t demo::ToyFragmentWriter::words_to_frag_words_(size_t nWords) {
-  size_t mod = nWords % words_per_frag_word_();
-  return mod ?
-    nWords / words_per_frag_word_() + 1 :
-    nWords / words_per_frag_word_();
 }
 
 #endif /* artdaq_demo_Overlays_ToyFragmentWriter_hh */
