@@ -44,18 +44,48 @@ artdaq_demo_dir=`cd "$2" >/dev/null;pwd`
 demo_dir=`dirname "$artdaq_demo_dir"`
 
 test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"  # This is where we will build artdaq
+test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo"  # This is where we will build artdaq-core-demo
 test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo"  # This is where we will build artdaq-demo
 
 
-# Get artdaq from central git repository
+# Get artdaq-core-demo from JCF's local area; there's not yet a
+# central repo for this, so you need to be on cluck for this to
+# work. The "338..." string below refers to the initial
+# artdaq-core-demo commit, made 8/20/14
+
+if [[ `hostname` != "cluck.fnal.gov" ]] ; then
+    echo "8/20/14: Must be on cluck.fnal.gov to install this code " \
+	"until artdaq-core-demo is installed in a central area"
+    exit 1
+fi
+
+test -d artdaq-core-demo || git clone /home/jcfree/scratch/developarea/artdaq-core-demo-base/artdaq-core-demo
+cd artdaq-core-demo
+git fetch origin
+git checkout 3380d6e15f6694f0e4e1eea0129de07c83fb5604
+cd ../build_artdaq-core-demo
+echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
+. $products_dir/setup
+. ../artdaq-core-demo/ups/setup_for_development -p e5 eth
+echo FINISHED ../artdaq-core-demo/ups/setup_for_development
+export CETPKG_INSTALL=$products_dir
+export CETPKG_J=16
+buildtool -i
+cd ..
+
+
+# Get artdaq from central git repository; the "529..." string
+# represents an August 19, 2014 commit and will be replaced when the
+# next official version of artdaq is cut
+
 test -d artdaq || git clone http://cdcvs.fnal.gov/projects/artdaq
 cd artdaq
 git fetch origin
-git checkout v1_07_01
+git checkout 529c5b674bbe508f1b0a8cd668d2deb744035f1c
 cd ../build_artdaq
 echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq/ups/setup_for_development -p e4 eth
+. ../artdaq/ups/setup_for_development -p e5 eth
 echo FINISHED ../artdaq/ups/setup_for_development
 export CETPKG_INSTALL=$products_dir
 export CETPKG_J=16
@@ -81,7 +111,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
-	. \$ARTDAQDEMO_REPO/ups/setup_for_development -p e4 eth
+	. \$ARTDAQDEMO_REPO/ups/setup_for_development -p e5 eth
 
 	alias rawEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/rawEventDump.fcl"
 	alias compressedEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/compressedEventDump.fcl"
