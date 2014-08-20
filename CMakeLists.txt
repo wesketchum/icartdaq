@@ -29,7 +29,8 @@ cet_set_compiler_flags(DIAGS VIGILANT
  WERROR
  NO_UNDEFINED
  EXTRA_FLAGS -pedantic
- EXTRA_CXX_FLAGS -std=c++11 -D_GLIBCXX_USE_NANOSLEEP
+# EXTRA_CXX_FLAGS -std=c++11 -D_GLIBCXX_USE_NANOSLEEP
+ EXTRA_CXX_FLAGS -std=c++11 -D_GLIBCXX_USE_NANOSLEEP -DUSE_MODERN_FEATURES
  )
 
 cet_report_compiler_flags()
@@ -37,6 +38,8 @@ cet_report_compiler_flags()
 # these are minimum required versions, not the actual product versions
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( artdaq v0_04_02 )
+find_ups_product( artdaq_core v1_00_00 )
+find_ups_product( artdaq_core_demo v0_00_01 )
 find_ups_product( art v1_06_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )

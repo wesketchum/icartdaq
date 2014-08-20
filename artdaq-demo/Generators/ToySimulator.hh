@@ -13,17 +13,17 @@
 // called "TOY2"; the only difference between the two boards is the #
 // of bits in the ADC values they send. These values are declared as
 // FragmentType enum's in artdaq-demo's
-// artdaq-demo/Overlays/FragmentType.hh header.
+// artdaq-core-demo/Overlays/FragmentType.hh header.
 
 // Some C++ conventions used:
 
 // -Append a "_" to every private member function and variable
 
 #include "fhiclcpp/fwd.h"
-#include "artdaq/DAQdata/Fragments.hh" 
+#include "artdaq-core/Data/Fragments.hh" 
 #include "artdaq/Application/CommandableFragmentGenerator.hh"
-#include "artdaq-demo/Overlays/ToyFragment.hh"
-#include "artdaq-demo/Overlays/FragmentType.hh"
+#include "artdaq-core-demo/Overlays/ToyFragment.hh"
+#include "artdaq-core-demo/Overlays/FragmentType.hh"
 
 #include <random>
 #include <vector>

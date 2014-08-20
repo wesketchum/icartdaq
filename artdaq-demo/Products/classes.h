@@ -1,6 +1,6 @@
 #include "art/Persistency/Common/Wrapper.h"
 #include "artdaq-demo/Products/CompressedV172x.hh"
-#include "artdaq/DAQdata/Fragment.hh"
+#include "artdaq-core/Data/Fragment.hh"
 #include "artdaq-demo/Products/Channel.hh"
 
 #include <vector>

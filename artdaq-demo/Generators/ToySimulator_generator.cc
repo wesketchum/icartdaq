@@ -3,9 +3,9 @@
 #include "art/Utilities/Exception.h"
 #include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "artdaq-demo/Overlays/ToyFragment.hh"
-#include "artdaq-demo/Overlays/ToyFragmentWriter.hh"
-#include "artdaq-demo/Overlays/FragmentType.hh"
+#include "artdaq-core-demo/Overlays/ToyFragment.hh"
+#include "artdaq-core-demo/Overlays/ToyFragmentWriter.hh"
+#include "artdaq-core-demo/Overlays/FragmentType.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq/Utilities/SimpleLookupPolicy.h"
 

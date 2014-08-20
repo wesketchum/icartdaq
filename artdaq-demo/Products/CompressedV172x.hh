@@ -8,9 +8,9 @@
 // Should we also store a vector of compressed fragment lengths? yes, because the
 // total bits returned from the encoders is an important number
 
-#include "artdaq/DAQdata/features.hh"
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq-demo/Overlays/V172xFragment.hh"
+//#include "artdaq/DAQdata/features.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core-demo/Overlays/V172xFragment.hh"
 
 #include <vector>
 
