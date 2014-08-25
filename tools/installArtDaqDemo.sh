@@ -48,21 +48,10 @@ test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core
 test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo"  # This is where we will build artdaq-demo
 
 
-# Get artdaq-core-demo from JCF's local area; there's not yet a
-# central repo for this, so you need to be on cluck for this to
-# work. The "338..." string below refers to the initial
-# artdaq-core-demo commit, made 8/20/14
-
-if [[ `hostname` != "cluck.fnal.gov" ]] ; then
-    echo "8/20/14: Must be on cluck.fnal.gov to install this code " \
-	"until artdaq-core-demo is installed in a central area"
-    exit 1
-fi
-
-test -d artdaq-core-demo || git clone /home/jcfree/scratch/developarea/artdaq-core-demo-base/artdaq-core-demo
+test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
 cd artdaq-core-demo
 git fetch origin
-git checkout 3380d6e15f6694f0e4e1eea0129de07c83fb5604
+git checkout develop
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
