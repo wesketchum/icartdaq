@@ -152,7 +152,7 @@ elif [ -n "${opt_force-}" ];then
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-} ${debug-}
+$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-} ${opt_debug-}
 
 endtime=`date`
 
