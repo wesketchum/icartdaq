@@ -65,7 +65,7 @@ git checkout develop
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5 eth
+. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5
 echo FINISHED ../artdaq-core-demo/ups/setup_for_development
 buildtool -i
 cd ..
