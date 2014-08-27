@@ -7,6 +7,7 @@ example: `basename $0` products artdaq-demo --run-demo
 <demo_products>    where products were installed (products/)
 <artdaq-demo_root> directory where artdaq-demo was cloned into.
 --run-demo   runs the demo
+--debug      perform a debug build
 Currently this script will clone (if not already cloned) artdaq
 along side of the artdaq-demo dir.
 Also it will create, if not already created, build directories
@@ -29,6 +30,7 @@ while [ -n "${1-}" ];do
         v*)        eval $op1chr; opt_v=`expr $opt_v + 1`;;
         x*)        eval $op1chr; set -x;;
         -run-demo) opt_run_demo=--run-demo;;
+        -debug)    opt_debug=--debug;;
         *)         echo "Unknown option -$op"; do_help=1;;
         esac
     else
@@ -43,10 +45,18 @@ products_dir=`cd "$1" >/dev/null;pwd`
 artdaq_demo_dir=`cd "$2" >/dev/null;pwd`
 demo_dir=`dirname "$artdaq_demo_dir"`
 
+export CETPKG_INSTALL=$products_dir
+export CETPKG_J=16
+
 test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"  # This is where we will build artdaq
 test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo"  # This is where we will build artdaq-core-demo
 test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo"  # This is where we will build artdaq-demo
 
+if [[ -n "${opt_debug:-}" ]];then
+    build_arg="d"
+else
+    build_arg="p"
+fi
 
 test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
 cd artdaq-core-demo
@@ -55,10 +65,8 @@ git checkout develop
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq-core-demo/ups/setup_for_development -p e5 eth
+. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5 eth
 echo FINISHED ../artdaq-core-demo/ups/setup_for_development
-export CETPKG_INSTALL=$products_dir
-export CETPKG_J=16
 buildtool -i
 cd ..
 
@@ -74,10 +82,8 @@ git checkout 529c5b674bbe508f1b0a8cd668d2deb744035f1c
 cd ../build_artdaq
 echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq/ups/setup_for_development -p e5 eth
+. ../artdaq/ups/setup_for_development -${build_arg} e5 eth
 echo FINISHED ../artdaq/ups/setup_for_development
-export CETPKG_INSTALL=$products_dir
-export CETPKG_J=16
 buildtool -i
 
 cd $demo_dir >/dev/null
@@ -100,7 +106,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
-	. \$ARTDAQDEMO_REPO/ups/setup_for_development -p e5 eth
+	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e5 eth
 
 	alias rawEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/rawEventDump.fcl"
 	alias compressedEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/compressedEventDump.fcl"
