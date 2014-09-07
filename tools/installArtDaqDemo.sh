@@ -71,14 +71,10 @@ buildtool -i
 cd ..
 
 
-# Get artdaq from central git repository; the "529..." string
-# represents an August 19, 2014 commit and will be replaced when the
-# next official version of artdaq is cut
-
 test -d artdaq || git clone http://cdcvs.fnal.gov/projects/artdaq
 cd artdaq
 git fetch origin
-git checkout 529c5b674bbe508f1b0a8cd668d2deb744035f1c
+git checkout v1_11_00
 cd ../build_artdaq
 echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
