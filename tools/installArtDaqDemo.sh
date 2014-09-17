@@ -75,14 +75,14 @@ buildtool -i
 cd ..
 
 
-# Commit 96240167d77676b942ddd5e5c5bcb870aaeb71a9, from 9/17/14,
+# Commit b520cf663e5325cd9b4378dfd29697a9f6bd9e35, from 9/17/14,
 # updates artdaq-core-demo to compile with the e5:s3 option (against
-# artdaq-core v1_04_00, etc.)
+# artdaq-core v1_04_00, etc.) and adds a traits class supplying build info
 
 test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
 cd artdaq-core-demo
 git fetch origin
-git checkout 96240167d77676b942ddd5e5c5bcb870aaeb71a9
+git checkout b520cf663e5325cd9b4378dfd29697a9f6bd9e35
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup

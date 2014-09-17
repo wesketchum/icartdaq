@@ -30,6 +30,17 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
    ${MF_UTILITIES}
    )
 
+simple_plugin(ArtdaqDemoBuildInfo "module"
+  artdaq_DAQdata
+  artdaq_BuildInfo
+  artdaq-core_BuildInfo
+  artdaq-demo_BuildInfo
+  artdaq-core-demo_BuildInfo
+  ${MF_MESSAGELOGGER}
+  ${FHICLCPP}
+  ${CETLIB}
+)
+
  simple_plugin(DataCharacterizer "module")
  simple_plugin(EventDump "module")
 simple_plugin(ToyDump "module")
