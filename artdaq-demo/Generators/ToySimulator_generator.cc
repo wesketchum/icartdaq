@@ -7,7 +7,7 @@
 #include "artdaq-core-demo/Overlays/ToyFragmentWriter.hh"
 #include "artdaq-core-demo/Overlays/FragmentType.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "artdaq/Utilities/SimpleLookupPolicy.h"
+#include "artdaq-core/Utilities/SimpleLookupPolicy.h"
 
 #include <fstream>
 #include <iomanip>

@@ -48,9 +48,10 @@ demo_dir=`dirname "$artdaq_demo_dir"`
 export CETPKG_INSTALL=$products_dir
 export CETPKG_J=16
 
-test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"  # This is where we will build artdaq
-test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo"  # This is where we will build artdaq-core-demo
-test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo"  # This is where we will build artdaq-demo
+test -d "$demo_dir/build_artdaq-core" || mkdir "$demo_dir/build_artdaq-core" 
+test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"
+test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo" 
+test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
 
 if [[ -n "${opt_debug:-}" ]];then
     build_arg="d"
@@ -58,27 +59,50 @@ else
     build_arg="p"
 fi
 
-test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
-cd artdaq-core-demo
+# Commit 52d6e7b4527dce8a86b7bcaf5970d45013373b89, from 9/15/14,
+# updates artdaq core v1_04_00 s.t. it includes the BuildInfo template
+
+test -d artdaq-core || git clone http://cdcvs.fnal.gov/projects/artdaq-core
+cd artdaq-core
 git fetch origin
-git checkout develop
-cd ../build_artdaq-core-demo
-echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
+git checkout 52d6e7b4527dce8a86b7bcaf5970d45013373b89
+cd ../build_artdaq-core
+echo IN $PWD: about to . ../artdaq-core/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5
-echo FINISHED ../artdaq-core-demo/ups/setup_for_development
+. ../artdaq-core/ups/setup_for_development -${build_arg} e5 s3
+echo FINISHED ../artdaq-core/ups/setup_for_development
 buildtool -i
 cd ..
 
 
+# Commit 96240167d77676b942ddd5e5c5bcb870aaeb71a9, from 9/17/14,
+# updates artdaq-core-demo to compile with the e5:s3 option (against
+# artdaq-core v1_04_00, etc.)
+
+test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
+cd artdaq-core-demo
+git fetch origin
+git checkout 96240167d77676b942ddd5e5c5bcb870aaeb71a9
+cd ../build_artdaq-core-demo
+echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
+. $products_dir/setup
+. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5 s3
+echo FINISHED ../artdaq-core-demo/ups/setup_for_development
+buildtool -i
+cd ..
+
+# artdaq commit f0f0c5eb950f5a53e06aee564975357c4bc5da7e, from
+# 9/16/14, includes both the merging of the buildinfo branch and the
+# timestamps branch
+
 test -d artdaq || git clone http://cdcvs.fnal.gov/projects/artdaq
 cd artdaq
 git fetch origin
-git checkout v1_11_00
+git checkout f0f0c5eb950f5a53e06aee564975357c4bc5da7e
 cd ../build_artdaq
 echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq/ups/setup_for_development -${build_arg} e5 eth
+. ../artdaq/ups/setup_for_development -${build_arg} e5 s3 eth
 echo FINISHED ../artdaq/ups/setup_for_development
 buildtool -i
 
@@ -102,7 +126,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
-	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e5 eth
+	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e5 s3 eth
 
 	alias rawEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/rawEventDump.fcl"
 	alias compressedEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/compressedEventDump.fcl"

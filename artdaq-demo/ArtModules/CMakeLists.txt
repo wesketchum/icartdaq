@@ -13,7 +13,7 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
  simple_plugin(Compression "module"
    artdaq-demo_Compression
    artdaq-demo_Products
-   ${ARTDAQ_UTILITIES}
+   ${ARTDAQ-CORE_UTILITIES}
    ${ARTDAQ_DAQDATA} 
    ${ARTDAQ-CORE_DATA}
    ${MF_MESSAGELOGGER} 
@@ -23,7 +23,7 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
  simple_plugin(Decompression "module"
    artdaq-demo_Compression
    artdaq-demo_Products
-   ${ARTDAQ_UTILITIES}
+   ${ARTDAQ-CORE_UTILITIES}
    ${ARTDAQ_DAQDATA} 
    ${ARTDAQ-CORE_DATA}
    ${MF_MESSAGELOGGER} 

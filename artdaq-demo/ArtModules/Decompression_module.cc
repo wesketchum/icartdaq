@@ -11,7 +11,7 @@
 #include "artdaq-demo/Products/CompressedV172x.hh"
 #include "artdaq-core/Data/Fragment.hh"
 #include "artdaq-core/Data/Fragments.hh"
-#include "artdaq/Utilities/SimpleLookupPolicy.h"
+#include "artdaq-core/Utilities/SimpleLookupPolicy.h"
 #include "cpp0x/memory"
 #include "fhiclcpp/ParameterSet.h"
 #include "messagefacility/MessageLogger/MessageLogger.h"
