@@ -8,7 +8,7 @@
 // Should we also store a vector of compressed fragment lengths? yes, because the
 // total bits returned from the encoders is an important number
 
-//#include "artdaq/DAQdata/features.hh"
+#include "artdaq-core/Data/dictionarycontrol.hh"
 #include "artdaq-core/Data/Fragment.hh"
 #include "artdaq-core-demo/Overlays/V172xFragment.hh"
 
@@ -42,7 +42,7 @@ public:
 
   // return a reference to the entire CompVec? perhaps.
 
-#if USE_MODERN_FEATURES
+#if HIDE_FROM_ROOT
   // since structures for headers are in the details, there is
   // no other clean way to present them here to the user.
   artdaq::Fragment headerOnlyFrag(size_t which) const;
@@ -82,7 +82,7 @@ private:
   Algo_t algo_;
 };
 
-#if USE_MODERN_FEATURES
+#if HIDE_FROM_ROOT
 
 inline
 artdaq::Fragment
@@ -108,6 +108,6 @@ demo::CompressedV172x::headerOnlyFrag(size_t which) const
   }
   return result;
 }
-#endif /* USE_MODERN_FEATURES */
+#endif /* HIDE_FROM_ROOT */
 
 #endif /* artdaq_demo_Products_CompressedV172x_hh */
