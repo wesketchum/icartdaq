@@ -82,7 +82,7 @@ cd ..
 test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
 cd artdaq-core-demo
 git fetch origin
-git checkout b520cf663e5325cd9b4378dfd29697a9f6bd9e35
+git checkout 4bb649916317fa473896f31459897eb3aebefce6
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
