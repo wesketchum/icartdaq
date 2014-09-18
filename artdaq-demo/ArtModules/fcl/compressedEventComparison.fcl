@@ -44,12 +44,18 @@ physics:
       uncompressed_V1724_label: unhuffV1724
     }
 
+    printBuildInfo: {
+      module_type: PrintBuildInfo
+      buildinfo_module_label: BuildInfo
+      buildinfo_instance_label: ArtdaqDemo
+    }
+
     # check decompression
     checkerV1720: @local::checker_1720
     checkerV1724: @local::checker_1724
   }
 
-  a1: [ evtDump, checkerV1720 ]
+  a1: [ evtDump, checkerV1720, printBuildInfo ]
   #a1: [ evtDump, checkerV1720, checkerV1724 ]
 
   f1: [ unhuffV1720 ]
