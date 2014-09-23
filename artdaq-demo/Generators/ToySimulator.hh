@@ -48,7 +48,9 @@ namespace demo {
 
     std::size_t const nADCcounts_;     // ADC values per fragment per event
     FragmentType const fragment_type_; // Type of fragment (see FragmentType.hh)
-    std::size_t const throttle_usecs_;
+
+    std::size_t const throttle_usecs_;        // Sleep at start of each call to getNext_(), in us
+    std::size_t const throttle_usecs_check_;  // Period between checks for stop/pause during the sleep (must be less than, and an integer divisor of, throttle_usecs_)
 
     // Members needed to generate the simulated data
 
