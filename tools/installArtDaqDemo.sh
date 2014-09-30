@@ -8,6 +8,7 @@ example: `basename $0` products artdaq-demo --run-demo
 <artdaq-demo_root> directory where artdaq-demo was cloned into.
 --run-demo   runs the demo
 --debug      perform a debug build
+-c           \"clean\" build dirs -- may be need during development
 Currently this script will clone (if not already cloned) artdaq
 along side of the artdaq-demo dir.
 Also it will create, if not already created, build directories
@@ -31,6 +32,7 @@ while [ -n "${1-}" ];do
         x*)        eval $op1chr; set -x;;
         -run-demo) opt_run_demo=--run-demo;;
         -debug)    opt_debug=--debug;;
+        -c*)       eval $op1chr; opt_clean=1;;
         *)         echo "Unknown option -$op"; do_help=1;;
         esac
     else
@@ -71,7 +73,7 @@ echo IN $PWD: about to . ../artdaq-core/ups/setup_for_development
 . $products_dir/setup
 . ../artdaq-core/ups/setup_for_development -${build_arg} e5 s3
 echo FINISHED ../artdaq-core/ups/setup_for_development
-buildtool -i
+buildtool ${opt_clean+-c} -i
 cd ..
 
 
@@ -88,7 +90,7 @@ echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
 . ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5 s3
 echo FINISHED ../artdaq-core-demo/ups/setup_for_development
-buildtool -i
+buildtool ${opt_clean+-c} -i
 cd ..
 
 # artdaq commit f0f0c5eb950f5a53e06aee564975357c4bc5da7e, from
@@ -104,7 +106,7 @@ echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
 . ../artdaq/ups/setup_for_development -${build_arg} e5 s3 eth
 echo FINISHED ../artdaq/ups/setup_for_development
-buildtool -i
+buildtool ${opt_clean+-c} -i
 
 cd $demo_dir >/dev/null
 if [[ ! -e ./setupARTDAQDEMO ]]; then
