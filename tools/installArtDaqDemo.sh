@@ -84,7 +84,7 @@ cd ..
 test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
 cd artdaq-core-demo
 git fetch origin
-git checkout 4bb649916317fa473896f31459897eb3aebefce6
+git checkout 208a1052b352863d7f1762bdc332d4a40a5e9bce
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
@@ -128,7 +128,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
-	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e5 s3 eth
+	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e5 eth
 
 	alias rawEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/rawEventDump.fcl"
 	alias compressedEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/compressedEventDump.fcl"

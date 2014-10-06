@@ -14,7 +14,8 @@ basequal=${2}
 build_type=${3}  # "prof" or "debug"
 
 basequal2=`echo ${basequal} | sed -r '/.*:.*:.*/s!:s3:eth!!' | sed -r 's!:eth!!'`
-basequal3=`echo ${basequal} | sed -e s!:eth!!g`
+basequal3=`echo ${basequal} | sed -e s/:eth//g`
+expr "$basequal3" : '.*\(s3\)' >/dev/null || basequal3=${basequal3+$basequal3:}s3
 
 starttime=`date`
 
