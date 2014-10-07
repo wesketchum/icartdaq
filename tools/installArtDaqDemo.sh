@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo Invoked: $0 "$@"
 env_opts_var=`basename $0 | sed 's/\.sh$//' | tr 'a-z-' 'A-Z_'`_OPTS
 USAGE="\
   usage: `basename $0` [options] <demo_products_dir/> <artdaq-demo/>
@@ -32,7 +32,7 @@ while [ -n "${1-}" ];do
         x*)        eval $op1chr; set -x;;
         -run-demo) opt_run_demo=--run-demo;;
         -debug)    opt_debug=--debug;;
-        -c*)       eval $op1chr; opt_clean=1;;
+        c*)        eval $op1chr; opt_clean=1;;
         *)         echo "Unknown option -$op"; do_help=1;;
         esac
     else
@@ -43,6 +43,7 @@ eval "set -- $args \"\$@\""; unset args aa
 
 test -n "${do_help-}" -o $# -ne 2 && echo "$USAGE" && exit
 
+test -d $1 || { echo "products directory ($1) not found"; exit 1; }
 products_dir=`cd "$1" >/dev/null;pwd`
 artdaq_demo_dir=`cd "$2" >/dev/null;pwd`
 demo_dir=`dirname "$artdaq_demo_dir"`
@@ -53,7 +54,7 @@ export CETPKG_J=16
 test -d "$demo_dir/build_artdaq-core" || mkdir "$demo_dir/build_artdaq-core" 
 test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"
 test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo" 
-test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
+test -d "$demo_dir/build_artdaq-demo"      || mkdir "$demo_dir/build_artdaq-demo"
 
 if [[ -n "${opt_debug:-}" ]];then
     build_arg="d"
@@ -61,55 +62,49 @@ else
     build_arg="p"
 fi
 
-# Commit 52d6e7b4527dce8a86b7bcaf5970d45013373b89, from 9/15/14,
-# updates artdaq core v1_04_00 s.t. it includes the BuildInfo template
 
-test -d artdaq-core || git clone http://cdcvs.fnal.gov/projects/artdaq-core
+#REPO_PREFIX=http://cdcvs.fnal.gov/projects
+REPO_PREFIX=ssh://p-artdaq-demo@cdcvs.fnal.gov/cvs/projects
+
+test -d artdaq-core || git clone ${REPO_PREFIX}/artdaq-core
 cd artdaq-core
 git fetch origin
-git checkout 52d6e7b4527dce8a86b7bcaf5970d45013373b89
+git checkout 70a61401af24b517b216a19965b23e71763def70 # basically HEAD at time of testing
 cd ../build_artdaq-core
 echo IN $PWD: about to . ../artdaq-core/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq-core/ups/setup_for_development -${build_arg} e5 s3
+. ../artdaq-core/ups/setup_for_development -${build_arg}
 echo FINISHED ../artdaq-core/ups/setup_for_development
 buildtool ${opt_clean+-c} -i
 cd ..
 
 
-# Commit b520cf663e5325cd9b4378dfd29697a9f6bd9e35, from 9/17/14,
-# updates artdaq-core-demo to compile with the e5:s3 option (against
-# artdaq-core v1_04_00, etc.) and adds a traits class supplying build info
-
-test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
+test -d artdaq-core-demo || git clone ${REPO_PREFIX}/artdaq-core-demo
 cd artdaq-core-demo
 git fetch origin
-git checkout 208a1052b352863d7f1762bdc332d4a40a5e9bce
+git checkout c1a02faec4357da7d9e9cca971a1b1e0674569af # basically HEAD at time of testing
 cd ../build_artdaq-core-demo
 echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5 s3
+. ../artdaq-core-demo/ups/setup_for_development -${build_arg}
 echo FINISHED ../artdaq-core-demo/ups/setup_for_development
 buildtool ${opt_clean+-c} -i
 cd ..
 
-# artdaq commit f0f0c5eb950f5a53e06aee564975357c4bc5da7e, from
-# 9/16/14, includes both the merging of the buildinfo branch and the
-# timestamps branch
 
-test -d artdaq || git clone http://cdcvs.fnal.gov/projects/artdaq
+test -d artdaq || git clone ${REPO_PREFIX}/artdaq
 cd artdaq
 git fetch origin
-git checkout f0f0c5eb950f5a53e06aee564975357c4bc5da7e
+git checkout 276095ebf29248c9ddbd17b3ed0a837872856085 # basically HEAD at time of testing
 cd ../build_artdaq
 echo IN $PWD: about to . ../artdaq/ups/setup_for_development
 . $products_dir/setup
-. ../artdaq/ups/setup_for_development -${build_arg} e5 s3 eth
+. ../artdaq/ups/setup_for_development -${build_arg} e6:s5:eth
 echo FINISHED ../artdaq/ups/setup_for_development
 buildtool ${opt_clean+-c} -i
 
 cd $demo_dir >/dev/null
-if [[ ! -e ./setupARTDAQDEMO ]]; then
+if [ ! -e ./setupARTDAQDEMO -o "${opt_clean-}" == 1 ]; then
     cat >setupARTDAQDEMO <<-EOF
 	echo # This script is intended to be sourced.
 
@@ -128,7 +123,7 @@ if [[ ! -e ./setupARTDAQDEMO ]]; then
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
-	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e5 eth
+	. \$ARTDAQDEMO_REPO/ups/setup_for_development -${build_arg} e6 eth
 
 	alias rawEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/rawEventDump.fcl"
 	alias compressedEventDump="art -c $artdaq_demo_dir/artdaq-demo/ArtModules/fcl/compressedEventDump.fcl"
@@ -141,7 +136,7 @@ fi
 echo "Building artdaq-demo..."
 cd $ARTDAQDEMO_BUILD
 . $demo_dir/setupARTDAQDEMO
-buildtool
+buildtool ${opt_clean+-c}
 
 echo "Installation and build complete; please see https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/wiki/Running_a_sample_artdaq-demo_system for instructions on how to run"
 
