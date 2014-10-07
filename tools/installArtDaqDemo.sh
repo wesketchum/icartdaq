@@ -63,8 +63,8 @@ else
 fi
 
 
-#REPO_PREFIX=http://cdcvs.fnal.gov/projects
-REPO_PREFIX=ssh://p-artdaq-demo@cdcvs.fnal.gov/cvs/projects
+REPO_PREFIX=http://cdcvs.fnal.gov/projects
+#REPO_PREFIX=ssh://p-artdaq-demo@cdcvs.fnal.gov/cvs/projects
 
 test -d artdaq-core || git clone ${REPO_PREFIX}/artdaq-core
 cd artdaq-core
