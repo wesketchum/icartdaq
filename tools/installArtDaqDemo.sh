@@ -8,6 +8,7 @@ example: `basename $0` products artdaq-demo --run-demo
 <artdaq-demo_root> directory where artdaq-demo was cloned into.
 --run-demo   runs the demo
 --debug      perform a debug build
+--HEAD       all git repo'd packages checked out from HEAD of develop branches
 -c           \"clean\" build dirs -- may be need during development
 Currently this script will clone (if not already cloned) artdaq
 along side of the artdaq-demo dir.
@@ -32,6 +33,7 @@ while [ -n "${1-}" ];do
         x*)        eval $op1chr; set -x;;
         -run-demo) opt_run_demo=--run-demo;;
         -debug)    opt_debug=--debug;;
+	    -HEAD)  opt_HEAD=--HEAD;;
         -c*)       eval $op1chr; opt_clean=1;;
         *)         echo "Unknown option -$op"; do_help=1;;
         esac
@@ -50,10 +52,10 @@ demo_dir=`dirname "$artdaq_demo_dir"`
 export CETPKG_INSTALL=$products_dir
 export CETPKG_J=16
 
-test -d "$demo_dir/build_artdaq-core" || mkdir "$demo_dir/build_artdaq-core" 
-test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"
-test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo" 
-test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
+#test -d "$demo_dir/build_artdaq-core" || mkdir "$demo_dir/build_artdaq-core" 
+#test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"
+#test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo" 
+#test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
 
 if [[ -n "${opt_debug:-}" ]];then
     build_arg="d"
@@ -61,20 +63,47 @@ else
     build_arg="p"
 fi
 
+function install_package {
+    local packagename=$1
+    local commit_tag=$2
+
+    # Get rid of the first two positional arguments now that they're stored in named variables
+    shift;
+    shift;
+
+    test -d "$demo_dir/build_$packagename" || mkdir "$demo_dir/build_$packagename"    
+
+    test -d ${packagename} || git clone http://cdcvs.fnal.gov/projects/$packagename
+    cd $packagename
+    git fetch origin
+    git checkout $commit_tag
+    cd ../build_$packagename
+
+    echo IN $PWD: about to . ../$packagename/ups/setup_for_development
+    . ../$packagename/ups/setup_for_development -${build_arg} $@
+    echo FINISHED ../$packagename/ups/setup_for_development
+    buildtool ${opt_clean+-c} -i
+    cd ..
+}
+
+. $products_dir/setup
+
 # Commit 52d6e7b4527dce8a86b7bcaf5970d45013373b89, from 9/15/14,
 # updates artdaq core v1_04_00 s.t. it includes the BuildInfo template
 
-test -d artdaq-core || git clone http://cdcvs.fnal.gov/projects/artdaq-core
-cd artdaq-core
-git fetch origin
-git checkout 52d6e7b4527dce8a86b7bcaf5970d45013373b89
-cd ../build_artdaq-core
-echo IN $PWD: about to . ../artdaq-core/ups/setup_for_development
-. $products_dir/setup
-. ../artdaq-core/ups/setup_for_development -${build_arg} e5 s3
-echo FINISHED ../artdaq-core/ups/setup_for_development
-buildtool ${opt_clean+-c} -i
-cd ..
+# test -d artdaq-core || git clone http://cdcvs.fnal.gov/projects/artdaq-core
+# cd artdaq-core
+# git fetch origin
+# git checkout 52d6e7b4527dce8a86b7bcaf5970d45013373b89
+# cd ../build_artdaq-core
+# echo IN $PWD: about to . ../artdaq-core/ups/setup_for_development
+# . $products_dir/setup
+# . ../artdaq-core/ups/setup_for_development -${build_arg} e5 s3
+# echo FINISHED ../artdaq-core/ups/setup_for_development
+# buildtool ${opt_clean+-c} -i
+# cd ..
+
+install_package artdaq-core 52d6e7b4527dce8a86b7bcaf5970d45013373b89 e5 s3
 
 
 # Commit b520cf663e5325cd9b4378dfd29697a9f6bd9e35, from 9/17/14,
