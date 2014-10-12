@@ -8,7 +8,6 @@ example: `basename $0` products artdaq-demo --run-demo
 <artdaq-demo_root> directory where artdaq-demo was cloned into.
 --run-demo   runs the demo
 --debug      perform a debug build
---HEAD       all git repo'd packages checked out from HEAD of develop branches
 -c           \"clean\" build dirs -- may be need during development
 Currently this script will clone (if not already cloned) artdaq
 along side of the artdaq-demo dir.
@@ -33,7 +32,6 @@ while [ -n "${1-}" ];do
         x*)        eval $op1chr; set -x;;
         -run-demo) opt_run_demo=--run-demo;;
         -debug)    opt_debug=--debug;;
-	    -HEAD)  opt_HEAD=--HEAD;;
         -c*)       eval $op1chr; opt_clean=1;;
         *)         echo "Unknown option -$op"; do_help=1;;
         esac
@@ -91,18 +89,6 @@ function install_package {
 # Commit 52d6e7b4527dce8a86b7bcaf5970d45013373b89, from 9/15/14,
 # updates artdaq core v1_04_00 s.t. it includes the BuildInfo template
 
-# test -d artdaq-core || git clone http://cdcvs.fnal.gov/projects/artdaq-core
-# cd artdaq-core
-# git fetch origin
-# git checkout 52d6e7b4527dce8a86b7bcaf5970d45013373b89
-# cd ../build_artdaq-core
-# echo IN $PWD: about to . ../artdaq-core/ups/setup_for_development
-# . $products_dir/setup
-# . ../artdaq-core/ups/setup_for_development -${build_arg} e5 s3
-# echo FINISHED ../artdaq-core/ups/setup_for_development
-# buildtool ${opt_clean+-c} -i
-# cd ..
-
 install_package artdaq-core 52d6e7b4527dce8a86b7bcaf5970d45013373b89 e5 s3
 
 
@@ -110,32 +96,14 @@ install_package artdaq-core 52d6e7b4527dce8a86b7bcaf5970d45013373b89 e5 s3
 # updates artdaq-core-demo to compile with the e5:s3 option (against
 # artdaq-core v1_04_00, etc.) and adds a traits class supplying build info
 
-test -d artdaq-core-demo || git clone http://cdcvs.fnal.gov/projects/artdaq-core-demo
-cd artdaq-core-demo
-git fetch origin
-git checkout 208a1052b352863d7f1762bdc332d4a40a5e9bce
-cd ../build_artdaq-core-demo
-echo IN $PWD: about to . ../artdaq-core-demo/ups/setup_for_development
-. $products_dir/setup
-. ../artdaq-core-demo/ups/setup_for_development -${build_arg} e5 s3
-echo FINISHED ../artdaq-core-demo/ups/setup_for_development
-buildtool ${opt_clean+-c} -i
-cd ..
+install_package artdaq-core-demo b520cf663e5325cd9b4378dfd29697a9f6bd9e35 e5 s3
 
 # artdaq commit f0f0c5eb950f5a53e06aee564975357c4bc5da7e, from
 # 9/16/14, includes both the merging of the buildinfo branch and the
 # timestamps branch
 
-test -d artdaq || git clone http://cdcvs.fnal.gov/projects/artdaq
-cd artdaq
-git fetch origin
-git checkout f0f0c5eb950f5a53e06aee564975357c4bc5da7e
-cd ../build_artdaq
-echo IN $PWD: about to . ../artdaq/ups/setup_for_development
-. $products_dir/setup
-. ../artdaq/ups/setup_for_development -${build_arg} e5 s3 eth
-echo FINISHED ../artdaq/ups/setup_for_development
-buildtool ${opt_clean+-c} -i
+install_package artdaq f0f0c5eb950f5a53e06aee564975357c4bc5da7e e5 s3 eth
+
 
 cd $demo_dir >/dev/null
 if [[ ! -e ./setupARTDAQDEMO ]]; then
