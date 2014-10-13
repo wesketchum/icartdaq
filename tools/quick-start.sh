@@ -32,12 +32,14 @@ USAGE="\
    usage: `basename $0` [options] [demo_root]
 examples: `basename $0` .
           `basename $0` --run-demo
+          `basename $0` --HEAD --debug
 If the \"demo_root\" optional parameter is not supplied, the user will be
 prompted for this location.
 --run-demo    runs the demo
 --debug       perform a debug build
 -f            force download
 --skip-check  skip the free diskspace check
+--HEAD        all git repo'd packages checked out from HEAD of develop branches
 "
 
 # Process script arguments and options
@@ -61,6 +63,7 @@ while [ -n "${1-}" ];do
         -skip-check)opt_skip_check=1;;
         -run-demo)  opt_run_demo=--run-demo;;
 	-debug)     opt_debug=--debug;;
+	    -HEAD)  opt_HEAD=--HEAD;;
         *)          echo "Unknown option -$op"; do_help=1;;
         esac
     else
@@ -161,7 +164,7 @@ elif [ -n "${opt_force-}" ];then
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-} ${opt_debug-}
+$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
 
 endtime=`date`
 
