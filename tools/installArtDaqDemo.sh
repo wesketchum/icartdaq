@@ -97,15 +97,13 @@ else
 install_package artdaq-core 52d6e7b4527dce8a86b7bcaf5970d45013373b89 e5 s3
 fi
 
-
-# Commit b520cf663e5325cd9b4378dfd29697a9f6bd9e35, from 9/17/14,
-# updates artdaq-core-demo to compile with the e5:s3 option (against
-# artdaq-core v1_04_00, etc.) and adds a traits class supplying build info
+# Commit 208a1052b352863d7f1762bdc332d4a40a5e9bce, made by Ron
+# Rechenmacher, dates from 10/6/14
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core-demo develop
 else
-install_package artdaq-core-demo b520cf663e5325cd9b4378dfd29697a9f6bd9e35 e5 s3
+install_package artdaq-core-demo 208a1052b352863d7f1762bdc332d4a40a5e9bce e5 s3
 fi
 
 # artdaq commit f0f0c5eb950f5a53e06aee564975357c4bc5da7e, from
