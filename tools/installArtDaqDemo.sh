@@ -108,7 +108,7 @@ install_package artdaq-core-demo c1a02faec4357da7d9e9cca971a1b1e0674569af e6 #s5
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq develop
+install_package artdaq develop e6 s5 eth
 else
 install_package artdaq 246b8e7e1cc9ae36b74099c9ed28bdddc903fbfe e6 s5 eth
 fi
