@@ -16,8 +16,6 @@
 #include <future>
 #include <TApplication.h>
 #include <TSystem.h>
-#include <TStyle.h>
-#include <TROOT.h>
 #include <unistd.h>
 
 namespace demo {
@@ -49,9 +47,6 @@ void demo::RootApplication::beginJob () {
   if (!gApplication || force_new_) {
     int tmp_argc(0);
     app_ = std::unique_ptr<TApplication>(new TApplication("noapplication", &tmp_argc, 0));
-    TStyle::BuildStyles();
-    TStyle *style = (TStyle*)gROOT->GetListOfStyles()->FindObject("Modern");
-    if (style) style->cd();
   }
 }
 
