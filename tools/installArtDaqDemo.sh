@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo Invoked: $0 "$@"
 env_opts_var=`basename $0 | sed 's/\.sh$//' | tr 'a-z-' 'A-Z_'`_OPTS
 USAGE="\
   usage: `basename $0` [options] <demo_products_dir/> <artdaq-demo/>
@@ -34,7 +34,7 @@ while [ -n "${1-}" ];do
         -run-demo) opt_run_demo=--run-demo;;
 	    -HEAD) opt_HEAD=--HEAD;;
         -debug)    opt_debug=--debug;;
-        -c*)       eval $op1chr; opt_clean=1;;
+        c*)        eval $op1chr; opt_clean=1;;
         *)         echo "Unknown option -$op"; do_help=1;;
         esac
     else
@@ -45,6 +45,7 @@ eval "set -- $args \"\$@\""; unset args aa
 
 test -n "${do_help-}" -o $# -ne 2 && echo "$USAGE" && exit
 
+test -d $1 || { echo "products directory ($1) not found"; exit 1; }
 products_dir=`cd "$1" >/dev/null;pwd`
 artdaq_demo_dir=`cd "$2" >/dev/null;pwd`
 demo_dir=`dirname "$artdaq_demo_dir"`
@@ -63,6 +64,11 @@ else
     build_arg="p"
 fi
 
+cd $demo_dir >/dev/null  # potential git clones under here
+
+REPO_PREFIX=http://cdcvs.fnal.gov/projects
+#REPO_PREFIX=ssh://p-artdaq@cdcvs.fnal.gov/cvs/projects # p-artdaq can be used to access artdaq-demo
+
 function install_package {
     local packagename=$1
     local commit_tag=$2
@@ -73,7 +79,7 @@ function install_package {
 
     test -d "$demo_dir/build_$packagename" || mkdir "$demo_dir/build_$packagename"    
 
-    test -d ${packagename} || git clone http://cdcvs.fnal.gov/projects/$packagename
+    test -d ${packagename} || git clone $REPO_PREFIX/$packagename
     cd $packagename
     git fetch origin
     git checkout $commit_tag
@@ -88,42 +94,32 @@ function install_package {
 
 . $products_dir/setup
 
-# Commit 52d6e7b4527dce8a86b7bcaf5970d45013373b89, from 9/15/14,
-# updates artdaq core v1_04_00 s.t. it includes the BuildInfo template
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core develop
 else
-install_package artdaq-core 52d6e7b4527dce8a86b7bcaf5970d45013373b89 e5 s3
+install_package artdaq-core 7629147ced569dcf3348769b3d370ec9bbb740b1 e6 s5
 fi
-
-# Commit 208a1052b352863d7f1762bdc332d4a40a5e9bce, made by Ron
-# Rechenmacher, dates from 10/6/14
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core-demo develop
 else
-install_package artdaq-core-demo 208a1052b352863d7f1762bdc332d4a40a5e9bce e5 s3
+install_package artdaq-core-demo c1a02faec4357da7d9e9cca971a1b1e0674569af e6 #s5
 fi
-
-# artdaq commit f0f0c5eb950f5a53e06aee564975357c4bc5da7e, from
-# 9/16/14, includes both the merging of the buildinfo branch and the
-# timestamps branch
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq develop
 else
-install_package artdaq f0f0c5eb950f5a53e06aee564975357c4bc5da7e e5 s3 eth
+install_package artdaq 246b8e7e1cc9ae36b74099c9ed28bdddc903fbfe e6 s5 eth
 fi
 
 if [  -n "${opt_HEAD-}" ];then
 setup_qualifier=""
 else
-setup_qualifier="e5 eth"
+setup_qualifier="e6 eth"
 fi
 
-cd $demo_dir >/dev/null
-if [[ ! -e ./setupARTDAQDEMO ]]; then
+if [ ! -e ./setupARTDAQDEMO -o "${opt_clean-}" == 1 ]; then
     cat >setupARTDAQDEMO <<-EOF
 	echo # This script is intended to be sourced.
 
@@ -155,14 +151,14 @@ fi
 echo "Building artdaq-demo..."
 cd $ARTDAQDEMO_BUILD
 . $demo_dir/setupARTDAQDEMO
-buildtool
+buildtool ${opt_clean+-c}
 
 echo "Installation and build complete; please see https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/wiki/Running_a_sample_artdaq-demo_system for instructions on how to run"
 
 if [ -n "${opt_run_demo-}" ];then
     echo doing the demo
 
-    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132x33 \
+    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom '132x33 -sl 2500' \
         -c '. ./setupARTDAQDEMO' \
         -c start2x2x2System.sh
     sleep 2
