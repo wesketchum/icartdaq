@@ -55,7 +55,7 @@ physics: {
      BuildInfo:
      {
        module_type: ArtdaqDemoBuildInfo
-       ArtdaqDemoBuildInfo: ArtdaqDemo
+       instance_name: ArtdaqDemo
      }
   }
 
