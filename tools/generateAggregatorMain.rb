@@ -51,9 +51,16 @@ physics: {
      %{huffdiffV1724}
 
      # Decompression functionality can also be added...
+
+     BuildInfo:
+     {
+       module_type: ArtdaqDemoBuildInfo
+       instance_name: ArtdaqDemo
+     }
   }
 
   p1: [ %{compressionModules} ] 
+  p2: [ BuildInfo ]
 
   %{enable_onmon}a1: %{onmon_modules}
 

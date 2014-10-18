@@ -32,11 +32,14 @@ USAGE="\
    usage: `basename $0` [options] [demo_root]
 examples: `basename $0` .
           `basename $0` --run-demo
+          `basename $0` --HEAD --debug
 If the \"demo_root\" optional parameter is not supplied, the user will be
 prompted for this location.
 --run-demo    runs the demo
+--debug       perform a debug build
 -f            force download
 --skip-check  skip the free diskspace check
+--HEAD        all git repo'd packages checked out from HEAD of develop branches
 "
 
 # Process script arguments and options
@@ -59,6 +62,8 @@ while [ -n "${1-}" ];do
         t*|-tag)    eval $reqarg; tag=$1;    shift;;
         -skip-check)opt_skip_check=1;;
         -run-demo)  opt_run_demo=--run-demo;;
+	-debug)     opt_debug=--debug;;
+	    -HEAD)  opt_HEAD=--HEAD;;
         *)          echo "Unknown option -$op"; do_help=1;;
         esac
     else
@@ -96,6 +101,15 @@ if [ "$branch" != '(no branch)' ];then
     fi
 fi
 
+# JCF, 8/28/14
+
+# Now that we've checked out the artdaq-demo version we want, make
+# sure we know what qualifier is meant to be passed to the
+# downloadDeps.sh and installArtDaqDemo.sh scripts below
+
+defaultqual=`grep ^defaultqual $git_working_path/ups/product_deps | awk '{print $2}'`
+
+
 vecho() { test $opt_v -gt 0 && echo "$@"; }
 starttime=`date`
 
@@ -123,6 +137,14 @@ if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
     exit 1
 fi
 
+
+if [[ -n "${opt_debug:-}" ]] ; then
+    build_type="debug"
+else
+    build_type="prof"
+fi
+
+
 if [ ! -d products -o ! -d download ];then
     echo "Are you sure you want to download and install the artdaq demo dependent products in `pwd`? [y/n]"
     read response
@@ -133,16 +155,16 @@ if [ ! -d products -o ! -d download ];then
     test -d products || mkdir products
     test -d download || mkdir download
     cd download
-    $git_working_path/tools/downloadDeps.sh  ../products e4:eth prof
+    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 elif [ -n "${opt_force-}" ];then
     cd download
-    $git_working_path/tools/downloadDeps.sh  ../products e4:eth prof
+    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-}
+$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
 
 endtime=`date`
 

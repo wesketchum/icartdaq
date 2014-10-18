@@ -1,28 +1,31 @@
 simple_plugin(V172xFileReader "generator"
-  artdaq-demo_Overlays
+  artdaq-core-demo_Overlays
   ${ARTDAQ_APPLICATION}
   ${ARTDAQ_DAQDATA}
-  ${ARTDAQ_UTILITIES}
+  ${ARTDAQ-CORE_UTILITIES}
+  ${ARTDAQ-CORE_DATA}
   ${ART_UTILITIES}
   ${FHICLCPP}
   ${CETLIB}
   )
 
 simple_plugin(V172xSimulator "generator"
-  artdaq-demo_Overlays
+  artdaq-core-demo_Overlays
   ${ARTDAQ_APPLICATION}
   ${ARTDAQ_DAQDATA}
-  ${ARTDAQ_UTILITIES}
+  ${ARTDAQ-CORE_UTILITIES}
+  ${ARTDAQ-CORE_DATA}
   ${ART_UTILITIES}
   ${FHICLCPP}
   ${CETLIB}
   )
 
 simple_plugin(ToySimulator "generator"
-  artdaq-demo_Overlays
+  artdaq-core-demo_Overlays
   ${ARTDAQ_APPLICATION}
   ${ARTDAQ_DAQDATA}
-  ${ARTDAQ_UTILITIES}
+  ${ARTDAQ-CORE_UTILITIES}
+  ${ARTDAQ-CORE_DATA}
   ${ART_UTILITIES}
   ${FHICLCPP}
   ${CETLIB}

@@ -13,17 +13,17 @@
 // called "TOY2"; the only difference between the two boards is the #
 // of bits in the ADC values they send. These values are declared as
 // FragmentType enum's in artdaq-demo's
-// artdaq-demo/Overlays/FragmentType.hh header.
+// artdaq-core-demo/Overlays/FragmentType.hh header.
 
 // Some C++ conventions used:
 
 // -Append a "_" to every private member function and variable
 
 #include "fhiclcpp/fwd.h"
-#include "artdaq/DAQdata/Fragments.hh" 
+#include "artdaq-core/Data/Fragments.hh" 
 #include "artdaq/Application/CommandableFragmentGenerator.hh"
-#include "artdaq-demo/Overlays/ToyFragment.hh"
-#include "artdaq-demo/Overlays/FragmentType.hh"
+#include "artdaq-core-demo/Overlays/ToyFragment.hh"
+#include "artdaq-core-demo/Overlays/FragmentType.hh"
 
 #include <random>
 #include <vector>
@@ -48,7 +48,9 @@ namespace demo {
 
     std::size_t const nADCcounts_;     // ADC values per fragment per event
     FragmentType const fragment_type_; // Type of fragment (see FragmentType.hh)
-    std::size_t const throttle_usecs_;
+
+    std::size_t const throttle_usecs_;        // Sleep at start of each call to getNext_(), in us
+    std::size_t const throttle_usecs_check_;  // Period between checks for stop/pause during the sleep (must be less than, and an integer divisor of, throttle_usecs_)
 
     // Members needed to generate the simulated data
 

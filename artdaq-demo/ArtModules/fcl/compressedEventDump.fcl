@@ -31,9 +31,15 @@ physics:
       uncompressed_V1720_label: unhuffV1720
       uncompressed_V1724_label: unhuffV1724
     }
+
+    printBuildInfo: {
+      module_type: PrintBuildInfo
+      buildinfo_module_label: BuildInfo
+      buildinfo_instance_label: ArtdaqDemo
+    }
   }
 
-  a1: [ evtDump ]
+  a1: [ evtDump, printBuildInfo ]
 
   f1: [ unhuffV1720 ]
   #f1: [ unhuffV1720, unhuffV1724 ]

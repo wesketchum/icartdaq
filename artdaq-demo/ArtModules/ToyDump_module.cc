@@ -11,8 +11,8 @@
 #include "art/Framework/Principal/Handle.h"
 
 #include "art/Utilities/Exception.h"
-#include "artdaq-demo/Overlays/ToyFragment.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core-demo/Overlays/ToyFragment.hh"
+#include "artdaq-core/Data/Fragments.hh"
 
 #include <algorithm>
 #include <cassert>

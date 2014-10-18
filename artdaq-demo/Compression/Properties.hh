@@ -8,7 +8,7 @@
   look up attributes and constexpr in C++11 as a better way to do this
 */
 
-#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-core-demo/Overlays/V172xFragment.hh"
 
 extern "C" {
 #include <stdint.h>

@@ -3,11 +3,11 @@
 #include "art/Utilities/Exception.h"
 #include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "artdaq-demo/Overlays/ToyFragment.hh"
-#include "artdaq-demo/Overlays/ToyFragmentWriter.hh"
-#include "artdaq-demo/Overlays/FragmentType.hh"
+#include "artdaq-core-demo/Overlays/ToyFragment.hh"
+#include "artdaq-core-demo/Overlays/ToyFragmentWriter.hh"
+#include "artdaq-core-demo/Overlays/FragmentType.hh"
 #include "fhiclcpp/ParameterSet.h"
-#include "artdaq/Utilities/SimpleLookupPolicy.h"
+#include "artdaq-core/Utilities/SimpleLookupPolicy.h"
 
 #include <fstream>
 #include <iomanip>
@@ -46,7 +46,8 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   CommandableFragmentGenerator(ps),
   nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type"))),
-  throttle_usecs_(ps.get<size_t>("throttle_usecs", 0)),
+  throttle_usecs_(ps.get<size_t>("throttle_usecs", 100000)),
+  throttle_usecs_check_(ps.get<size_t>("throttle_usecs_check", 10000)),
   engine_(ps.get<int64_t>("random_seed", 314159)),
   uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))
 {
@@ -59,17 +60,42 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
   if (std::find( ftypes.begin(), ftypes.end(), fragment_type_) == ftypes.end() ) {
     throw cet::exception("Error in ToySimulator: unexpected fragment type supplied to constructor");
   }
+
+  if (throttle_usecs_ > 0 && (throttle_usecs_check_ >= throttle_usecs_ ||
+			      throttle_usecs_ % throttle_usecs_check_ != 0) ) {
+    throw cet::exception("Error in ToySimulator: disallowed combination of throttle_usecs and throttle_usecs_check (see ToySimulator.hh for rules)");
+  }
     
 }
 
 
 bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
 
-  if (should_stop()) {
-    return false;
-  }
+  // JCF, 9/23/14
 
-  usleep( throttle_usecs_ );
+  // If throttle_usecs_ is greater than zero (i.e., user requests a
+  // sleep interval before generating the pseudodata) then during that
+  // interval perform a periodic check to see whether a stop request
+  // has been received
+
+  // Values for throttle_usecs_ and throttle_usecs_check_ will have
+  // been tested for validity in constructor
+
+  if (throttle_usecs_ > 0) {
+    size_t nchecks = throttle_usecs_ / throttle_usecs_check_;
+
+    for (size_t i_c = 0; i_c < nchecks; ++i_c) {
+      usleep( throttle_usecs_check_ );
+
+      if (should_stop()) {
+	return false;
+      }
+    }
+  } else {
+    if (should_stop()) {
+      return false;
+    }
+  }
 
   // Set fragment's metadata
 

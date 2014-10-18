@@ -1,5 +1,5 @@
 # ======================================================================
-#  darkart main build file
+#  artdaq-demo main build file
 #
 #  cd .../path/to/build/directory
 #  source .../path/to/artdaq-demo/ups/setup_for_development
@@ -29,7 +29,6 @@ cet_set_compiler_flags(DIAGS VIGILANT
  WERROR
  NO_UNDEFINED
  EXTRA_FLAGS -pedantic
- EXTRA_CXX_FLAGS -std=c++11 -D_GLIBCXX_USE_NANOSLEEP
  )
 
 cet_report_compiler_flags()
@@ -37,6 +36,8 @@ cet_report_compiler_flags()
 # these are minimum required versions, not the actual product versions
 find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( artdaq v0_04_02 )
+find_ups_product( artdaq_core v1_00_00 )
+find_ups_product( artdaq_core_demo v0_00_01 )
 find_ups_product( art v1_06_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
@@ -48,11 +49,12 @@ find_ups_boost( v1_50_0 filesystem
                         unit_test_framework
  )
 
-cet_check_gcc()
-
-# have to make sure cmake doesn't select the system libraries
-# define libsigc
-cet_find_library( SIGC    NAMES sigc-2.0  PATHS ENV LIBSIGCPP_LIB NO_DEFAULT_PATH )
+# Needed if using old art with new cetbuildtools / CMake.
+check_ups_version(art "$ENV{ART_VERSION}" v1_11_00 PRODUCT_OLDER_VAR have_old_art)
+if (have_old_art)
+  cmake_policy(SET CMP0046 OLD)
+endif()
+unset(have_old_art)
 
 # macros for art_dictionary and simple_plugin
 include(ArtDictionary)

@@ -14,11 +14,11 @@
 #include "art/Utilities/Exception.h"
 #include "art/Utilities/InputTag.h"
 #include "artdaq-demo/ArtModules/converter_algs.hh"
-#include "artdaq-demo/Overlays/FragmentType.hh"
-#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-core-demo/Overlays/FragmentType.hh"
+#include "artdaq-core-demo/Overlays/V172xFragment.hh"
 #include "artdaq-demo/Products/Channel.hh"
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core/Data/Fragments.hh"
 
 #include <memory>
 #include <utility>

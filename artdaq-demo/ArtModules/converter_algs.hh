@@ -1,10 +1,10 @@
 #ifndef artdaq_demo_ArtModules_converter_algs_hh
 #define artdaq_demo_ArtModules_converter_algs_hh
 
-#include "artdaq/DAQdata/Fragment.hh"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragment.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq-demo/Products/Channel.hh"
-#include "artdaq-demo/Overlays/V172xFragment.hh"
+#include "artdaq-core-demo/Overlays/V172xFragment.hh"
 
 namespace darkart
 {

@@ -35,6 +35,9 @@ namespace {
     return p;
   }
 
+  // 26-Sep-2014, KAB - commented out these two functions since they
+  // are unused and the compiler doesn't like that
+#if 0
   HuffmanTable::ItPair HighHigh(HuffmanTable::HeadList & heads)
   {
     auto higher = heads.begin();
@@ -48,6 +51,7 @@ namespace {
     HuffmanTable::ItPair p(heads.begin(), --heads.rbegin().base());
     return p;
   }
+#endif
 
 }
 

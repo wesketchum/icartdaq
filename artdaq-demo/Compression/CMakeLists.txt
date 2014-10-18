@@ -17,7 +17,8 @@ set( LIB_SOURCES
 
 art_make_library(SOURCE ${LIB_SOURCES}
   LIBRARIES
-  artdaq-demo_Overlays
+  artdaq-core-demo_Overlays
+  cetlib
   )
 
 art_make_exec(BuildHuffmanTable LIBRARIES artdaq-demo_Compression)

@@ -560,8 +560,12 @@ class SystemControl
             generatorCode = generateV1720(boardreaderOptions.index,
                                           boardreaderOptions.board_id, kind)
           elsif kind == "TOY1" || kind == "TOY2"
+        
+            # The last argument refers to the pause, in us, before
+            # generating pseudodata in ToySimulator::getNext_()
+            
             generatorCode = generateToy(boardreaderOptions.index,
-                                        boardreaderOptions.board_id, kind)
+                                        boardreaderOptions.board_id, kind, 100000)
           end
 
           cfg = generateBoardReaderMain(totalEBs, totalFRs,

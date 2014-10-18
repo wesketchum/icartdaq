@@ -2,10 +2,10 @@
 #define artdaq_demo_Generators_V172xSimulator_hh
 
 #include "fhiclcpp/fwd.h"
-#include "artdaq/DAQdata/Fragments.hh"
+#include "artdaq-core/Data/Fragments.hh"
 #include "artdaq/Application/CommandableFragmentGenerator.hh"
-#include "artdaq-demo/Overlays/V172xFragment.hh"
-#include "artdaq-demo/Overlays/FragmentType.hh"
+#include "artdaq-core-demo/Overlays/V172xFragment.hh"
+#include "artdaq-core-demo/Overlays/FragmentType.hh"
 
 #include <random>
 #include <vector>
