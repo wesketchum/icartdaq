@@ -17,7 +17,7 @@ rev='$Revision: 1.20 $$Date: 2010/02/18 13:20:16 $'
 #
 # This script will:
 #      1.  get (if not already gotten) artdaq-demo and all support products
-#          Note: this whole demo takes approx. X Megabytes of disk space
+#          Note: this whole demo takes approx. 4 Gigabytes of disk space
 #      2a. possibly build the artdaq dependent product
 #      2b. build (via cmake),
 #  and 3.  start the artdaq-demo system
