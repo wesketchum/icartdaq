@@ -23,6 +23,8 @@ require File.join( File.dirname(__FILE__), 'demo_utilities' )
 # (BoardReaderMain, EventBuilderMain, AggregatorMain)
 
 require File.join( File.dirname(__FILE__), 'generateToy' )
+require File.join( File.dirname(__FILE__), 'generatePattern' )
+require File.join( File.dirname(__FILE__), 'generateNormal' )
 require File.join( File.dirname(__FILE__), 'generateV1720' )
 require File.join( File.dirname(__FILE__), 'generateWFViewer' )
 
@@ -300,9 +302,10 @@ class CommandLineParser
         @options.v1720s << v1724Config
       end
 
-      opts.on("--toy1 [host,port,board_id, <eventSize>]", Array, 
+      opts.on("--toy1 [host,port,board_id,<eventSize>,<generator_id>]", Array, 
               "Add a TOY1 fragment receiver that runs on the specified host, port, ",
-              "and board ID. Optionally set Event Size (in bytes).") do |toy1|
+              "and board ID. Generates events of size eventSize bytes. ", 
+              "Generator ID must be one of: Uniform, Normal, or Pattern") do |toy1|
         if toy1.length < 3
           puts "You must specifiy a host, port, and board ID."
           exit
@@ -312,8 +315,12 @@ class CommandLineParser
         toy1Config.port = Integer(toy1[1])
         toy1Config.board_id = Integer(toy1[2])
         toy1Config.kind = "TOY1"
+        toy1Config.generator_id = "Uniform"
+        if toy1.length == 5
+          toy1Config.generator_id = toy1[4]
+        end
         toy1Config.eventSize = nil
-        if toy1.length > 3 && toy1[3] != "nil"
+        if toy1.length > 3 && toy1[3] != "na"
           toy1Config.eventSize = Integer(toy1[3])
         end
         toy1Config.index = (@options.v1720s + @options.toys).length
@@ -323,9 +330,10 @@ class CommandLineParser
       end
 
 
-      opts.on("--toy2 [host,port,board_id,<eventSize>]", Array, 
+      opts.on("--toy2 [host,port,board_id,<eventSize>,<generator_id>]", Array, 
               "Add a TOY2 fragment receiver that runs on the specified host, port, ",
-              "and board ID. Optionally set Event Size (in bytes)") do |toy2|
+              "and board ID. Generates events of size eventSize bytes. ",
+              "Generator ID must be one of: Uniform, Normal, or Pattern") do |toy2|
         if toy2.length < 3
           puts "You must specifiy a host, port, and board ID."
           exit
@@ -335,8 +343,12 @@ class CommandLineParser
         toy2Config.port = Integer(toy2[1])
         toy2Config.board_id = Integer(toy2[2])
         toy2Config.kind = "TOY2"
+        toy2Config.generator_id = "Uniform"
+        if toy2.length == 5
+          toy2Config.generator_id = toy2[4]
+        end
         toy2Config.eventSize = nil
-        if toy2.length > 3 && toy2[3] != "nil"
+        if toy2.length > 3 && toy2[3] != "na"
           toy2Config.eventSize = Integer(toy2[3])
         end
         toy2Config.index = (@options.v1720s + @options.toys).length
@@ -571,8 +583,21 @@ class SystemControl
         
             # The third argument refers to the pause, in us, before
             # generating pseudodata in ToySimulator::getNext_()
-            generatorCode = generateToy(boardreaderOptions.index,
+            
+            case boardreaderOptions.generator_id
+            when "Uniform"
+                generatorCode = generateToy(boardreaderOptions.index,
                                         boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
+            when "Normal"
+                generatorCode = generateNormal(boardreaderOptions.index,
+                                        boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
+            when "Pattern"
+                generatorCode = generatePattern(boardreaderOptions.index,
+                                        boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
+            else
+               puts "Invalid generator_id!"
+               exit
+            end
           end
 
           cfg = generateBoardReaderMain(totalEBs, totalFRs,
