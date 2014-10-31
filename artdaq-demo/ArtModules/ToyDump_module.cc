@@ -97,6 +97,10 @@ void demo::ToyDump::analyze(art::Event const & evt)
 	std::cout << std::endl;
       }
 
+      if (num_adcs_to_show_ == 0) {
+        num_adcs_to_show_ = bb.total_adc_values();
+      }
+
       if (num_adcs_to_show_ > 0) {
 
 	if (num_adcs_to_show_ > bb.total_adc_values() ) {
@@ -108,10 +112,11 @@ void demo::ToyDump::analyze(art::Event const & evt)
 		    << std::endl;
 	}
 
-
+	std::ofstream output ("out.bin", std::ios::out | std::ios::app | std::ios::binary );
 	for (uint32_t i_adc = 0; i_adc < num_adcs_to_show_; ++i_adc) {
-	  std::cout << *(bb.dataBegin() + i_adc) << " ";
+	  output.write((char*)(bb.dataBegin() + i_adc),sizeof(ToyFragment::adc_t));
 	}
+        output.close();
 	std::cout << std::endl;
 	std::cout << std::endl;
       }
