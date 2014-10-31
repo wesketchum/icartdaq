@@ -300,10 +300,10 @@ class CommandLineParser
         @options.v1720s << v1724Config
       end
 
-      opts.on("--toy1 [host,port,board_id]", Array, 
+      opts.on("--toy1 [host,port,board_id, <eventSize>]", Array, 
               "Add a TOY1 fragment receiver that runs on the specified host, port, ",
-              "and board ID.") do |toy1|
-        if toy1.length != 3
+              "and board ID. Optionally set Event Size (in bytes).") do |toy1|
+        if toy1.length < 3
           puts "You must specifiy a host, port, and board ID."
           exit
         end
@@ -312,17 +312,21 @@ class CommandLineParser
         toy1Config.port = Integer(toy1[1])
         toy1Config.board_id = Integer(toy1[2])
         toy1Config.kind = "TOY1"
+        toy1Config.eventSize = nil
+        if toy1.length > 3 && toy1[3] != "nil"
+          toy1Config.eventSize = Integer(toy1[3])
+        end
         toy1Config.index = (@options.v1720s + @options.toys).length
         toy1Config.board_reader_index = addToBoardReaderList(toy1Config.host, toy1Config.port,
-                                                              toy1Config.kind, toy1Config.index)
+                                                              toy1Config.kind, toy1Config.index, toy1Config.eventSize)
         @options.toys << toy1Config
       end
 
 
-      opts.on("--toy2 [host,port,board_id]", Array, 
+      opts.on("--toy2 [host,port,board_id,<eventSize>]", Array, 
               "Add a TOY2 fragment receiver that runs on the specified host, port, ",
-              "and board ID.") do |toy2|
-        if toy2.length != 3
+              "and board ID. Optionally set Event Size (in bytes)") do |toy2|
+        if toy2.length < 3
           puts "You must specifiy a host, port, and board ID."
           exit
         end
@@ -331,9 +335,13 @@ class CommandLineParser
         toy2Config.port = Integer(toy2[1])
         toy2Config.board_id = Integer(toy2[2])
         toy2Config.kind = "TOY2"
+        toy2Config.eventSize = nil
+        if toy2.length > 3 && toy2[3] != "nil"
+          toy2Config.eventSize = Integer(toy2[3])
+        end
         toy2Config.index = (@options.v1720s + @options.toys).length
         toy2Config.board_reader_index = addToBoardReaderList(toy2Config.host, toy2Config.port,
-                                                              toy2Config.kind, toy2Config.index)
+                                                              toy2Config.kind, toy2Config.index, toy2Config.eventSize)
 
         @options.toys << toy2Config
       end
@@ -418,7 +426,7 @@ class CommandLineParser
     return nil
   end
 
-  def addToBoardReaderList(host, port, kind, boardIndex)
+  def addToBoardReaderList(host, port, kind, boardIndex, eventSize = nil)
     # check for an existing boardReader with the same host and port
     brIndex = 0
     @options.boardReaders.each do |br|
@@ -443,7 +451,7 @@ class CommandLineParser
     br.commandHasBeenSent = false
     br.hasBeenIncludedInXMLRPCList = false
     br.kind = "multi-board"
-
+    br.eventSize = eventSize
     brIndex = @options.boardReaders.length
     @options.boardReaders << br
     return brIndex
@@ -561,11 +569,10 @@ class SystemControl
                                           boardreaderOptions.board_id, kind)
           elsif kind == "TOY1" || kind == "TOY2"
         
-            # The last argument refers to the pause, in us, before
+            # The third argument refers to the pause, in us, before
             # generating pseudodata in ToySimulator::getNext_()
-            
             generatorCode = generateToy(boardreaderOptions.index,
-                                        boardreaderOptions.board_id, kind, 100000)
+                                        boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
           end
 
           cfg = generateBoardReaderMain(totalEBs, totalFRs,

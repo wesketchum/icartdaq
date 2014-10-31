@@ -19,6 +19,7 @@ THIS_NODE=`hostname -s`
 # 11) the desired number of events in each file
 # 12) the desired time duration of each file (minutes)
 # 13) whether to print out CFG information (verbose)
+# 14) the event size in bytes
 function launch() {
   ebComp=$3
   agComp=$3
@@ -35,8 +36,8 @@ function launch() {
   fi
 
   DemoControl.rb ${enableSerial} -s -c $1 \
-    --toy1 `hostname`,${ARTDAQDEMO_BR_PORT[0]},0 \
-    --toy2 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1 \
+    --toy1 `hostname`,${ARTDAQDEMO_BR_PORT[0]},0,${14} \
+    --toy2 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1,${14} \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[0]},$ebComp \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[1]},$ebComp \
     --ag `hostname`,${ARTDAQDEMO_AG_PORT[0]},1,$agComp \
@@ -63,6 +64,7 @@ Configuration options (init commands):
   -D : disables the writing of data to disk
   -s <file size>: specifies the size threshold for closing data files (in MB)
       [default is 8000 MB (~7.8 GB); zero means that there is no file size limit]
+  --event-size <event size>: specifies the size of each event from each BoardReader in bytes
   --file-events <count>: specifies the desired number of events in each file
       [default=0, which means no event count limit for files]
   --file-duration <duration>: specifies the desired duration of each file (minutes)
@@ -124,6 +126,7 @@ fileEventCount=0
 fileDuration=0
 verbose=0
 OPTIND=1
+eventSize="nil"
 while getopts "hc:N:o:t:m:Dn:d:s:w:v-:" opt; do
     if [ "$opt" = "-" ]; then
         opt=$OPTARG
@@ -173,6 +176,10 @@ while getopts "hc:N:o:t:m:Dn:d:s:w:v-:" opt; do
         s)
             fileSize=${OPTARG}
             fsChoiceSpecified=1
+            ;;
+        event-size)
+            eventSize=${!OPTIND}
+            let OPTIND=$OPTIND+1
             ;;
         v)
             verbose=1
@@ -261,11 +268,11 @@ if [[ "$command" == "shutdown" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     # stop the MPI program
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
@@ -277,11 +284,11 @@ elif [[ "$command" == "restart" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     # stop the MPI program
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
@@ -292,11 +299,11 @@ elif [[ "$command" == "reinit" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     # stop the MPI program
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
@@ -307,11 +314,11 @@ elif [[ "$command" == "reinit" ]]; then
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
 elif [[ "$command" == "exit" ]]; then
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
     ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
@@ -330,7 +337,7 @@ elif [[ "$command" == "fast-reinit" ]]; then
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
 elif [[ "$command" == "fast-exit" ]]; then
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
@@ -339,5 +346,5 @@ elif [[ "$command" == "fast-exit" ]]; then
 else
     launch $command $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose
+        $fileEventCount $fileDuration $verbose $eventSize
 fi
