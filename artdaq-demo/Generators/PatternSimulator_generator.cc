@@ -139,15 +139,15 @@ bool demo::PatternSimulator::getNext_(artdaq::FragmentPtrs & frags) {
   // not-too-physical example of how one could generate simulated
   // data)
 
-  int maxADC = pow(2, typeToADC( fragment_type_ ) ) - 1;
-  int step = maxADC / nADCcounts_;
-  int current = ev_counter() - step;
+  //int maxADC = pow(2, typeToADC( fragment_type_ ) ) - 1;
+  //int step = maxADC / nADCcounts_;
+  //int current = ev_counter() - step;
 
   std::generate_n(newfrag.dataBegin(), nADCcounts_,
   		  [&]() {
-                    current += step;
-  		    return static_cast<ToyFragment::adc_t>
- 		      (current % maxADC);
+                    //current += step;
+  		    return static_cast<ToyFragment::adc_t>(ev_counter());
+ 		     // (current % maxADC);
   		  }
   		  );
 

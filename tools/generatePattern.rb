@@ -30,7 +30,7 @@ def generatePattern(startingFragmentId, boardId,
 
   if ! eventSize.nil?
     adcCounts = eventSize / 2
-    toyConfig.gsub!(/.*nADCcounts.*\:.*/, "nADCcounts: %d" % [adcCounts])
+    patternConfig.gsub!(/.*nADCcounts.*\:.*/, "nADCcounts: %d" % [adcCounts])
   end
 
   if ! throttleUsecs.nil?
