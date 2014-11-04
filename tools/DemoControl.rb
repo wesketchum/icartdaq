@@ -26,6 +26,7 @@ require File.join( File.dirname(__FILE__), 'generateToy' )
 require File.join( File.dirname(__FILE__), 'generatePattern' )
 require File.join( File.dirname(__FILE__), 'generateNormal' )
 require File.join( File.dirname(__FILE__), 'generateV1720' )
+require File.join( File.dirname(__FILE__), 'generateAscii' )
 require File.join( File.dirname(__FILE__), 'generateWFViewer' )
 
 require File.join( File.dirname(__FILE__), 'generateBoardReaderMain' )
@@ -170,7 +171,7 @@ daq: {
     xmlrpcClients = ""
 #    boardreaders = Array.new + @options.v1720s + @options.toys
 #    boardreaders.each do |proc|
-    (cmdLineOptions.v1720s + cmdLineOptions.toys).each do |proc|
+    (cmdLineOptions.v1720s + cmdLineOptions.toys + cmdLineOptions.asciis).each do |proc|
       br = cmdLineOptions.boardReaders[proc.board_reader_index]
       if br.hasBeenIncludedInXMLRPCList
         next
@@ -209,6 +210,7 @@ class CommandLineParser
     @options.eventBuilders = []
     @options.v1720s = []
     @options.toys = []
+    @options.asciis = []
     @options.boardReaders = []
     @options.dataDir = nil
     @options.command = nil
@@ -277,7 +279,7 @@ class CommandLineParser
         v1720Config.port = Integer(v1720[1])
         v1720Config.board_id = Integer(v1720[2])
         v1720Config.kind = "V1720"
-        v1720Config.index = (@options.v1720s + @options.toys).length
+        v1720Config.index = (@options.v1720s + @options.toys + @options.asciis).length
         v1720Config.board_reader_index = addToBoardReaderList(v1720Config.host, v1720Config.port,
                                                               v1720Config.kind, v1720Config.index)
         @options.v1720s << v1720Config
@@ -295,11 +297,33 @@ class CommandLineParser
         v1724Config.port = Integer(v1724[1])
         v1724Config.board_id = Integer(v1724[2])
         v1724Config.kind = "V1724"
-        v1724Config.index = (@options.v1720s + @options.toys).length
+        v1724Config.index = (@options.v1720s + @options.toys + @options.asciis).length
         v1724Config.board_reader_index = addToBoardReaderList(v1724Config.host, v1724Config.port,
                                                               v1724Config.kind, v1724Config.index)
         # NOTE that we're simply adding this to the 1720 list...
         @options.v1720s << v1724Config
+      end
+
+      opts.on("--ascii [host,port,board_id,<string1>,<string2>]", Array, 
+              "Add a TOY1 fragment receiver that runs on the specified host, port, ",
+              "and board ID. Generates alternating string1 and string2's.") do |ascii|
+        if ascii.length < 3
+          puts "You must specifiy a host, port, and board ID."
+          exit
+        end
+        asciiConfig = OpenStruct.new
+        asciiConfig.host = ascii[0]
+        asciiConfig.port = Integer(ascii[1])
+        asciiConfig.board_id = Integer(ascii[2])
+        asciiConfig.kind = "ASCII"
+        if ascii.length == 5
+          asciiConfig.string1 = ascii[3]
+          asciiConfig.string2 = ascii[4]
+        end
+        asciiConfig.index = (@options.v1720s + @options.toys + @options.asciis).length
+        asciiConfig.board_reader_index = addToBoardReaderList(asciiConfig.host, asciiConfig.port,
+                                                              asciiConfig.kind, asciiConfig.index)
+        @options.asciis << asciiConfig
       end
 
       opts.on("--toy1 [host,port,board_id,<eventSize>,<generator_id>]", Array, 
@@ -323,7 +347,7 @@ class CommandLineParser
         if toy1.length > 3 && toy1[3] != "na"
           toy1Config.eventSize = Integer(toy1[3])
         end
-        toy1Config.index = (@options.v1720s + @options.toys).length
+        toy1Config.index = (@options.v1720s + @options.toys + @options.asciis).length
         toy1Config.board_reader_index = addToBoardReaderList(toy1Config.host, toy1Config.port,
                                                               toy1Config.kind, toy1Config.index, toy1Config.eventSize)
         @options.toys << toy1Config
@@ -351,7 +375,7 @@ class CommandLineParser
         if toy2.length > 3 && toy2[3] != "na"
           toy2Config.eventSize = Integer(toy2[3])
         end
-        toy2Config.index = (@options.v1720s + @options.toys).length
+        toy2Config.index = (@options.v1720s + @options.toys + @options.asciis).length
         toy2Config.board_reader_index = addToBoardReaderList(toy2Config.host, toy2Config.port,
                                                               toy2Config.kind, toy2Config.index, toy2Config.eventSize)
 
@@ -475,7 +499,7 @@ class CommandLineParser
     # is running on which host.
     puts "Configuration Summary:"
     hostMap = {}
-    (@options.eventBuilders + @options.v1720s + @options.toys + @options.aggregators).each do |proc|
+    (@options.eventBuilders + @options.v1720s + @options.toys + @options.aggregators + @options.asciis).each do |proc|
       if not hostMap.keys.include?(proc.host)
         hostMap[proc.host] = []
       end
@@ -496,7 +520,7 @@ class CommandLineParser
           puts "    EventBuilder, port %d, rank %d" % [item.port, totalFRs + item.index]
         when "ag"
           puts "    Aggregator, port %d, rank %d" % [item.port, totalEBs + totalFRs + item.index]
-        when "V1720", "V1724", "TOY1", "TOY2"
+        when "V1720", "V1724", "TOY1", "TOY2", "ASCII"
           puts "    FragmentReceiver, Simulated %s, port %d, rank %d, board_id %d" % 
             [item.kind.upcase,
              item.port,
@@ -535,6 +559,7 @@ class SystemControl
     totalv1724s = 0
     totaltoy1s = 0
     totaltoy2s = 0
+    totalasciis = 0
     @options.v1720s.each do |proc|
       case proc.kind
       when "V1720"
@@ -551,7 +576,10 @@ class SystemControl
         totaltoy2s += 1
       end
     end
-    totalBoards = @options.v1720s.length + @options.toys.length
+    @options.asciis.each do |proc|
+      totalasciis += 1
+    end
+    totalBoards = @options.v1720s.length + @options.toys.length + @options.asciis.length
     totalFRs = @options.boardReaders.length
     totalEBs = @options.eventBuilders.length
     totalAGs = @options.aggregators.length
@@ -570,7 +598,7 @@ class SystemControl
 
     # John F., 1/21/14 -- added the toy fragment generators
 
-    (@options.v1720s + @options.toys).each { |boardreaderOptions|
+    (@options.v1720s + @options.toys + @options.asciis).each { |boardreaderOptions|
       br = @options.boardReaders[boardreaderOptions.board_reader_index]
       listIndex = 0
       br.kindList.each do |kind|
@@ -579,6 +607,9 @@ class SystemControl
           if kind == "V1720" || kind == "V1724"
             generatorCode = generateV1720(boardreaderOptions.index,
                                           boardreaderOptions.board_id, kind)
+          elsif kind == "ASCII"
+            generatorCode = generateAscii(boardreaderOptions.index, 
+                                         boardreaderOptions.board_id, kind, 100000)
           elsif kind == "TOY1" || kind == "TOY2"
         
             # The third argument refers to the pause, in us, before
@@ -616,7 +647,7 @@ class SystemControl
 
     threads = []
 
-    (@options.v1720s + @options.toys).each { |proc|
+    (@options.v1720s + @options.toys + @options.asciis).each { |proc|
       br = @options.boardReaders[proc.board_reader_index]
       if br.boardCount > 1
         if br.commandHasBeenSent
@@ -666,8 +697,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
 
-        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys).map { |board| board.board_id },
-                                        (@options.v1720s + @options.toys).map { |board| board.kind }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys + @options.asciis).map { |board| board.kind }
                                        )
 
         puts "HAVE %d v1720s and %d v1724s" % [ totalv1720s, totalv1724s ]
@@ -705,8 +736,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(agOptions.host, "/RPC2", 
                                           agOptions.port)
 
-        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys).map { |board| board.board_id },
-                                        (@options.v1720s + @options.toys).map { |board| board.kind }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys + @options.asciis).map { |board| board.kind }
                                         )
 
         cfg = generateAggregatorMain(@options.dataDir, @options.runNumber,
@@ -747,6 +778,7 @@ class SystemControl
     self.sendCommandSet("start", @options.eventBuilders, runNumber)
     self.sendCommandSet("start", @options.v1720s, runNumber)
     self.sendCommandSet("start", @options.toys, runNumber)
+    self.sendCommandSet("start", @options.asciis, runNumber)
   end
 
   def sendCommandSet(commandName, procs, commandArg = nil)
@@ -811,6 +843,9 @@ class SystemControl
         when "TOY2"
           puts "%s: TOY2 FragmentReceiver on %s:%d result: %s" %
             [currentTime, proc.host, proc.port, result]
+        when "ASCII"
+          puts "%s: ASCII FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
         when "multi-board"
           puts "%s: multi-board FragmentReceiver on %s:%d result: %s" %
             [currentTime, proc.host, proc.port, result]
@@ -826,6 +861,7 @@ class SystemControl
   def shutdown()
     self.sendCommandSet("shutdown", @options.v1720s)
     self.sendCommandSet("shutdown", @options.toys)
+    self.sendCommandSet("shutdown", @options.asciis)
     self.sendCommandSet("shutdown", @options.eventBuilders)
     self.sendCommandSet("shutdown", @options.aggregators)
   end
@@ -833,6 +869,7 @@ class SystemControl
   def pause()
     self.sendCommandSet("pause", @options.v1720s)
     self.sendCommandSet("pause", @options.toys)
+    self.sendCommandSet("pause", @options.asciis)
     self.sendCommandSet("pause", @options.eventBuilders)
     self.sendCommandSet("pause", @options.aggregators)
   end
@@ -968,6 +1005,7 @@ class SystemControl
 
     self.sendCommandSet("stop", @options.v1720s)
     self.sendCommandSet("stop", @options.toys)
+    self.sendCommandSet("stop", @options.asciis)
     self.sendCommandSet("stop", @options.eventBuilders)
     @options.aggregators.each do |proc|
       tmpList = []
@@ -981,6 +1019,7 @@ class SystemControl
     self.sendCommandSet("resume", @options.eventBuilders)
     self.sendCommandSet("resume", @options.v1720s)
     self.sendCommandSet("resume", @options.toys)
+    self.sendCommandSet("resume", @options.asciis)
   end
 
   def checkStatus()
@@ -988,6 +1027,7 @@ class SystemControl
     self.sendCommandSet("status", @options.eventBuilders)
     self.sendCommandSet("status", @options.v1720s)
     self.sendCommandSet("status", @options.toys)
+    self.sendCommandSet("status", @options.asciis)
   end
 
   def getLegalCommands()
@@ -995,6 +1035,7 @@ class SystemControl
     self.sendCommandSet("legal_commands", @options.eventBuilders)
     self.sendCommandSet("legal_commands", @options.v1720s)
     self.sendCommandSet("legal_commands", @options.toys)
+    self.sendCommandSet("legal_commands", @options.asciis)
   end
 end
 

@@ -51,3 +51,12 @@ simple_plugin(PatternSimulator "generator"
   ${FHICLCPP} 
   ${CETLIB} 
   )
+
+simple_plugin(AsciiSimulator "generator"
+  artdaq-core-demo_Overlays
+  ${ARTDAQ_APPLICATION}
+  ${ARTDAQ_DAQDATA}
+  ${ARTDAQ_UTILITIES}
+  ${FHICLCPP}
+  ${CETLIB}
+  )
