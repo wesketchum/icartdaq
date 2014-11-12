@@ -15,7 +15,8 @@ set( LIB_SOURCES
   SymTable.cc
   )
 
-art_make_library(SOURCE ${LIB_SOURCES}
+art_make_library(LIBRARY_NAME artdaq-demo_Compression
+  SOURCE ${LIB_SOURCES}
   LIBRARIES
   artdaq-core-demo_Overlays
   cetlib

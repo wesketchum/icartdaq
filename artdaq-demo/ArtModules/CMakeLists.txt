@@ -1,4 +1,6 @@
 art_make(NO_PLUGINS # WAnt different link lists for modues
+ BASENAME_ONLY
+ LIBRARY_NAME artdaq-demo_ArtModules
  LIB_LIBRARIES artdaq-core-demo_Overlays artdaq-demo_Products
 )
 
@@ -13,9 +15,9 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
  simple_plugin(Compression "module"
    artdaq-demo_Compression
    artdaq-demo_Products
-   ${ARTDAQ-CORE_UTILITIES}
-   ${ARTDAQ_DAQDATA} 
-   ${ARTDAQ-CORE_DATA}
+   artdaq-core_Utilities
+   artdaq_DAQdata
+   artdaq-core_Data
    ${MF_MESSAGELOGGER} 
    ${MF_UTILITIES}
    )
@@ -23,9 +25,9 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
  simple_plugin(Decompression "module"
    artdaq-demo_Compression
    artdaq-demo_Products
-   ${ARTDAQ-CORE_UTILITIES}
-   ${ARTDAQ_DAQDATA} 
-   ${ARTDAQ-CORE_DATA}
+   artdaq-core_Utilities
+   artdaq_DAQdata
+   artdaq-core_Data
    ${MF_MESSAGELOGGER} 
    ${MF_UTILITIES}
    )

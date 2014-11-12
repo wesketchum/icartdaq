@@ -10,6 +10,8 @@
 # use cmake 2.8 or later
 cmake_minimum_required (VERSION 2.8)
 
+
+project(artdaq-demo)
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
