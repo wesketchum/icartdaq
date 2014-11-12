@@ -105,7 +105,7 @@ def main
   # Note that since the backticks return stdout, we just stick the
   # call in front of a "puts" command to see the driver's output
 
-  cmd = "driver -c " + filename
+  cmd = "demo_driver -c " + filename
   puts `#{cmd}`
 
   # Either remove or save the FHiCL file
