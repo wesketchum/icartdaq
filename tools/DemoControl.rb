@@ -220,6 +220,8 @@ class CommandLineParser
     @options.fileSizeThreshold = 0
     @options.fileDurationSeconds = 0
     @options.eventsInFile = 0
+    @options.onmonFileEnabled = 0
+    @options.onmonFileDir = ""
 
     @optParser = OptionParser.new do |opts|
       opts.banner = "Usage: DemoControl.rb [options]"
@@ -344,9 +346,12 @@ class CommandLineParser
         @options.dataDir = dataDir
       end
 
-      opts.on("-m", "--online-monitoring [enable flag (0 or 1)]", 
-              "Whether to run the online monitoring modules.") do |runOnmon|
-        @options.runOnmon = runOnmon
+      opts.on("-m", "--online-monitoring [enabled,file_enabled,output_dir]", Array,
+              "Whether to run the online monitoring modules,", 
+              "also whether and whither to send file output from the online monitoring" ) do |runOnmon|
+        @options.runOnmon = Integer(runOnmon[0])
+        @options.onmonFileEnabled = Integer(runOnmon[1])
+        @options.onmonFileDir = runOnmon[2]
       end
 
       opts.on("-w", "--write-data [enable flag (0 or 1)]", 
@@ -685,7 +690,8 @@ class SystemControl
                                  agIndexThread, totalAGs, inputBuffSizeWords,
                                  xmlrpcClients, @options.fileSizeThreshold,
                                  @options.fileDurationSeconds,
-                                 @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE)
+                                 @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE,
+                                 @options.onmonFileEnabled, @options.onmonFileDir)
 
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
