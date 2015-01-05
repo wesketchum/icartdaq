@@ -53,9 +53,6 @@ demo_dir=`dirname "$artdaq_demo_dir"`
 export CETPKG_INSTALL=$products_dir
 export CETPKG_J=16
 
-#test -d "$demo_dir/build_artdaq-core" || mkdir "$demo_dir/build_artdaq-core" 
-#test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"
-#test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo" 
 test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
 
 if [[ -n "${opt_debug:-}" ]];then
@@ -104,7 +101,7 @@ fi
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core-demo develop
 else
-install_package artdaq-core-demo v1_00_00 e6
+install_package artdaq-core-demo 6ed1d3a91adfe10630efc3814ccbf1618e235c66
 fi
 
 if [ -n "${opt_HEAD-}" ];then
