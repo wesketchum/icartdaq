@@ -8,7 +8,7 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
 #  LIB_LIBRARIES artdaq-core-demo_Overlays 
 #)
 
- foreach (mod Baseline Converter Summer)
+ foreach (mod Baseline Converter Summer NthEvent )
    simple_plugin(${mod} "module" artdaq-demo_ArtModules)
  endforeach()
 
