@@ -374,6 +374,11 @@ void demo::WFViewer::beginRun(art::Run const &e) {
   if (e.run () == current_run_) return;
   current_run_ = e.run ();
 
+  if(writeOutput_) {
+    fFile_ = new TFile(outputFileName_.c_str(), "RECREATE");
+    fFile_->cd();
+  }
+
   for (int i = 0; i < 2; i++) canvas_[i] = 0;
   for (auto &x: graphs_) x = 0;
   for (auto &x: histograms_) x = 0;
@@ -392,8 +397,6 @@ void demo::WFViewer::beginRun(art::Run const &e) {
   }
 
   if(writeOutput_) {
-    fFile_ = new TFile(outputFileName_.c_str(), "RECREATE");
-    fFile_->cd();
     canvas_[0]->Write();
     canvas_[1]->Write();
   }
