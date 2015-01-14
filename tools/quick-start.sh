@@ -26,6 +26,7 @@ rev='$Revision: 1.20 $$Date: 2010/02/18 13:20:16 $'
 # program (default) parameters
 root=
 tag=
+productsdir=
 
 env_opts_var=`basename $0 | sed 's/\.sh$//' | tr 'a-z-' 'A-Z_'`_OPTS
 USAGE="\
@@ -60,6 +61,7 @@ while [ -n "${1-}" ];do
         x*)         eval $op1chr; set -x;;
         f*)         eval $op1chr; opt_force=1;;
         t*|-tag)    eval $reqarg; tag=$1;    shift;;
+        -products-dir)    eval $reqarg; productsdir=$1;    shift;;
         -skip-check)opt_skip_check=1;;
         -run-demo)  opt_run_demo=--run-demo;;
 	-debug)     opt_debug=--debug;;
@@ -145,26 +147,37 @@ else
 fi
 
 
-if [ ! -d products -o ! -d download ];then
+if [[ -n "${productsdir:-}" ]] ; then
+    
+    if [[ ! -d $productsdir ]] ; then
+	echo 'Unable to find products directory "'$productsdir'", ' \
+	    "aborting..."
+	exit 1
+    else
+	echo "Will assume all needed products can be found in " \
+	    "$productsdir; no downloading will be performed"
+    fi
+
+elif [ ! -d products -o ! -d download ];then
     echo "Are you sure you want to download and install the artdaq demo dependent products in `pwd`? [y/n]"
     read response
     if [[ "$response" != "y" ]]; then
         echo "Aborting..."
         exit
     fi
-    test -d products || mkdir products
+    test -d $productsdir || mkdir $productsdir
     test -d download || mkdir download
     cd download
-    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+    $git_working_path/tools/downloadDeps.sh  $productsdir $defaultqual $build_type
     cd ..
 elif [ -n "${opt_force-}" ];then
     cd download
-    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+    $git_working_path/tools/downloadDeps.sh  $productsdir $defaultqual $build_type
     cd ..
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh products $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
+$git_working_path/tools/installArtDaqDemo.sh $productsdir $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
 
 endtime=`date`
 
