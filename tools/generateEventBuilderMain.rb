@@ -38,12 +38,14 @@ services: {
 outputs: {
   %{netmon_output}netMonOutput: {
   %{netmon_output}  module_type: NetMonOutput
+  %{netmon_output}  SelectEvents: { SelectEvents: [ pmod2,pmod3 ] }
   %{netmon_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
   %{netmon_output}}
   %{root_output}normalOutput: {
   %{root_output}  module_type: RootOutput
   %{root_output}  fileName: \"%{output_file}\"
   %{root_output}  compressionLevel: 0
+  %{root_output}  SelectEvents: { SelectEvents: [ pmod2,pmod3 ] }
   %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
   %{root_output}}
 }
@@ -60,7 +62,23 @@ physics: {
      %{huffdiffV1724}
   }
 
+  filters: {
+
+    prescaleMod2: {
+       module_type: NthEvent
+       nth: 2
+    }
+
+    prescaleMod3: {
+       module_type: NthEvent
+       nth: 3
+    }
+  }
+
   p1: [ %{compressionModules} ] 
+  pmod2: [ prescaleMod2 ]
+  pmod3: [ prescaleMod3 ]
+   
 
   %{enable_onmon}a1: [ app, wf ]
 
