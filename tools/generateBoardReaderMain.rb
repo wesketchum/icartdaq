@@ -2,7 +2,7 @@
 # BoardReaderMain application by configuring its
 # artdaq::BoardReaderCore object
   
-def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode)
+def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode, brHost, brPort)
 
   brConfig = String.new( "\
   daq: {
@@ -15,6 +15,14 @@ def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode)
 
     %{generator_code}
     }
+
+  metrics: {
+    brFile: {
+      metricPluginType: \"file\"
+      level: 3
+      fileName: \"/tmp/boardreader/br_%{hoststring}_metrics.log\"
+    }
+  }
 }"
 )
   
@@ -23,5 +31,7 @@ def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode)
   brConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
   brConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
   brConfig.gsub!(/\%\{generator_code\}/, String(generatorCode))
+  brConfig.gsub!(/\%\{hoststring\}/, String("%s:%d" % [ brHost, brPort ])) 
+ 
   return brConfig
 end

@@ -9,7 +9,8 @@ def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            compressionLevel, totalv1720s, totalv1724s, onmonEnable,
                            diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
-                           fileEventCount, fclWFViewer, onmonEventPrescale)
+                           fileEventCount, fclWFViewer, onmonEventPrescale,
+                           aggHost, aggPort)
 
 agConfig = String.new( "\
 services: {
@@ -115,7 +116,7 @@ process_name: DAQAG"
 
   aggregator_code = generateAggregator( totalFRs, totalEBs, bunchSize, fragSizeWords,
                                         xmlrpcClientList, fileSizeThreshold, fileDuration,
-                                        fileEventCount, queueDepth, queueTimeout, onmonEventPrescale )
+                                        fileEventCount, queueDepth, queueTimeout, onmonEventPrescale, aggHost, aggPort )
   agConfig.gsub!(/\%\{aggregator_code\}/, aggregator_code)
 
   puts "Initial aggregator " + String(agIndex) + " disk writing setting = " +

@@ -122,7 +122,18 @@ fi
 # sure we know what qualifier is meant to be passed to the
 # downloadDeps.sh and installArtDaqDemo.sh scripts below
 
-defaultqual=`grep ^defaultqual $git_working_path/ups/product_deps | awk '{print $2}'`
+if [[ -n "${opt_debug:-}" ]] ; then
+    build_type="debug"
+else
+    build_type="prof"
+fi
+
+# Get the Artdaq-demo default qualifier
+add_defaultqual=`grep ^defaultqual $git_working_path/ups/product_deps | awk '{print $2}'`
+# Use that to find the corresponding ARTDAQ qualifier
+ad_qual=`grep ^${add_defaultqual}:${build_type} $git_working_path/ups/product_deps | awk '{print $2}'`
+# pullProducts expects a qualifier like "s6-e6", get that out of the full ARTDAQ qualifier
+defaultqual=`echo $ad_qual|grep -oE "s[0-9]+"`-`echo $ad_qual|grep -oE "e[0-9]+"`
 
 
 vecho() { test $opt_v -gt 0 && echo "$@"; }
@@ -143,20 +154,13 @@ if [ -z "${opt_skip_check-}" -a "$free_disk_G" -lt 15 ];then
     exit 1
 fi
 
-if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
-    echo error: missing tools/downloadDeps.sh
-    exit 1
-fi
+#if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
+#    echo error: missing tools/downloadDeps.sh
+#    exit 1
+#fi
 if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
     echo error: missing tools/installArtDaqDemo.sh
     exit 1
-fi
-
-
-if [[ -n "${opt_debug:-}" ]] ; then
-    build_type="debug"
-else
-    build_type="prof"
 fi
 
 # JCF, 1/15/15
@@ -175,25 +179,26 @@ fi
 # $productsdir directory is expected to contain all needed packages,
 # and no downloading takes place
 
-if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download ) ]] ; then
-
-    echo "Are you sure you want to download and install the artdaq demo dependent products in `pwd`? [y/n]"
-    read response
-    if [[ "$response" != "y" ]]; then
-        echo "Aborting..."
-        exit
+if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_force-}" ) ]] ; then
+    if [[ ! -n "${opt_force-}" ]]; then
+        echo "Are you sure you want to download and install the artdaq demo dependent products in `pwd`? [y/n]"
+        read response
+        if [[ "$response" != "y" ]]; then
+            echo "Aborting..."
+            exit
+        fi
+        test -d products || mkdir products
+        test -d download || mkdir download
+    else
+        echo "Will force download despite existing directories"
     fi
-    test -d products || mkdir products
-    test -d download || mkdir download
     cd download
-    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
-    cd ..
-
-elif [[ ! -n ${productsdir:-} && -n "${opt_force-}" ]]; then
-
-    echo "Will force download despite existing directories"
-    cd download
-    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
+    chmod +x pullProducts
+    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
+    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type"
+    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
+    #$git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 
 elif [[ -n ${productsdir:-} ]] ; then 

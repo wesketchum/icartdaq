@@ -633,7 +633,7 @@ class SystemControl
 
           cfg = generateBoardReaderMain(totalEBs, totalFRs,
                                         Integer(inputBuffSizeWords/8), 
-                                        generatorCode)
+                                        generatorCode, br.host, br.port)
 
           br.cfgList[listIndex] = cfg
           break
@@ -709,7 +709,7 @@ class SystemControl
                                    @options.dataDir, @options.runOnmon,
                                    @options.writeData, inputBuffSizeWords,
                                    totalBoards, 
-                                   fclWFViewer
+                                   fclWFViewer, ebOptions.host, ebOptions.port
                                    )
 
         if @options.serialize
@@ -748,7 +748,8 @@ class SystemControl
                                  agIndexThread, totalAGs, inputBuffSizeWords,
                                  xmlrpcClients, @options.fileSizeThreshold,
                                  @options.fileDurationSeconds,
-                                 @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE)
+                                 @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE,
+                                 agOptions.host, agOptions.port)
 
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
