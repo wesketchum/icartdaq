@@ -230,6 +230,36 @@ class CommandLineParser
       opts.separator ""
       opts.separator "Specific options:"
 
+
+      opts.on("-C", "--config-file [file name]",
+              "ARTDAQ-configuration XML Configuration file") do |configFile|
+        doc = REXML::Document.new(File.new(configFile)).root
+        puts "This configuration brought to you by " + doc.elements("author").text
+      
+        baseport = ENV['ARTDAQDEMO_BASE_PORT']
+ 
+        @options.writeData = doc.elements("dataLogger/enabled").text == "true"
+        @options.aggregators = []
+        @options.eventBuilders = []
+        @options.boardReaders = []
+        @options.dataDir = doc.elements("dataDir").text
+        @options.runOnmon = doc.elements("onlineMonitor/enabled").text == "true"
+        runMode = doc.elements("dataLogger/runMode").text
+        if(runMode == "Time")
+        @options.runDurationSeconds = doc.elements("dataLogger/runValue")
+        elsif(runMode == "Events")
+        @options.eventsInRun = doc.elements("dataLogger/runValue")
+        end
+        fileMode = doc.elements("dataLogger/fileMode").text
+        if(fileMode == "Size")
+        @options.fileSizeThreshold = doc.elements("dataLogger/fileValue")
+        elsif (fileMode == "Time")
+        @options.fileDurationSeconds = doc.elements("dataLogger/fileValue")
+        elsif (fileMode == "Events")
+        @options.eventsInFile = doc.elements("dataLogger/fileValue")
+        end
+      end
+
       opts.on("--eb [host,port,compression_level]", Array,
               "Add an event builder that runs on the",
               "specified host and port and optionally",
