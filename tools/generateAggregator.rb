@@ -26,7 +26,8 @@ daq: {
     aggFile: {
       metricPluginType: \"file\"
       level: 3
-      fileName: \"/tmp/aggregator/agg_%{hoststring}_metrics.log\"
+      fileName: \"/tmp/aggregator/agg_%UID%_metrics.log\"
+      uniquify: true
     }
   }
 }" )
@@ -42,7 +43,6 @@ daq: {
   agConfig.gsub!(/\%\{file_size\}/, String(fileSizeThreshold))
   agConfig.gsub!(/\%\{file_duration\}/, String(fileDuration))
   agConfig.gsub!(/\%\{file_event_count\}/, String(fileEventCount))
-  agConfig.gsub!(/\%\{hoststring\}/, String("%s:%d" % [aggHost, aggPort] ))
 
   return agConfig
 end

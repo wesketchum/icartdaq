@@ -17,7 +17,8 @@ daq: {
     evbFile: {
       metricPluginType: \"file\"
       level: 3
-      fileName: \"/tmp/eventbuilder/evb_%{hoststring}_metrics.log\"
+      fileName: \"/tmp/eventbuilder/evb_%UID%_metrics.log\"
+      uniquify: true
     }
   }
 } "
@@ -28,7 +29,7 @@ daq: {
   ebConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
   ebConfig.gsub!(/\%\{total_fragments\}/, String(totalFragments))
   ebConfig.gsub!(/\%\{verbose\}/, String(verbose))
-  ebConfig.gsub!(/\%\{hoststring\}/,String("%s:%d" % [ebHost, ebPort]))
+  test = ebPort * 2
 
   return ebConfig
 
