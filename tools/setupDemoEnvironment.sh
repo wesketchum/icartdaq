@@ -54,6 +54,8 @@ shift $(($OPTIND - 1))
 if [[ "${basePort}" == "" ]]; then
     if [[ "${ARTDAQDEMO_BASE_PORT}" != "" ]]; then
         basePort=${ARTDAQDEMO_BASE_PORT}
+    elif [[ "${ARTDAQ_BASE_PORT}" != "" ]]; then
+        basePort=${ARTDAQ_BASE_PORT}
     else
         basePort=5200
     fi

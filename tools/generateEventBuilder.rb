@@ -17,7 +17,8 @@ daq: {
     evbFile: {
       metricPluginType: \"file\"
       level: 3
-      fileName: \"/tmp/eventbuilder/evb_%{hoststring}_metrics.log\"
+      fileName: \"/tmp/eventbuilder/evb_%UID%_metrics.log\"
+      uniquify: true
     }
   }
 } "

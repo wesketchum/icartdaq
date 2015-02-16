@@ -10,7 +10,7 @@ def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
                            fileEventCount, fclWFViewer, onmonEventPrescale,
-                           aggHost, aggPort)
+                           onmon_modules, aggHost, aggPort)
 
 agConfig = String.new( "\
 services: {
@@ -136,7 +136,7 @@ process_name: DAQAG"
   agConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
   agConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
 
-  agConfig.gsub!(/\%\{onmon_modules\}/, String(ONMON_MODULES))
+  agConfig.gsub!(/\%\{onmon_modules\}/, String(onmon_modules))
 
   compressionModules = []
 
