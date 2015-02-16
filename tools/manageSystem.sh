@@ -10,6 +10,7 @@ THIS_NODE=`hostname -s`
 #  4) path to the configuration
 #  5) the logfile name
 function launch() {
+  echo "Running: DemoControl.rb -s -c $1 --run-number $2 --onmon-file $3 --config-file $4 2>&1 | tee -a $5"
   DemoControl.rb -s -c $1 \
     --run-number $2 --onmon-file $3 \
     --config-file $4 2>&1 | tee -a ${5}
@@ -64,7 +65,7 @@ Examples: ${scriptName} init
 originalCommand="$0 $*"
 runNumber=""
 OPTIND=1
-onmonFile=""
+onmonFile="/dev/null"
 configName=""
 while getopts "hN:M:C:-:" opt; do
     if [ "$opt" = "-" ]; then

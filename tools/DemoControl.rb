@@ -237,6 +237,7 @@ class CommandLineParser
       @options.serialize = true
       opts.on("-C", "--config-file [file name]",
               "ARTDAQ-configuration XML Configuration file") do |configFile|
+        puts "Configuration File is " + configFile
         doc = REXML::Document.new(File.new(configFile)).root
         puts "This configuration brought to you by " + doc.elements["author"].text
       
@@ -272,8 +273,44 @@ class CommandLineParser
         @options.aggregators << omConfig
 
 
-        # Event Builders
+        # Board Readers
         currentPort = portNumber + 3
+        if doc.elements["boardReaders"] != nil
+          doc.elements["boardReaders"].each() { |element| 
+            begin
+              if element.elements["enabled"].text == "true"
+                brConfig = OpenStruct.new
+                brConfig.host = element.elements["hostname"].text
+                brConfig.port = currentPort
+                brConfig.board_id = @options.boardReaders.length
+                currentPort += 1
+                brConfig.fragType = element.elements["type"].text
+                brConfig.name = element.elements["name"].text
+                brConfig.eventSize = nil
+                brConfig.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
+                brConfig.kind = "pbr"
+                typeConfig = ""
+                element.elements["config"].each() { |config|
+                   begin
+                   if config.name == "generator_id"
+                     brConfig.generator_id = config.text
+                   else
+                     typeConfig += config.name + ": " + config.text + "\n"
+                   end
+                   rescue
+                   end
+                }
+                brConfig.typeConfig = typeConfig
+                brConfig.board_reader_index = addToBoardReaderList(brConfig.host, brConfig.port, brConfig.fragType,
+                                                                   brConfig.index, brConfig.eventSize, true)
+                @options.pbrs << brConfig
+              end
+            rescue
+            end
+          }
+        end
+
+        # Event Builders
         numEvbs = doc.elements["eventBuilders/count"].text
         compression = doc.elements["eventBuilders/compress"].text == "true" ? 1 : 0
         *hosts = doc.elements["eventBuilders/hostnames/hostname"]     
@@ -290,37 +327,6 @@ class CommandLineParser
           it += 1
         end
 
-        if doc.elements["boardReaders"] != nil
-          doc.elements["boardReaders"].each() { |element| 
-            begin
-              if element.elements["enabled"].text == "true"
-                brConfig = OpenStruct.new
-                brConfig.host = element.elements["hostname"].text
-                brConfig.port = currentPort
-                brConfig.board_id = @options.boardReaders.length
-                currentPort += 1
-                brConfig.type = element.elements["type"].text
-                brConfig.name = element.elements["name"].text
-                brConfig.eventSize = nil
-                brConfig.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
-                brConfig.kind = "pbr"
-                typeConfig = ""
-                element.elements["typeConfig"].each() { |config|
-                   if config.name == "generator_id"
-                     brConfig.generator_id = config.text
-                   else
-                     typeConfig += config.name + ": " + config.text + "\n"
-                   end
-                }
-                brConfig.typeConfig = typeConfig
-                brConfig.board_reader_index = addToBoardReaderList(brConfig.host, brConfig.port, brConfig.kind,
-                                                                   brConfig.index, brConfig.eventSize)
-                @options.pbrs << brConfig
-              end
-            rescue
-            end
-          }
-        end
         @options.dataDir = doc.elements["dataDir"].text
         if doc.elements["onlineMonitor/enabled"].text == "true"
           @options.runOnmon = "1"
@@ -329,17 +335,17 @@ class CommandLineParser
         end
         runMode = doc.elements["dataLogger/runMode"].text
         if(runMode == "Time")
-        @options.runDurationSeconds = doc.elements["dataLogger/runValue"]
+        @options.runDurationSeconds = doc.elements["dataLogger/runValue"].text.to_i
         elsif(runMode == "Events")
-        @options.eventsInRun = doc.elements["dataLogger/runValue"]
+        @options.eventsInRun = doc.elements["dataLogger/runValue"].text.to_i
         end
         fileMode = doc.elements["dataLogger/fileMode"].text
         if(fileMode == "Size")
-        @options.fileSizeThreshold = doc.elements["dataLogger/fileValue"]
+        @options.fileSizeThreshold = doc.elements["dataLogger/fileValue"].text.to_i
         elsif (fileMode == "Time")
-        @options.fileDurationSeconds = doc.elements["dataLogger/fileValue"]
+        @options.fileDurationSeconds = doc.elements["dataLogger/fileValue"].text.to_i
         elsif (fileMode == "Events")
-        @options.eventsInFile = doc.elements["dataLogger/fileValue"]
+        @options.eventsInFile = doc.elements["dataLogger/fileValue"].text.to_i
         end
       end
 
@@ -579,12 +585,16 @@ class CommandLineParser
     return nil
   end
 
-  def addToBoardReaderList(host, port, kind, boardIndex, eventSize = nil)
+  def addToBoardReaderList(host, port, kind, boardIndex, eventSize = nil, isPBR = nil)
     # check for an existing boardReader with the same host and port
     brIndex = 0
     @options.boardReaders.each do |br|
       if host == br.host && port == br.port
-        br.kindList << kind
+        if isPBR != nil
+          br.kindList << "pbr"
+        else
+          br.kindList << kind
+        end
         br.boardIndexList << boardIndex
         br.cfgList << ""
         br.boardCount += 1
@@ -597,7 +607,11 @@ class CommandLineParser
     br = OpenStruct.new
     br.host = host
     br.port = port
-    br.kindList = [kind]
+    if isPBR != nil
+      br.kindList = ["pbr"]
+    else
+      br.kindList = [kind]
+    end
     br.boardIndexList = [boardIndex]
     br.cfgList = [""]
     br.boardCount = 1
@@ -639,7 +653,7 @@ class CommandLineParser
           puts "    Aggregator, port %d, rank %d" % [item.port, totalEBs + totalFRs + item.index]
         when "pbr"
           puts "    BoardReader, port %d, rank %d, board_id %d, generator %s" %
-            [ item.port, item.index, item.board_id, item.type.upcase ]
+            [ item.port, item.index, item.board_id, item.fragType ]
         when "V1720", "V1724", "TOY1", "TOY2", "ASCII"
           puts "    FragmentReceiver, Simulated %s, port %d, rank %d, board_id %d" % 
             [item.kind.upcase,
@@ -727,26 +741,25 @@ class SystemControl
       listIndex = 0
       br.kindList.each do |kind|
         if kind == boardreaderOptions.kind && br.boardIndexList[listIndex] == boardreaderOptions.index
-
           if kind == "V1720" || kind == "V1724"
             generatorCode = generateV1720(boardreaderOptions.index,
                                           boardreaderOptions.board_id, kind)
           elsif kind == "pbr"
-            if boardreaderOptions.type == "V172X"
+            if boardreaderOptions.fragType == "V172X"
               generatorCode = generateV1720(boardreaderOptions.index, boardreaderOptions.board_id, "V1720")
-            elsif boardreaderOptions.type == "ASCII"
+            elsif boardreaderOptions.fragType == "ASCII"
               generatorCode = generateAscii(boardreaderOptions.index, boardreaderOptions.board_id, "ASCII", 100000)
-            elsif boardreaderOptions.type == "TOY1" || boardreaderOptions.type == "TOY2"
+            elsif boardreaderOptions.fragType == "TOY1" || boardreaderOptions.fragType == "TOY2"
               case boardreaderOptions.generator_id
               when "Uniform"
                   generatorCode = generateToy(boardreaderOptions.index,
-                                          boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
+                                          boardreaderOptions.board_id, boardreaderOptions.fragType, 100000, nil, br.eventSize)
               when "Normal"
                   generatorCode = generateNormal(boardreaderOptions.index,
-                                          boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
+                                          boardreaderOptions.board_id, boardreaderOptions.fragType, 100000, nil, br.eventSize)
               when "Pattern"
                   generatorCode = generatePattern(boardreaderOptions.index,
-                                        boardreaderOptions.board_id, kind, 100000, nil, br.eventSize)
+                                        boardreaderOptions.board_id,  boardreaderOptions.fragType, 100000, nil, br.eventSize)
               else
                  puts "Invalid generator_id!"
                  exit
