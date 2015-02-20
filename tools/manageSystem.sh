@@ -144,7 +144,9 @@ fi
 
 # build the logfile name
 TIMESTAMP=`date '+%Y%m%d%H%M%S'`
-logFile="/tmp/masterControl/dsMC-${TIMESTAMP}-${command}.log"
+# Discover the log directory
+logroot=`grep -oE "<logDir>(.*?)</logDir>" $configName|sed -r 's/<\/?logDir>//g'`
+logFile="${logroot}/masterControl/dsMC-${TIMESTAMP}-${command}.log"
 echo "${originalCommand}" > $logFile
 echo ">>> ${originalCommand} (Disk writing is ${diskWriting})"
 
