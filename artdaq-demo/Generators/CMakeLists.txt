@@ -28,6 +28,8 @@ simple_plugin(ToySimulator "generator"
   artdaq-core_Data
   ${ART_UTILITIES}
   ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
   ${CETLIB}
   )
 
