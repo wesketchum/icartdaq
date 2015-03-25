@@ -108,11 +108,16 @@ fi
 
 branch=`git branch | sed -ne '/^\*/{s/^\* *//;p;q}'`
 echo the current branch is $branch
-if [ "$branch" != '(no branch)' ];then
-    test -z "$tag" && tag=`git tag -l 'v[0-9]*' | tail -n1`
-    if [ "$tag" != "$branch" ];then
-        echo "checking out tag $tag"
-        git checkout $tag
+if [ "$branch" != '(no branch)' ] && [ "$branch" != 'develop' -a "x$opt_HEAD" != 'x' ];then
+    if [ "x$opt_HEAD" != 'x' ]; then
+        echo "checking out develop"
+        git checkout develop
+    else
+        test -z "$tag" && tag=`git tag -l 'v[0-9]*' | tail -n1`
+        if [ "$tag" != "$branch" ];then
+            echo "checking out tag $tag"
+            git checkout $tag
+        fi
     fi
 fi
 
