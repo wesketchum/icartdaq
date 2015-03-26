@@ -108,7 +108,7 @@ fi
 
 branch=`git branch | sed -ne '/^\*/{s/^\* *//;p;q}'`
 echo the current branch is $branch
-if [ "$branch" != '(no branch)' ] && [ "$branch" != 'develop' -a "x$opt_HEAD" != 'x' ];then
+if [ "$branch" != '(no branch)' ] && [ "$branch" != 'develop' -a "${opt_HEAD:-unset}" != 'unset' ];then
     if [ "x$opt_HEAD" != 'x' ]; then
         echo "checking out develop"
         git checkout develop
