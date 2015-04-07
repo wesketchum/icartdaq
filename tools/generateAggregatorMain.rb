@@ -10,7 +10,8 @@ def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
                            fileEventCount, fclWFViewer, onmonEventPrescale,
-                           onmon_modules, aggHost, aggPort)
+                           onmon_modules, aggHost, aggPort,
+                           onmonFileEnable, onmonFileName)
 
 agConfig = String.new( "\
 services: {
@@ -180,6 +181,12 @@ process_name: DAQAG"
   if Integer(onmonEnable) != 0
     agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, fclWFViewer )
     agConfig.gsub!(/\%\{enable_onmon\}/, "")
+    if Integer(onmonFileEnable) != 0
+      agConfig.gsub!(/\%\{onmon_file_enable\}/,"")
+      agConfig.gsub!(/\%\{onmon_fileName\}/,"fileName: \"" + onmonFileName + "\"")
+    else 
+      agConfig.gsub!(/\%\{onmon_file_enable\}/,"#")
+    end
   else
     agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
     agConfig.gsub!(/\%\{enable_onmon\}/, "#")

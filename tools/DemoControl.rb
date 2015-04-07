@@ -228,6 +228,7 @@ class CommandLineParser
     @options.fileSizeThreshold = 0
     @options.fileDurationSeconds = 0
     @options.eventsInFile = 0
+    @options.onmonFileEnabled = 0
 
     @optParser = OptionParser.new do |opts|
       opts.banner = "Usage: DemoControl.rb [options]"
@@ -247,6 +248,11 @@ class CommandLineParser
           @options.writeData = "1"
         else
           @options.writeData = "0"
+        end
+        if(doc.elements["onlineMonitor/enabled"].text == "true")
+          @options.onmonFileEnabled = 1
+        else
+          @options.onmonFileEnabled = 0
         end
         if(doc.elements["onlineMonitor/viewerEnabled"].text == "true")
           @options.onmon_modules = "[ app, wf ]"
@@ -298,6 +304,7 @@ class CommandLineParser
                      typeConfig += config.name + ": " + config.text + "\n"
                    end
                    rescue
+                     puts ""
                    end
                 }
                 brConfig.typeConfig = typeConfig
@@ -306,6 +313,7 @@ class CommandLineParser
                 @options.pbrs << brConfig
               end
             rescue
+               puts ""
             end
           }
         end
@@ -398,6 +406,7 @@ class CommandLineParser
         v1720Config.port = Integer(v1720[1])
         v1720Config.board_id = Integer(v1720[2])
         v1720Config.kind = "V1720"
+        v1720Config.fragType = "V1720"
         v1720Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
         v1720Config.board_reader_index = addToBoardReaderList(v1720Config.host, v1720Config.port,
                                                               v1720Config.kind, v1720Config.index)
@@ -416,6 +425,7 @@ class CommandLineParser
         v1724Config.port = Integer(v1724[1])
         v1724Config.board_id = Integer(v1724[2])
         v1724Config.kind = "V1724"
+        v1724Config.fragType = "V1724"
         v1724Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
         v1724Config.board_reader_index = addToBoardReaderList(v1724Config.host, v1724Config.port,
                                                               v1724Config.kind, v1724Config.index)
@@ -435,6 +445,7 @@ class CommandLineParser
         asciiConfig.port = Integer(ascii[1])
         asciiConfig.board_id = Integer(ascii[2])
         asciiConfig.kind = "ASCII"
+        asciiConfig.fragType = "ASCII"
         if ascii.length == 5
           asciiConfig.string1 = ascii[3]
           asciiConfig.string2 = ascii[4]
@@ -458,6 +469,7 @@ class CommandLineParser
         toy1Config.port = Integer(toy1[1])
         toy1Config.board_id = Integer(toy1[2])
         toy1Config.kind = "TOY1"
+        toy1Config.fragType = "TOY1"
         toy1Config.generator_id = "Uniform"
         if toy1.length == 5
           toy1Config.generator_id = toy1[4]
@@ -486,6 +498,7 @@ class CommandLineParser
         toy2Config.port = Integer(toy2[1])
         toy2Config.board_id = Integer(toy2[2])
         toy2Config.kind = "TOY2"
+        toy2Config.fragType = "TOY2"
         toy2Config.generator_id = "Uniform"
         if toy2.length == 5
           toy2Config.generator_id = toy2[4]
@@ -503,6 +516,7 @@ class CommandLineParser
 
       opts.on("-M", "--onmon-file [file name]",
               "Specify a file name that the online monitoring will save to, for downstream consumers.") do |onmonFile|
+        @options.onmonFileEnabled = 1
         @options.onmonFile = onmonFile
       end
 
@@ -511,9 +525,10 @@ class CommandLineParser
         @options.dataDir = dataDir
       end
 
-      opts.on("-m", "--online-monitoring [enable flag (0 or 1)]", 
-              "Whether to run the online monitoring modules.") do |runOnmon|
-        @options.runOnmon = runOnmon
+      opts.on("-m", "--online-monitoring [enabled]", Array,
+              "Whether to run the online monitoring modules,", 
+              "also whether and whither to send file output from the online monitoring" ) do |runOnmon|
+        @options.runOnmon = Integer(runOnmon)
       end
 
       opts.on("-w", "--write-data [enable flag (0 or 1)]", 
@@ -858,8 +873,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
 
-        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis).map { |board| board.board_id },
-                                        (@options.v1720s + @options.toys + @options.asciis).map { |board| board.kind }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.fragType }
                                        )
 
         puts "HAVE %d v1720s and %d v1724s" % [ totalv1720s, totalv1724s ]
@@ -897,8 +912,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(agOptions.host, "/RPC2", 
                                           agOptions.port)
 
-        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis).map { |board| board.board_id },
-                                        (@options.v1720s + @options.toys + @options.asciis).map { |board| board.kind }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.fragType }
                                         )
 
         if @options.onmon_modules = "" || @options.onmon_modules = nil
@@ -913,7 +928,8 @@ class SystemControl
                                  xmlrpcClients, @options.fileSizeThreshold,
                                  @options.fileDurationSeconds,
                                  @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE,
-                                 @options.onmon_modules, agOptions.host, agOptions.port)
+                                 @options.onmon_modules, agOptions.host, agOptions.port,
+                                 @options.onmonFileEnabled, @options.onmonFile)
 
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]

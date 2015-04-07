@@ -14,6 +14,7 @@
 
 #include "cetlib/exception.h"
 
+#include "TFile.h"
 #include "TRootCanvas.h"
 #include "TCanvas.h"
 #include "TGraph.h"
@@ -63,6 +64,9 @@ namespace demo {
     std::vector<std::unique_ptr<TH1D>> histograms_;
 
     std::map<artdaq::Fragment::fragment_id_t, std::size_t> id_to_index_;
+    std::string outputFileName_;
+    TFile* fFile_;
+    bool writeOutput_;    
   };
 
 }
@@ -77,7 +81,9 @@ demo::WFViewer::WFViewer (fhicl::ParameterSet const & ps):
   fragment_type_labels_(ps.get<std::vector<std::string>>("fragment_type_labels")),
   fragment_ids_(ps.get<std::vector<artdaq::Fragment::fragment_id_t> >("fragment_ids")),
   graphs_( fragment_ids_.size() ), 
-  histograms_( fragment_ids_.size() )
+  histograms_( fragment_ids_.size() ),
+  outputFileName_(ps.get<std::string>("fileName","artdaqdemo_onmon.root")),
+  writeOutput_(ps.get<bool>("write_to_file", false))
 {
 
    if (num_x_plots_ == std::numeric_limits<std::size_t>::max() ||
@@ -334,7 +340,6 @@ void demo::WFViewer::analyze (art::Event const & e) {
       padframe->GetXaxis()->SetTitle("ADC #");
       pad->SetGrid();
       padframe->Draw("SAME");
-
     }
 
     // Draw the histogram
@@ -349,10 +354,17 @@ void demo::WFViewer::analyze (art::Event const & e) {
   
     if (!digital_sum_only_) {
       canvas_[1]->cd(ind+1);
+
       graphs_[ind]->Draw("PSAME");
 
       canvas_[1] -> Modified();
       canvas_[1] -> Update();
+    }
+
+    if(writeOutput_) {
+      canvas_[0]->Write("wf0", TObject::kOverwrite);
+      canvas_[1]->Write("wf1", TObject::kOverwrite);
+      fFile_->Write();
     }
 
   }
@@ -361,6 +373,11 @@ void demo::WFViewer::analyze (art::Event const & e) {
 void demo::WFViewer::beginRun(art::Run const &e) { 
   if (e.run () == current_run_) return;
   current_run_ = e.run ();
+
+  if(writeOutput_) {
+    fFile_ = new TFile(outputFileName_.c_str(), "RECREATE");
+    fFile_->cd();
+  }
 
   for (int i = 0; i < 2; i++) canvas_[i] = 0;
   for (auto &x: graphs_) x = 0;
@@ -378,6 +395,12 @@ void demo::WFViewer::beginRun(art::Run const &e) {
   if (! digital_sum_only_) {
     canvas_[1]->SetTitle("ADC Values, Event Snapshot");
   }
+
+  if(writeOutput_) {
+    canvas_[0]->Write();
+    canvas_[1]->Write();
+  }
+
 }
 
 
