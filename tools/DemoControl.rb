@@ -285,18 +285,22 @@ class CommandLineParser
           doc.elements["boardReaders"].each() { |element| 
             begin
               if element.elements["enabled"].text == "true"
+                puts "DEBUG: BR Enabled"
                 brConfig = OpenStruct.new
                 brConfig.host = element.elements["hostname"].text
                 brConfig.port = currentPort
                 brConfig.board_id = @options.boardReaders.length
                 currentPort += 1
+                puts "DEBUG: Host and Port Setup"
                 brConfig.fragType = element.elements["type"].text
                 brConfig.name = element.elements["name"].text
                 brConfig.eventSize = nil
+                puts "DEBUG: Before getting index"
                 brConfig.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
                 brConfig.kind = "pbr"
+                puts "DEBUG: Loading TypeConfig"
                 typeConfig = ""
-                element.elements["config"].each() { |config|
+                element.elements["typeConfig"].each() { |config|
                    begin
                    if config.name == "generator_id"
                      brConfig.generator_id = config.text
@@ -304,16 +308,17 @@ class CommandLineParser
                      typeConfig += config.name + ": " + config.text + "\n"
                    end
                    rescue
-                     puts ""
+                     puts "DEBUG: RESCUE in TypeConfig"
                    end
                 }
                 brConfig.typeConfig = typeConfig
                 brConfig.board_reader_index = addToBoardReaderList(brConfig.host, brConfig.port, brConfig.fragType,
                                                                    brConfig.index, brConfig.eventSize, true)
+                puts "DEBUG: BR Config Complete"
                 @options.pbrs << brConfig
               end
             rescue
-               puts ""
+               puts "DEBUG: RESCUE in BR Config"
             end
           }
         end

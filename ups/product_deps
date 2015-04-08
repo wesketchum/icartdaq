@@ -18,9 +18,9 @@ fcldir      -
 
 #
 product		 version	optional
-artdaq           v1_12_06
-artdaq_core_demo v1_01_00
-cetbuildtools    v4_03_03        -       only_for_build
+artdaq           v1_12_09
+artdaq_core_demo v1_02_00
+cetbuildtools    v4_07_03        -       only_for_build
 end_product_list
 
 # e5  - with gcc 4.8.2 and -std=c++11
@@ -34,12 +34,8 @@ end_product_list
 qualifier		artdaq	 	 artdaq_core_demo
 e6:eth:prof		e6:s6:eth:prof	 e6:prof
 e6:eth:debug		e6:s6:eth:debug	 e6:debug
-e5:eth:prof		e5:s4:eth:prof   e5:prof
-e5:eth:debug		e5:s4:eth:debug  e5:debug
 e6:ib:prof		e6:s6:ib:prof	 e6:prof
 e6:ib:debug		e6:s6:ib:debug	 e6:debug
-e5:ib:prof		e5:s4:ib:prof    e5:prof
-e5:ib:debug		e5:s4:ib:debug   e5:debug
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
