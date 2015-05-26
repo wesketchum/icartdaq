@@ -140,6 +140,9 @@ ad_qual=`grep ^${add_defaultqual}:${build_type} $git_working_path/ups/product_de
 # pullProducts expects a qualifier like "s6-e6", get that out of the full ARTDAQ qualifier
 defaultqual=`echo $ad_qual|grep -oE "s[0-9]+"`-`echo $ad_qual|grep -oE "e[0-9]+"`
 
+# JCF, 5/26/15
+# More fun - we now want to strip away the "sX" part of the qualifier...
+defaultqual=$(echo $defaultqual | sed -r 's/.*(e[0-9]).*/\1/')
 
 vecho() { test $opt_v -gt 0 && echo "$@"; }
 starttime=`date`
@@ -159,10 +162,10 @@ if [ -z "${opt_skip_check-}" -a "$free_disk_G" -lt 15 ];then
     exit 1
 fi
 
-#if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
-#    echo error: missing tools/downloadDeps.sh
-#    exit 1
-#fi
+if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
+    echo error: missing tools/downloadDeps.sh
+    exit 1
+fi
 if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
     echo error: missing tools/installArtDaqDemo.sh
     exit 1
@@ -197,13 +200,21 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     else
         echo "Will force download despite existing directories"
     fi
+
+# JCF, 5/26/15
+
+# As there's no manifest available for the latest artdaq (v1_12_10),
+# use the traditional downloadDeps.sh script, which calls the art
+# manifest and then manually downloads packages which artdaq (but not
+# art) depends on
+
     cd download
-    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
-    chmod +x pullProducts
-    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
-    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type"
-    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
-    #$git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+#    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
+#    chmod +x pullProducts
+#    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
+#    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type"
+#    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
+    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 
 elif [[ -n ${productsdir:-} ]] ; then 
