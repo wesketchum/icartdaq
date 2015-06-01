@@ -23,7 +23,7 @@ services: {
       max_fragment_size_words: %{size_words}
     }
   }
-  Timing: { summaryOnly: true }
+
   #SimpleMemoryCheck: { }
 }
 

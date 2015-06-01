@@ -29,7 +29,7 @@ services: {
       #broadcast_sends: true
     }
   }
-  Timing: { summaryOnly: true }
+
   #SimpleMemoryCheck: { }
 }
 
