@@ -5,6 +5,7 @@
 #include "cetlib/exception.h"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq-core/Utilities/SimpleLookupPolicy.h"
+#include "messagefacility/MessageLogger/MessageLogger.h"
 #include "artdaq-core-demo/Overlays/UDPFragmentWriter.hh"
 
 #include <fstream>
@@ -107,21 +108,24 @@ bool demo::UDPReceiver::getNextFragment_(artdaq::FragmentPtrs & frags) {
         recvfrom(datasocket_, peekBuffer, sizeof(peekBuffer), MSG_PEEK,
 		 (struct sockaddr *) &si_data_, (socklen_t*)sizeof(si_data_));
 
-        std::cout << "Recieved UDP Packet with sequence number " << std::hex << (int)peekBuffer[1] << "!" << std::endl;
+	mf::LogInfo("UDPReceiver") << "Recieved UDP Packet with sequence number " << std::hex << (int)peekBuffer[1] << "!";
         //std::cout << "peekBuffer[1] == expectedPacketNumber_: " << std::hex << (int)peekBuffer[1] << " =?= " << (int)expectedPacketNumber_ << std::endl;
 
         uint8_t seqNum = peekBuffer[1];
         ReturnCode dataCode = getReturnCode(peekBuffer[0]);
-        if(seqNum >= expectedPacketNumber_ || (seqNum < 10 && expectedPacketNumber_ > 200) || droppedPackets > 0)
+        if(seqNum >= expectedPacketNumber_ || (seqNum < 10 && expectedPacketNumber_ > 200) || droppedPackets > 0 || expectedPacketNumber_ - seqNum > 20)
         {
           if(seqNum != expectedPacketNumber_ && (seqNum >= expectedPacketNumber_ || (seqNum < 10 && expectedPacketNumber_ > 200)))
           {
    	    int deltaHi = seqNum - expectedPacketNumber_;
 	    int deltaLo = 255 + seqNum - expectedPacketNumber_;
             droppedPackets += deltaLo < 255 ? deltaLo : deltaHi;
-	    std::cout << "Dropped/Delayed packets detected: " << std::to_string(droppedPackets) << std::endl;
+	    mf::LogWarning("UDPReceiver") << "Dropped/Delayed packets detected: " << std::to_string(droppedPackets) << std::endl;
               expectedPacketNumber_ = seqNum;
-          }
+          } else if(seqNum != expectedPacketNumber_) {
+	    int delta = expectedPacketNumber_ - seqNum;
+	    mf::LogWarning("UDPReceiver") << "Sequence Number significantly different than expected! (delta: " << delta << ")";
+	  }
   
           if(dataCode == ReturnCode::Read || dataCode == ReturnCode::First) {
             packetBuffers_.clear();
@@ -129,7 +133,7 @@ bool demo::UDPReceiver::getNextFragment_(artdaq::FragmentPtrs & frags) {
             memset(&buffer[0],0,sizeof(packetBuffer_t));
             recvfrom(datasocket_, &buffer[0], sizeof(packetBuffer_t), 0,(struct sockaddr *) &si_data_, (socklen_t*)sizeof(si_data_));
             packetBuffers_.push_back(buffer);
-            std::cout << "Now placing UDP packet with sequence number " << std::hex << (int)seqNum << " into buffer." << std::endl;
+	    mf::LogDebug("UDPReceiver") << "Now placing UDP packet with sequence number " << std::hex << (int)seqNum << " into buffer.";
             if(dataCode == ReturnCode::Read) { haveData = true; }
             else 
             {
@@ -158,7 +162,7 @@ bool demo::UDPReceiver::getNextFragment_(artdaq::FragmentPtrs & frags) {
 		packetBuffers_.push_back(buffer);
               }
             }
-            std::cout << "Now placing UDP packet with sequence number " << std::hex << (int)seqNum << " into buffer." << std::endl;
+	    mf::LogDebug("UDPReceiver") << "Now placing UDP packet with sequence number " << std::hex << (int)seqNum << " into buffer.";
               if(dataCode == ReturnCode::Last && droppedPackets == 0) { 
 		while(getReturnCode(packetBuffers_.back()[0]) != ReturnCode::Last) { packetBuffers_.pop_back(); }
                 haveData = true; 
@@ -176,14 +180,14 @@ bool demo::UDPReceiver::getNextFragment_(artdaq::FragmentPtrs & frags) {
         {
           packetBuffer_t discardBuffer;
           recvfrom(datasocket_, &discardBuffer[0], sizeof(discardBuffer), 0, (struct sockaddr *) &si_data_, (socklen_t*)sizeof(si_data_));
-          std::cout << "Out-of-sequence packet detected and discarded!" << std::endl;   
+	  mf::LogWarning("UDPReceiver") << "Out-of-sequence packet detected and discarded!";   
         }
       }
     }
   }
 
   packetBuffer_t& firstPacket = packetBuffers_.front();
-  std::cout << "Recieved data, now placing data with UDP sequence number " << (int)firstPacket[1] << " into UDPFragment" << std::endl;
+  mf::LogDebug("UDPReceiver") << "Recieved data, now placing data with UDP sequence number " << (int)firstPacket[1] << " into UDPFragment";
   thisFrag.resize(1500 * packetBuffers_.size() + 1);
   std::ofstream output;
   if(rawOutput_) {
