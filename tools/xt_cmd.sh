@@ -207,5 +207,5 @@ env -i SHELL=$SHELL PATH=/usr/bin:/bin LOGNAME=$USER USER=$USER \
  DISPLAY=$DISPLAY \
  REALHOME="$HOME" HISTFILE="$HOME/.bash_history" \
  HISTTIMEFORMAT='%a %m/%d %H:%M:%S  ' \
- HOME="$home" KRB5CCNAME=$KRB5CCNAME CMD_STR="$CMD_STR" \
+ HOME="$home" ${KRB5CCNAME+KRB5CCNAME=$KRB5CCNAME} CMD_STR="$CMD_STR" \
  $term $term_geom $term_opts $bash $bash_opts &
