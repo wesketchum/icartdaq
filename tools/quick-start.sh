@@ -108,17 +108,19 @@ fi
 
 branch=`git branch | sed -ne '/^\*/{s/^\* *//;p;q}'`
 echo the current branch is $branch
-if [ "$branch" != '(no branch)' ] && [ "$branch" != 'develop' -a "${opt_HEAD:-unset}" != 'unset' ];then
-    if [ "x$opt_HEAD" != 'x' ]; then
-        echo "checking out develop"
-        git checkout develop
-    else
-        test -z "$tag" && tag=`git tag -l 'v[0-9]*' | tail -n1`
-        if [ "$tag" != "$branch" ];then
-            echo "checking out tag $tag"
-            git checkout $tag
-        fi
-    fi
+# The initial clone will have branch = develop.
+# In this case, IF opt_HEAD is not set (or, actually, has zero length),
+# THEN checkout tag (latest tag if not specified).
+if [ "$branch" = develop -a -z "${opt_HEAD-}" ];then
+    test -z "$tag" && tag=`git tag -l 'v[0-9]*' | tail -n1`
+    git status | grep -q 'working directory clean' || git stash
+    echo "checking out tag $tag"
+    git checkout $tag
+elif [ -n "${opt_HEAD-}" -a "$branch" != develop ];then # opt_HEAD is set (nonzero length)
+    echo "checking out develop"
+    git checkout develop
+else
+    echo "no checkout -- branch = $branch"
 fi
 
 # JCF, 8/28/14
