@@ -214,7 +214,7 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     chmod +x pullProducts
     version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
     echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type"
-    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
+    ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type
 #    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 
