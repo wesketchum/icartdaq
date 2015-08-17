@@ -164,10 +164,10 @@ if [ -z "${opt_skip_check-}" -a "$free_disk_G" -lt 15 ];then
     exit 1
 fi
 
-if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
-    echo error: missing tools/downloadDeps.sh
-    exit 1
-fi
+#if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
+#    echo error: missing tools/downloadDeps.sh
+#    exit 1
+#fi
 if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
     echo error: missing tools/installArtDaqDemo.sh
     exit 1
@@ -203,20 +203,18 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
         echo "Will force download despite existing directories"
     fi
 
-# JCF, 5/26/15
+# ELF 8/17/2015
 
-# As there's no manifest available for the latest artdaq (v1_12_10),
-# use the traditional downloadDeps.sh script, which calls the art
-# manifest and then manually downloads packages which artdaq (but not
-# art) depends on
+# Latest artdaq (v1_12_12) once again has manifests in all the right places. Switching back to
+# bundle-based distribution.
 
     cd download
-#    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
-#    chmod +x pullProducts
-#    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
-#    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type"
-#    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
-    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
+    chmod +x pullProducts
+    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
+    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type"
+    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
+#    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 
 elif [[ -n ${productsdir:-} ]] ; then 

@@ -95,19 +95,19 @@ function install_package {
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core develop
 else
-install_package artdaq-core v1_04_13 e7 s11
+install_package artdaq-core v1_04_17 e7 s15
 fi
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core-demo develop
 else
-install_package artdaq-core-demo v1_04_00 e7 s11
+install_package artdaq-core-demo v1_04_01 e7 s15
 fi
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq develop
 else
-install_package artdaq v1_12_10 e7 s11 eth
+install_package artdaq v1_12_12 e7 s15 eth
 fi
 
 if [  -n "${opt_HEAD-}" ];then
