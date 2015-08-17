@@ -1,11 +1,17 @@
-cet_script(setupDemoEnvironment.sh DemoControl.rb start2x2System.sh manage2x2System.sh start2x2x2System.sh manage2x2x2System.sh CreateNewFragmentGenerator.rb  generateEventBuilderMain.rb  generateWFViewer.rb generateEventBuilder.rb demo_utilities.rb generateToy.rb generateAggregator.rb generateAggregatorMain.rb generateV1720.rb generateCompression.rb generateBoardReaderMain.rb RunDriver.rb)
+cet_script(setupDemoEnvironment.sh DemoControl.rb start2x2System.sh
+manage2x2System.sh start2x2x2System.sh manage2x2x2System.sh
+manage1x2x2System.sh start1x2x2System.sh
+CreateNewFragmentGenerator.rb  generateEventBuilderMain.rb
+generateWFViewer.rb generateEventBuilder.rb demo_utilities.rb generateToy.rb
+generatePattern.rb generateNormal.rb generateAscii.rb generateAggregator.rb 
+generateAggregatorMain.rb generateV1720.rb generateCompression.rb generateBoardReaderMain.rb RunDriver.rb)
 
 
-art_make_exec(driver
+art_make_exec(demo_driver
   LIBRARIES
-  ${ARTDAQ_APPLICATION}
-  ${ARTDAQ_DAQRATE}
-  ${ARTDAQ-CORE_UTILITIES}
+  artdaq_Application
+  artdaq_DAQrate
+  artdaq-core_Utilities
   ${ART_FRAMEWORK_ART}
   ${FHICLCPP}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}

@@ -8,7 +8,7 @@
 require File.join( File.dirname(__FILE__), 'demo_utilities' )
   
 def generateToy(startingFragmentId, boardId, 
-                fragmentType, throttleUsecs = nil, nADCcounts = nil)
+                fragmentType, throttleUsecs = nil, nADCcounts = nil, eventSize = nil)
 
   toyConfig = String.new( "\
     generator: ToySimulator
@@ -26,6 +26,11 @@ def generateToy(startingFragmentId, boardId,
 
   if ! nADCcounts.nil?
     toyConfig.gsub!(/.*nADCcounts.*\:.*/, "nADCcounts: %d" % [nADCcounts])
+  end
+  
+  if ! eventSize.nil?
+    adcCounts = eventSize / 2
+    toyConfig.gsub!(/.*nADCcounts.*\:.*/, "nADCcounts: %d" % [adcCounts])
   end
 
   if ! throttleUsecs.nil?

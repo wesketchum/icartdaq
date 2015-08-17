@@ -9,7 +9,7 @@ require File.join( File.dirname(__FILE__), 'generateEventBuilder' )
 def generateEventBuilderMain(ebIndex, totalFRs, totalEBs, totalAGs, compressionLevel, 
                          totalv1720s, totalv1724s, dataDir, onmonEnable,
                          diskWritingEnable, fragSizeWords, totalFragments,
-                         fclWFViewer )
+                         fclWFViewer, ebHost, ebPort )
   # Do the substitutions in the event builder configuration given the options
   # that were passed in from the command line.  
 
@@ -29,7 +29,7 @@ services: {
       #broadcast_sends: true
     }
   }
-  Timing: { summaryOnly: true }
+
   #SimpleMemoryCheck: { }
 }
 
@@ -38,12 +38,14 @@ services: {
 outputs: {
   %{netmon_output}netMonOutput: {
   %{netmon_output}  module_type: NetMonOutput
+  %{netmon_output}  SelectEvents: { SelectEvents: [ pmod2,pmod3 ] }
   %{netmon_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
   %{netmon_output}}
   %{root_output}normalOutput: {
   %{root_output}  module_type: RootOutput
   %{root_output}  fileName: \"%{output_file}\"
   %{root_output}  compressionLevel: 0
+  %{root_output}  SelectEvents: { SelectEvents: [ pmod2,pmod3 ] }
   %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
   %{root_output}}
 }
@@ -60,7 +62,23 @@ physics: {
      %{huffdiffV1724}
   }
 
+  filters: {
+
+    prescaleMod2: {
+       module_type: NthEvent
+       nth: 2
+    }
+
+    prescaleMod3: {
+       module_type: NthEvent
+       nth: 3
+    }
+  }
+
   p1: [ %{compressionModules} ] 
+  pmod2: [ prescaleMod2 ]
+  pmod3: [ prescaleMod3 ]
+   
 
   %{enable_onmon}a1: [ app, wf ]
 
@@ -71,7 +89,7 @@ source: {
   module_type: RawInput
   waiting_time: 900
   resume_after_timeout: true
-  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"], [6, \"TOY1\"], [7, \"TOY2\"]]
+  fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"], [6, \"TOY1\"], [7, \"TOY2\"], [8, \"ASCII\"]]
 }
 process_name: DAQ" )
 
@@ -82,7 +100,7 @@ if Integer(totalAGs) >= 1
 end
 
 
-event_builder_code = generateEventBuilder( fragSizeWords, totalFRs, totalAGs, totalFragments, verbose)
+event_builder_code = generateEventBuilder( fragSizeWords, totalFRs, totalAGs, totalFragments, verbose, ebHost, ebPort)
 
 ebConfig.gsub!(/\%\{event_builder_code\}/, event_builder_code)
 

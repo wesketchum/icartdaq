@@ -12,14 +12,6 @@ physics:
   analyzers:
   {
 
-#     artdaqPrintBuildInfo: {
-#        module_type: PrintBuildInfo
-#
-#        buildinfo_module_label: BuildInfo
-#        buildinfo_instance_label: ArtdaqBuildInfo
-#     }
-
-
     printBuildInfo: {
     module_type: PrintBuildInfo
 
@@ -27,6 +19,13 @@ physics:
         buildinfo_instance_label: myInstanceName
      }
 
+    toyDump:
+    {
+      module_type: ToyDump
+      raw_data_label: daq
+      frag_type: TOY1
+      num_adcs_to_show: 0
+    }
   }
 
   producers:
@@ -35,8 +34,9 @@ physics:
   }   
 
   a1: [ printBuildInfo ]
+  a2: [ toyDump]
   e1: [ out1 ]
-  end_paths: [ e1,a1 ]
+  end_paths: [ e1,a1,a2 ]
 }
 
 outputs:
@@ -45,6 +45,7 @@ outputs:
   {
     module_type: FileDumperOutput
     wantProductFriendlyClassName: true
+    onlyIfPresent: true
   }
 
 

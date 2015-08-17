@@ -9,7 +9,8 @@ def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            compressionLevel, totalv1720s, totalv1724s, onmonEnable,
                            diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
-                           fileEventCount, fclWFViewer, onmonEventPrescale)
+                           fileEventCount, fclWFViewer, onmonEventPrescale,
+                           aggHost, aggPort)
 
 agConfig = String.new( "\
 services: {
@@ -22,7 +23,7 @@ services: {
       max_fragment_size_words: %{size_words}
     }
   }
-  Timing: { summaryOnly: true }
+
   #SimpleMemoryCheck: { }
 }
 
@@ -36,8 +37,22 @@ outputs: {
   %{root_output}  module_type: RootOutput
   %{root_output}  fileName: \"%{output_file}\"
   %{root_output}  compressionLevel: 0
-  %{root_output}  %{drop_uncompressed}outputCommands: [ \"keep *\", \"drop artdaq::Fragments_daq_V1720_*\", \"drop artdaq::Fragments_daq_V1724_*\" ]
   %{root_output}}
+
+  %{root_output}normalOutputMod2: {
+  %{root_output}  module_type: RootOutput
+  %{root_output}  fileName: \"%{output_file_mod2}\"
+  %{root_output}  SelectEvents: { SelectEvents: [ pmod2 ] }
+  %{root_output}  compressionLevel: 0
+  %{root_output}}
+
+  %{root_output}normalOutputMod3: {
+  %{root_output}  module_type: RootOutput
+  %{root_output}  fileName: \"%{output_file_mod3}\"
+  %{root_output}  SelectEvents: { SelectEvents: [ pmod3 ] }
+  %{root_output}  compressionLevel: 0
+  %{root_output}}
+
 }
 physics: {
   analyzers: {
@@ -57,14 +72,30 @@ physics: {
        module_type: ArtdaqDemoBuildInfo
        instance_name: ArtdaqDemo
      }
+   }
+
+  filters: {
+
+    prescaleMod2: {
+       module_type: NthEvent
+       nth: 2
+    }
+
+    prescaleMod3: {
+       module_type: NthEvent
+       nth: 3
+    }
   }
+
 
   p1: [ %{compressionModules} ] 
   p2: [ BuildInfo ]
+  pmod2: [ prescaleMod2 ]
+  pmod3: [ prescaleMod3 ]
 
   %{enable_onmon}a1: %{onmon_modules}
 
-  %{root_output}my_output_modules: [ normalOutput ]
+  %{root_output}my_output_modules: [ normalOutput, normalOutputMod2, normalOutputMod3 ]
 }
 process_name: DAQAG"
 )
@@ -85,7 +116,7 @@ process_name: DAQAG"
 
   aggregator_code = generateAggregator( totalFRs, totalEBs, bunchSize, fragSizeWords,
                                         xmlrpcClientList, fileSizeThreshold, fileDuration,
-                                        fileEventCount, queueDepth, queueTimeout, onmonEventPrescale )
+                                        fileEventCount, queueDepth, queueTimeout, onmonEventPrescale, aggHost, aggPort )
   agConfig.gsub!(/\%\{aggregator_code\}/, aggregator_code)
 
   puts "Initial aggregator " + String(agIndex) + " disk writing setting = " +
@@ -100,6 +131,8 @@ process_name: DAQAG"
   outputFile = File.join(dataDir, fileName)
 
   agConfig.gsub!(/\%\{output_file\}/, outputFile)
+  agConfig.gsub!(/\%\{output_file_mod2\}/, outputFile.sub(".root", "_mod2.root"))
+  agConfig.gsub!(/\%\{output_file_mod3\}/, outputFile.sub(".root", "_mod3.root"))
   agConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
   agConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
 

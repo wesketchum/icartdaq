@@ -1,10 +1,10 @@
-#include "artdaq-demo/Generators/ToySimulator.hh"
+#include "artdaq-demo/Generators/AsciiSimulator.hh"
 
 #include "art/Utilities/Exception.h"
 #include "artdaq/Application/GeneratorMacros.hh"
 #include "cetlib/exception.h"
-#include "artdaq-core-demo/Overlays/ToyFragment.hh"
-#include "artdaq-core-demo/Overlays/ToyFragmentWriter.hh"
+#include "artdaq-core-demo/Overlays/AsciiFragment.hh"
+#include "artdaq-core-demo/Overlays/AsciiFragmentWriter.hh"
 #include "artdaq-core-demo/Overlays/FragmentType.hh"
 #include "fhiclcpp/ParameterSet.h"
 #include "artdaq-core/Utilities/SimpleLookupPolicy.h"
@@ -17,59 +17,48 @@
 #include <unistd.h>
 
 namespace {
-
-  size_t typeToADC(demo::FragmentType type)
+  template<typename T>
+  T convertToASCII(std::string input)
   {
-    switch (type) {
-    case demo::FragmentType::TOY1:
-      return 12;
-      break;
-    case demo::FragmentType::TOY2:
-      return 14;
-      break;
-    default:
-      throw art::Exception(art::errors::Configuration)
-        << "Unknown board type "
-        << type
-        << " ("
-        << demo::fragmentTypeToString(type)
-        << ").\n";
-    };
+    if(input.size() < sizeof(T)/sizeof(char))
+      {
+	input.insert(0,sizeof(T)/sizeof(char) - input.size(),' ');
+      }
+    else if(input.size() > sizeof(T)/sizeof(char))
+      {
+        input.erase(0,input.size() - sizeof(T)/sizeof(char));
+      }
+    
+    uint64_t bigOutput = 0ull;
+    //    std::ofstream outputStr ("/tmp/ASCIIConverter.bin", std::ios::out | std::ios::app | std::ios::binary );
+    for(uint i = 0; i < input.length(); ++i) {
+      //outputStr.write((char*)&input[i],sizeof(char));
+    bigOutput *= 0x100;
+    bigOutput += input[input.length() - i - 1];
   }
 
+    //outputStr.close();
+  return static_cast<T>(bigOutput);
+  }
 }
 
-
-
-demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
+demo::AsciiSimulator::AsciiSimulator(fhicl::ParameterSet const & ps)
   :
   CommandableFragmentGenerator(ps),
-  nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
-  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type"))),
+  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type", "ASCII"))),
   throttle_usecs_(ps.get<size_t>("throttle_usecs", 100000)),
   throttle_usecs_check_(ps.get<size_t>("throttle_usecs_check", 10000)),
-  engine_(ps.get<int64_t>("random_seed", 314159)),
-  uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))
+  string1_(ps.get<std::string>("string1","All work and no play makes ARTDAQ a dull library")),
+  string2_(ps.get<std::string>("string2","Hey, look at what ARTDAQ can do!"))
 {
-
-  // Check and make sure that the fragment type will be one of the "toy" types
-  
-  std::vector<artdaq::Fragment::type_t> const ftypes = 
-    {FragmentType::TOY1, FragmentType::TOY2 };
-
-  if (std::find( ftypes.begin(), ftypes.end(), fragment_type_) == ftypes.end() ) {
-    throw cet::exception("Error in ToySimulator: unexpected fragment type supplied to constructor");
-  }
-
   if (throttle_usecs_ > 0 && (throttle_usecs_check_ >= throttle_usecs_ ||
 			      throttle_usecs_ % throttle_usecs_check_ != 0) ) {
-    throw cet::exception("Error in ToySimulator: disallowed combination of throttle_usecs and throttle_usecs_check (see ToySimulator.hh for rules)");
+    throw cet::exception("Error in AsciiSimulator: disallowed combination of throttle_usecs and throttle_usecs_check (see AsciiSimulator.hh for rules)");
   }
     
 }
 
-
-bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
+bool demo::AsciiSimulator::getNext_(artdaq::FragmentPtrs & frags) {
 
   // JCF, 9/23/14
 
@@ -98,10 +87,10 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   }
 
   // Set fragment's metadata
-
-  ToyFragment::Metadata metadata;
-  metadata.board_serial_number = 999;
-  metadata.num_adc_bits = typeToADC(fragment_type_);
+  size_t data_size = ev_counter() % 2 ? string1_.length() + 2 : string2_.length() + 2;
+  AsciiFragment::Metadata metadata;
+  std::string size_string = "S:" + std::to_string(data_size) + ",";
+  metadata.charsInLine = convertToASCII<AsciiFragment::Metadata::chars_in_line_t>(size_string);
 
   // And use it, along with the artdaq::Fragment header information
   // (fragment id, sequence id, and user type) to create a fragment
@@ -128,38 +117,29 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
 						      fragment_type_, metadata) );
 
   // Then any overlay-specific quantities next; will need the
-  // ToyFragmentWriter class's setter-functions for this
+  // AsciiFragmentWriter class's setter-functions for this
 
-  ToyFragmentWriter newfrag(*frags.back());
+  AsciiFragmentWriter newfrag(*frags.back());
+  
+  newfrag.set_hdr_line_number(convertToASCII<AsciiFragment::Header::line_number_t>("LN:" + std::to_string(ev_counter()) + ","));
 
-  newfrag.set_hdr_run_number(999);
+  newfrag.resize(data_size);
 
-  newfrag.resize(nADCcounts_);
+  // Now, generate the payload, based on the string to use
+  std::string string_to_use = ev_counter() % 2 ? string1_ : string2_;
+  string_to_use += "\r\n";  
 
-  // And generate nADCcounts ADC values ranging from 0 to max with an
-  // equal probability over the full range (a specific and perhaps
-  // not-too-physical example of how one could generate simulated
-  // data)
-
-  std::generate_n(newfrag.dataBegin(), nADCcounts_,
-  		  [&]() {
-  		    return static_cast<ToyFragment::adc_t>
-  		      ((*uniform_distn_)( engine_ ));
-  		  }
-  		  );
-
-  if(metricMan_ != nullptr) {
-    metricMan_->sendMetric("Fragments Sent",ev_counter(), "Events", 3);
+  //  std::ofstream output ("/tmp/ASCIIGenerator.bin", std::ios::out | std::ios::app | std::ios::binary );
+  for(uint i = 0; i < string_to_use.length(); ++i) {
+    //output.write((char*)&string_to_use[i],sizeof(char));
+    *(newfrag.dataBegin() + i) = string_to_use[i];
   }
-  // Check and make sure that no ADC values in this fragment are
-  // larger than the max allowed
-
-  newfrag.fastVerify( metadata.num_adc_bits );
-
+  //  output.close();
+ 
   ev_counter_inc();
 
   return true;
 }
 
 // The following macro is defined in artdaq's GeneratorMacros.hh header
-DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::ToySimulator) 
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::AsciiSimulator) 
