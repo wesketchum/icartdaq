@@ -107,7 +107,7 @@ fi
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq develop
 else
-install_package artdaq v1_12_12 e7 s15 eth
+install_package artdaq v1_12_12a e7 s15 eth
 fi
 
 if [  -n "${opt_HEAD-}" ];then
