@@ -1,4 +1,4 @@
-#! /bin/env bash
+#! /bin/bash
 #  This file (artdaq-demo-quickstart.sh) was created by Ron Rechenmacher <ron@fnal.gov> on
 #  Jan  7, 2014. "TERMS AND CONDITIONS" governing this file are in the README
 #  or COPYING file. If you do not have such a file, one can be obtained by
@@ -22,20 +22,6 @@ rev='$Revision: 1.20 $$Date: 2010/02/18 13:20:16 $'
 #      2b. build (via cmake),
 #  and 3.  start the artdaq-demo system
 #
-
-# JCF, 1/16/15
-
-# Save all output from this script (stdout + stderr) in a file with a
-# name that looks like "quick-start.sh_Fri_Jan_16_13:58:27.script" as
-# well as all stderr in a file with a name that looks like
-# "quick-start.sh_Fri_Jan_16_13:58:27_stderr.script"
-
-alloutput_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
-
-stderr_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4"_stderr.script"}' )
-
-exec  > >(tee $alloutput_file)
-exec 2> >(tee $stderr_file)
 
 # program (default) parameters
 root=
@@ -99,6 +85,24 @@ tools_dir=`basename $tools_path`
 git_working_path=`dirname $tools_path`
 cd "$git_working_path" >/dev/null
 git_working_path=$PWD
+
+if [ -z "$root" ];then
+    root=`dirname $git_working_path`
+    echo the root is $root
+fi
+test -d "$root" || mkdir -p "$root"
+
+# JCF, 1/16/15
+# Save all output from this script (stdout + stderr) in a file with a
+# name that looks like "quick-start.sh_Fri_Jan_16_13:58:27.script" as
+# well as all stderr in a file with a name that looks like
+# "quick-start.sh_Fri_Jan_16_13:58:27_stderr.script"
+alloutput_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
+stderr_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4"_stderr.script"}' )
+mkdir -p "$root/log"
+exec  > >(tee "$root/log/$alloutput_file")
+exec 2> >(tee "$root/log/$stderr_file")
+
 git_status=`git status 2>/dev/null`
 git_sts=$?
 if [ $git_sts -ne 0 -o $tools_dir != tools ];then
@@ -150,12 +154,6 @@ defaultqual=$(echo $defaultqual | sed -r 's/.*(e[0-9]).*/\1/')
 vecho() { test $opt_v -gt 0 && echo "$@"; }
 starttime=`date`
 
-if [ -z "$root" ];then
-    root=`dirname $git_working_path`
-    echo the root is $root
-fi
-
-test -d "$root" || mkdir -p "$root"
 cd $root
 
 free_disk_G=`df -B1G . | awk '/[0-9]%/{print$(NF-2)}'`

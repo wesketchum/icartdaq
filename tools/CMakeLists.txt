@@ -12,10 +12,12 @@ art_make_exec(demo_driver
   artdaq_Application
   artdaq_DAQrate
   artdaq-core_Utilities
+  artdaq-core_Core
   ${ART_FRAMEWORK_ART}
   ${FHICLCPP}
   ${Boost_PROGRAM_OPTIONS_LIBRARY}
   ${MPI_C_LIBRARIES}
+  ${CETLIB}
   )
   
 
