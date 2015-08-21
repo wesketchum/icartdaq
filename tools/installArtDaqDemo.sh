@@ -105,6 +105,12 @@ install_package artdaq-core-demo v1_04_01 e7 s15
 fi
 
 if [ -n "${opt_HEAD-}" ];then
+    install_package artdaq-utilities develop
+else
+    install_package artdaq-utilities v1_00_00 e7 s15
+fi
+
+if [ -n "${opt_HEAD-}" ];then
 install_package artdaq develop
 else
 install_package artdaq v1_12_12a e7 s15 eth
