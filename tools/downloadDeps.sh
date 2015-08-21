@@ -14,8 +14,8 @@ starttime=`date`
 cd ${productdir}
 
 prods="\
-mpich v3_1_2a -f Linux64bit+2.6-2.12 -z ${productdir} -q ${basequal2}:${build_type}
-xmlrpc_c v1_25_30a -f Linux64bit+2.6-2.12 -z ${productdir} -q ${basequal2}:${build_type}"
+mpich v3_1_4 -f Linux64bit+2.6-2.12 -z ${productdir} -q ${basequal2}:${build_type}
+xmlrpc_c v1_33_16 -f Linux64bit+2.6-2.12 -z ${productdir} -q ${basequal2}:${build_type}"
 
 # Some tarfiles have names that deviate from the standard "template",
 # so we can't use the download function's algorithm
@@ -55,7 +55,7 @@ cd ${productdir}
 export savedPRODUCTS=${PRODUCTS}
 installDir=`pwd`
 simpleQual=`echo ${basequal} | sed 's/:eth//g' | sed 's/eth://g' | sed 's/ib://g' | sed 's/:ib//g'`
-artVersion=v1_14_02
+artVersion=v1_15_02
 pullScript=pullProducts
 url=http://scisoft.fnal.gov/scisoft/bundles/tools/${pullScript}
 echo url=$url

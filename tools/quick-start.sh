@@ -1,4 +1,4 @@
-#! /bin/env bash
+#! /bin/bash
 #  This file (artdaq-demo-quickstart.sh) was created by Ron Rechenmacher <ron@fnal.gov> on
 #  Jan  7, 2014. "TERMS AND CONDITIONS" governing this file are in the README
 #  or COPYING file. If you do not have such a file, one can be obtained by
@@ -22,20 +22,6 @@ rev='$Revision: 1.20 $$Date: 2010/02/18 13:20:16 $'
 #      2b. build (via cmake),
 #  and 3.  start the artdaq-demo system
 #
-
-# JCF, 1/16/15
-
-# Save all output from this script (stdout + stderr) in a file with a
-# name that looks like "quick-start.sh_Fri_Jan_16_13:58:27.script" as
-# well as all stderr in a file with a name that looks like
-# "quick-start.sh_Fri_Jan_16_13:58:27_stderr.script"
-
-alloutput_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
-
-stderr_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4"_stderr.script"}' )
-
-exec  > >(tee $alloutput_file)
-exec 2> >(tee $stderr_file)
 
 # program (default) parameters
 root=
@@ -99,6 +85,24 @@ tools_dir=`basename $tools_path`
 git_working_path=`dirname $tools_path`
 cd "$git_working_path" >/dev/null
 git_working_path=$PWD
+
+if [ -z "$root" ];then
+    root=`dirname $git_working_path`
+    echo the root is $root
+fi
+test -d "$root" || mkdir -p "$root"
+
+# JCF, 1/16/15
+# Save all output from this script (stdout + stderr) in a file with a
+# name that looks like "quick-start.sh_Fri_Jan_16_13:58:27.script" as
+# well as all stderr in a file with a name that looks like
+# "quick-start.sh_Fri_Jan_16_13:58:27_stderr.script"
+alloutput_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4".script"}' )
+stderr_file=$( date | awk -v "SCRIPTNAME=$(basename $0)" '{print SCRIPTNAME"_"$1"_"$2"_"$3"_"$4"_stderr.script"}' )
+mkdir -p "$root/log"
+exec  > >(tee "$root/log/$alloutput_file")
+exec 2> >(tee "$root/log/$stderr_file")
+
 git_status=`git status 2>/dev/null`
 git_sts=$?
 if [ $git_sts -ne 0 -o $tools_dir != tools ];then
@@ -108,17 +112,19 @@ fi
 
 branch=`git branch | sed -ne '/^\*/{s/^\* *//;p;q}'`
 echo the current branch is $branch
-if [ "$branch" != '(no branch)' ] && [ "$branch" != 'develop' -a "${opt_HEAD:-unset}" != 'unset' ];then
-    if [ "x$opt_HEAD" != 'x' ]; then
-        echo "checking out develop"
-        git checkout develop
-    else
-        test -z "$tag" && tag=`git tag -l 'v[0-9]*' | tail -n1`
-        if [ "$tag" != "$branch" ];then
-            echo "checking out tag $tag"
-            git checkout $tag
-        fi
-    fi
+# The initial clone will have branch = develop.
+# In this case, IF opt_HEAD is not set (or, actually, has zero length),
+# THEN checkout tag (latest tag if not specified).
+if [ "$branch" = develop -a -z "${opt_HEAD-}" ];then
+    test -z "$tag" && tag=`git tag -l 'v[0-9]*' | tail -n1`
+    git status | grep -q 'working directory clean' || git stash
+    echo "checking out tag $tag"
+    git checkout $tag
+elif [ -n "${opt_HEAD-}" -a "$branch" != develop ];then # opt_HEAD is set (nonzero length)
+    echo "checking out develop"
+    git checkout develop
+else
+    echo "no checkout -- branch = $branch"
 fi
 
 # JCF, 8/28/14
@@ -139,6 +145,7 @@ add_defaultqual=`grep ^defaultqual $git_working_path/ups/product_deps | awk '{pr
 ad_qual=`grep ^${add_defaultqual}:${build_type} $git_working_path/ups/product_deps | awk '{print $2}'`
 # pullProducts expects a qualifier like "s6-e6", get that out of the full ARTDAQ qualifier
 defaultqual=`echo $ad_qual|grep -oE "s[0-9]+"`-`echo $ad_qual|grep -oE "e[0-9]+"`
+defaultqualWithS=$defaultqual
 
 # JCF, 5/26/15
 # More fun - we now want to strip away the "sX" part of the qualifier...
@@ -147,12 +154,6 @@ defaultqual=$(echo $defaultqual | sed -r 's/.*(e[0-9]).*/\1/')
 vecho() { test $opt_v -gt 0 && echo "$@"; }
 starttime=`date`
 
-if [ -z "$root" ];then
-    root=`dirname $git_working_path`
-    echo the root is $root
-fi
-
-test -d "$root" || mkdir -p "$root"
 cd $root
 
 free_disk_G=`df -B1G . | awk '/[0-9]%/{print$(NF-2)}'`
@@ -162,10 +163,10 @@ if [ -z "${opt_skip_check-}" -a "$free_disk_G" -lt 15 ];then
     exit 1
 fi
 
-if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
-    echo error: missing tools/downloadDeps.sh
-    exit 1
-fi
+#if [ ! -x $git_working_path/tools/downloadDeps.sh ];then
+#    echo error: missing tools/downloadDeps.sh
+#    exit 1
+#fi
 if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
     echo error: missing tools/installArtDaqDemo.sh
     exit 1
@@ -201,20 +202,18 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
         echo "Will force download despite existing directories"
     fi
 
-# JCF, 5/26/15
+# ELF 8/17/2015
 
-# As there's no manifest available for the latest artdaq (v1_12_10),
-# use the traditional downloadDeps.sh script, which calls the art
-# manifest and then manually downloads packages which artdaq (but not
-# art) depends on
+# Latest artdaq (v1_12_12) once again has manifests in all the right places. Switching back to
+# bundle-based distribution.
 
     cd download
-#    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
-#    chmod +x pullProducts
-#    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
-#    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type"
-#    ./pullProducts ../products slf6 artdaq-${version} $defaultqual $build_type
-    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+    wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
+    chmod +x pullProducts
+    version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
+    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type"
+    ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type
+#    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 
 elif [[ -n ${productsdir:-} ]] ; then 
