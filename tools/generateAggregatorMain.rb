@@ -17,11 +17,9 @@ services: {
   scheduler: {
     fileMode: NOMERGE
   }
-  user: {
-    NetMonTransportServiceInterface: {
-      service_provider: NetMonTransportService
-      max_fragment_size_words: %{size_words}
-    }
+  NetMonTransportServiceInterface: {
+    service_provider: NetMonTransportService
+    max_fragment_size_words: %{size_words}
   }
 
   #SimpleMemoryCheck: { }
