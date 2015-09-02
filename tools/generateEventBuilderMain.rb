@@ -19,15 +19,13 @@ services: {
   scheduler: {
     fileMode: NOMERGE
   }
-  user: {
-    NetMonTransportServiceInterface: {
-      service_provider: NetMonTransportService
-      first_data_receiver_rank: %{ag_rank}
-      mpi_buffer_count: %{netmonout_buffer_count}
-      max_fragment_size_words: %{size_words}
-      data_receiver_count: 1 # %{ag_count}
-      #broadcast_sends: true
-    }
+  NetMonTransportServiceInterface: {
+    service_provider: NetMonTransportService
+    first_data_receiver_rank: %{ag_rank}
+    mpi_buffer_count: %{netmonout_buffer_count}
+    max_fragment_size_words: %{size_words}
+    data_receiver_count: 1 # %{ag_count}
+    #broadcast_sends: true
   }
 
   #SimpleMemoryCheck: { }
@@ -87,7 +85,7 @@ physics: {
 }
 source: {
   module_type: RawInput
-  waiting_time: 900
+  waiting_time: 2500000
   resume_after_timeout: true
   fragment_type_map: [[1, \"missed\"], [3, \"V1720\"], [4, \"V1724\"], [6, \"TOY1\"], [7, \"TOY2\"], [8, \"ASCII\"]]
 }
