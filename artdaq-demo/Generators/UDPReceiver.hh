@@ -72,10 +72,10 @@ struct CommandPacket {
 
     bool getNextFragment_(artdaq::FragmentPtrs & output) override;
 
-    void start() override;
+    void start_() override;
     void stop() override;
     void pause() override;
-    void resume() override;
+    void resume_() override;
    
     DataType getDataType(uint8_t byte) { return static_cast<DataType>((byte & 0xF0) >> 4); }
     ReturnCode getReturnCode(uint8_t byte) { return static_cast<ReturnCode>(byte & 0xF); }

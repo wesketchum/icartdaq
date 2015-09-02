@@ -12,6 +12,7 @@ def generateUDP(startingFragmentId, boardId,
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
     trigger_port: 5001
+    trigger_mode: \"Untriggered\"
     sleep_on_stop_us: 500000 " \
                           + read_fcl("UDPReceiver.fcl") )
   

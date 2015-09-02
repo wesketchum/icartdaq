@@ -218,7 +218,7 @@ bool demo::UDPReceiver::getNextFragment_(artdaq::FragmentPtrs & frags) {
   return true;
 }
 
-void demo::UDPReceiver::start()
+void demo::UDPReceiver::start_()
 {
   send(CommandType::Start_Burst);
 }
@@ -233,7 +233,7 @@ void demo::UDPReceiver::pause()
   send(CommandType::Stop_Burst);
 }
 
-void demo::UDPReceiver::resume()
+void demo::UDPReceiver::resume_()
 {
   send(CommandType::Start_Burst);
 }
