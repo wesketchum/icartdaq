@@ -547,11 +547,12 @@ class CommandLineParser
         @options.dataDir = dataDir
       end
 
-      opts.on("-m", "--online-monitoring [enabled,file_path]", Array,
+      opts.on("-m", "--online-monitoring [enabled,file_enabled,file_path]", Array,
               "Whether to run the online monitoring modules,", 
               "also whether and whither to send file output from the online monitoring" ) do |runOnmon|
         @options.runOnmon = Integer(runOnmon[0])
-        @options.onmonFile = runOnmon[1]
+        @options.onmonFileEnabled = Integer(runOnmon[1])
+        @options.onmonFile = runOnmon[2]
       end
 
       opts.on("-w", "--write-data [enable flag (0 or 1)]", 
@@ -772,7 +773,7 @@ class SystemControl
 
     # John F., 1/21/14 -- added the toy fragment generators
 
-    (@options.v1720s + @options.toys + @options.asciiss + @options.udps + @options.pbrs).each { |boardreaderOptions|
+    (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).each { |boardreaderOptions|
       br = @options.boardReaders[boardreaderOptions.board_reader_index]
       listIndex = 0
       br.kindList.each do |kind|
@@ -952,8 +953,7 @@ class SystemControl
                                  xmlrpcClients, @options.fileSizeThreshold,
                                  @options.fileDurationSeconds,
                                  @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE,
-                                 @options.onmon_modules, agOptions.host, agOptions.port,
-                                 @options.onmonFileEnabled, @options.onmonFile,
+                                 @options.onmon_modules, @options.onmonFileEnabled, @options.onmonFile,
                                  agOptions.host, agOptions.port)
 
         if @options.serialize

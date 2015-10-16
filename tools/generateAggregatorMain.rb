@@ -10,7 +10,7 @@ def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
                            fileEventCount, fclWFViewer, onmonEventPrescale, 
-                           onmonFileEnable, onmonOutputDir,
+                           onmon_modules, onmonFileEnable, onmonOutputDir,
                            aggHost, aggPort)
 
 agConfig = String.new( "\
