@@ -9,7 +9,8 @@ def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            compressionLevel, totalv1720s, totalv1724s, onmonEnable,
                            diskWritingEnable, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
-                           fileEventCount, fclWFViewer, onmonEventPrescale,
+                           fileEventCount, fclWFViewer, onmonEventPrescale, 
+                           onmonFileEnable, onmonOutputDir,
                            aggHost, aggPort)
 
 agConfig = String.new( "\
@@ -134,8 +135,6 @@ process_name: DAQAG"
   agConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
   agConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
 
-  agConfig.gsub!(/\%\{onmon_modules\}/, String(ONMON_MODULES))
-
   compressionModules = []
 
   if Integer(compressionLevel) > 0 && Integer(compressionLevel) < 3
@@ -178,6 +177,20 @@ process_name: DAQAG"
   if Integer(onmonEnable) != 0
     agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, fclWFViewer )
     agConfig.gsub!(/\%\{enable_onmon\}/, "")
+    if Integer(onmonFileEnable) != 0
+      agConfig.gsub!(/\%\{onmon_modules\}/, String("[wf]"))
+      agConfig.gsub!(/\%\{write_to_file\}/,"true")
+    else
+      agConfig.gsub!(/\%\{onmon_modules\}/, String(ONMON_MODULES))
+      agConfig.gsub!(/\%\{write_to_file\}/,"false")
+    end
+      fileNameTemp = "artdaqdemo_onmon.root"
+    if onmonOutputDir != nil && onmonOutputDir.length > 0
+      onmonOutputFile = File.join(onmonOutputDir, fileNameTemp)
+    else
+      onmonOutputFile = File.join(dataDir, fileNameTemp)
+    end
+    agConfig.gsub!(/\%\{onmon_fileName\}/,"fileName: \"" + onmonOutputFile + "\"")
   else
     agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, "")
     agConfig.gsub!(/\%\{enable_onmon\}/, "#")
