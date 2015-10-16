@@ -148,6 +148,9 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   		  }
   		  );
 
+  if(metricMan_ != nullptr) {
+    metricMan_->sendMetric("Fragments Sent",ev_counter(), "Events", 3);
+  }
   // Check and make sure that no ADC values in this fragment are
   // larger than the max allowed
 

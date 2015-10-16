@@ -20,7 +20,8 @@ def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode, br
     brFile: {
       metricPluginType: \"file\"
       level: 3
-      fileName: \"/tmp/boardreader/br_%{hoststring}_metrics.log\"
+      fileName: \"/tmp/boardreader/br_%UID%_metrics.log\"
+      uniquify: true
     }
   }
 }"
@@ -31,7 +32,6 @@ def generateBoardReaderMain(totalEBs, totalFRs, fragSizeWords, generatorCode, br
   brConfig.gsub!(/\%\{buffer_count\}/, String(totalEBs*8))
   brConfig.gsub!(/\%\{size_words\}/, String(fragSizeWords))
   brConfig.gsub!(/\%\{generator_code\}/, String(generatorCode))
-  brConfig.gsub!(/\%\{hoststring\}/, String("%s:%d" % [ brHost, brPort ])) 
  
   return brConfig
 end

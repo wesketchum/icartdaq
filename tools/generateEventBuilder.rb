@@ -29,7 +29,7 @@ daq: {
   ebConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
   ebConfig.gsub!(/\%\{total_fragments\}/, String(totalFragments))
   ebConfig.gsub!(/\%\{verbose\}/, String(verbose))
-  ebConfig.gsub!(/\%\{hoststring\}/,String("%s:%d" % [ebHost, ebPort]))
+  test = ebPort * 2
 
   return ebConfig
 
