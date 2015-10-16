@@ -1,7 +1,8 @@
 
 def generateAggregator(totalFRs, totalEBs, bunchSize, fragSizeWords,
                        xmlrpcClientList, fileSizeThreshold, fileDuration,
-                       fileEventCount, queueDepth, queueTimeout, onmonEventPrescale)
+                       fileEventCount, queueDepth, queueTimeout, onmonEventPrescale,
+                       aggHost, aggPort)
 
 agConfig = String.new( "\
 daq: {
@@ -19,6 +20,15 @@ daq: {
     file_size_MB: %{file_size}
     file_duration: %{file_duration}
     file_event_count: %{file_event_count}
+  }
+
+  metrics: {
+    aggFile: {
+      metricPluginType: \"file\"
+      level: 3
+      fileName: \"/tmp/aggregator/agg_%UID%_metrics.log\"
+      uniquify: true
+    }
   }
 }" )
 

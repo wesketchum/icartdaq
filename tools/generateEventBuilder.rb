@@ -1,5 +1,5 @@
 
-def generateEventBuilder( fragSizeWords, totalFRs, totalAGs, totalFragments, verbose)
+def generateEventBuilder( fragSizeWords, totalFRs, totalAGs, totalFragments, verbose, ebHost, ebPort)
 
 ebConfig = String.new( "\
 daq: {
@@ -13,6 +13,14 @@ daq: {
     print_event_store_stats: true
     verbose: %{verbose}
   }
+  metrics: {
+    evbFile: {
+      metricPluginType: \"file\"
+      level: 3
+      fileName: \"/tmp/eventbuilder/evb_%UID%_metrics.log\"
+      uniquify: true
+    }
+  }
 } "
 )
 
@@ -21,6 +29,7 @@ daq: {
   ebConfig.gsub!(/\%\{total_frs\}/, String(totalFRs))
   ebConfig.gsub!(/\%\{total_fragments\}/, String(totalFragments))
   ebConfig.gsub!(/\%\{verbose\}/, String(verbose))
+  test = ebPort * 2
 
   return ebConfig
 

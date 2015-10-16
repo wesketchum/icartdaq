@@ -53,9 +53,6 @@ demo_dir=`dirname "$artdaq_demo_dir"`
 export CETPKG_INSTALL=$products_dir
 export CETPKG_J=16
 
-#test -d "$demo_dir/build_artdaq-core" || mkdir "$demo_dir/build_artdaq-core" 
-#test -d "$demo_dir/build_artdaq"      || mkdir "$demo_dir/build_artdaq"
-#test -d "$demo_dir/build_artdaq-core-demo" || mkdir "$demo_dir/build_artdaq-core-demo" 
 test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
 
 if [[ -n "${opt_debug:-}" ]];then
@@ -98,25 +95,31 @@ function install_package {
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core develop
 else
-install_package artdaq-core v1_04_06 e6 s5
+install_package artdaq-core v1_04_17 e7 s15
 fi
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core-demo develop
 else
-install_package artdaq-core-demo v1_00_00 e6
+install_package artdaq-core-demo v1_04_01 e7 s15
+fi
+
+if [ -n "${opt_HEAD-}" ];then
+    install_package artdaq-utilities develop
+else
+    install_package artdaq-utilities v1_00_00 e7 s15
 fi
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq develop
 else
-install_package artdaq v1_12_04 e6 s5 eth
+install_package artdaq v1_12_12a e7 s15 eth
 fi
 
 if [  -n "${opt_HEAD-}" ];then
 setup_qualifier=""
 else
-setup_qualifier="e6 eth"
+setup_qualifier="e7 eth"
 fi
 
 if [ ! -e ./setupARTDAQDEMO -o "${opt_clean-}" == 1 ]; then

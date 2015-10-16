@@ -11,7 +11,7 @@
 #include "art/Framework/Principal/Handle.h"
 
 #include "art/Utilities/Exception.h"
-#include "artdaq-core-demo/Overlays/ToyFragment.hh"
+#include "artdaq-core-demo/Overlays/AsciiFragment.hh"
 #include "artdaq-core/Data/Fragments.hh"
 
 #include <algorithm>
@@ -23,13 +23,13 @@
 #include <iostream>
 
 namespace demo {
-  class ToyDump;
+  class ASCIIDump;
 }
 
-class demo::ToyDump : public art::EDAnalyzer {
+class demo::ASCIIDump : public art::EDAnalyzer {
 public:
-  explicit ToyDump(fhicl::ParameterSet const & pset);
-  virtual ~ToyDump();
+  explicit ASCIIDump(fhicl::ParameterSet const & pset);
+  virtual ~ASCIIDump();
 
   virtual void analyze(art::Event const & evt);
 
@@ -40,28 +40,26 @@ private:
 };
 
 
-demo::ToyDump::ToyDump(fhicl::ParameterSet const & pset)
+demo::ASCIIDump::ASCIIDump(fhicl::ParameterSet const & pset)
     : EDAnalyzer(pset),
       raw_data_label_(pset.get<std::string>("raw_data_label")),
-      frag_type_(pset.get<std::string>("frag_type")),
-      num_adcs_to_show_(pset.get<uint32_t>("num_adcs_to_show", 0))
-		      
+      frag_type_(pset.get<std::string>("frag_type"))
 {
 }
 
-demo::ToyDump::~ToyDump()
+demo::ASCIIDump::~ASCIIDump()
 {
 }
 
-void demo::ToyDump::analyze(art::Event const & evt)
+void demo::ASCIIDump::analyze(art::Event const & evt)
 {
   art::EventNumber_t eventNumber = evt.event();
 
   // ***********************
-  // *** Toy Fragments ***
+  // *** ASCII Fragments ***
   // ***********************
 
-  // look for raw Toy data
+  // look for raw ASCII data
 
   art::Handle<artdaq::Fragments> raw;
   evt.getByLabel(raw_data_label_, frag_type_, raw);
@@ -76,51 +74,30 @@ void demo::ToyDump::analyze(art::Event const & evt)
     for (size_t idx = 0; idx < raw->size(); ++idx) {
       const auto& frag((*raw)[idx]);
 
-      ToyFragment bb(frag);
+      AsciiFragment bb(frag);
 
       std::cout << std::endl;
-      std::cout << "Toy fragment " << frag.fragmentID() << " has total ADC counts = " 
-		<< bb.total_adc_values() << std::endl;
+      std::cout << "Ascii fragment " << frag.fragmentID() << " has " 
+		<< bb.total_line_characters() << " characters in the line." << std::endl;
       std::cout << std::endl;
 
       if (frag.hasMetadata()) {
       std::cout << std::endl;
 	std::cout << "Fragment metadata: " << std::endl;
-        ToyFragment::Metadata const* md =
-          frag.metadata<ToyFragment::Metadata>();
-        std::cout << std::showbase << "Board serial number = "
-                  << ((int)md->board_serial_number) << ", sample bits = "
-                  << ((int)md->num_adc_bits)
-		  << " -> max ADC value = " 
-		  << bb.adc_range( (int)md->num_adc_bits )
-                  << std::endl;
+        AsciiFragment::Metadata const* md =
+          frag.metadata<AsciiFragment::Metadata>();
+        std::cout << "Chars in line: " << md->charsInLine << std::endl;
 	std::cout << std::endl;
       }
 
-      if (num_adcs_to_show_ == 0) {
-        num_adcs_to_show_ = bb.total_adc_values();
-      }
-
-      if (num_adcs_to_show_ > 0) {
-
-	if (num_adcs_to_show_ > bb.total_adc_values() ) {
-	  throw cet::exception("num_adcs_to_show is larger than total number of adcs in fragment");
-	} else {
-	  std::cout << std::endl;
-	  std::cout << "First " << num_adcs_to_show_ 
-		    << " ADC values in the fragment: " 
-		    << std::endl;
-	}
-
 	std::ofstream output ("out.bin", std::ios::out | std::ios::app | std::ios::binary );
-	for (uint32_t i_adc = 0; i_adc < num_adcs_to_show_; ++i_adc) {
-	  output.write((char*)(bb.dataBegin() + i_adc),sizeof(ToyFragment::adc_t));
+	for (uint32_t i_adc = 0; i_adc < bb.total_line_characters(); ++i_adc) {
+	  output.write((char*)(bb.dataBegin() + i_adc),sizeof(char));
 	}
         output.close();
 	std::cout << std::endl;
 	std::cout << std::endl;
       }
-    }
   }
   else {
     std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
@@ -131,4 +108,4 @@ void demo::ToyDump::analyze(art::Event const & evt)
 
 }
 
-DEFINE_ART_MODULE(demo::ToyDump)
+DEFINE_ART_MODULE(demo::ASCIIDump)

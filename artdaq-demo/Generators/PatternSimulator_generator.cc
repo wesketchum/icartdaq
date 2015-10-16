@@ -1,4 +1,4 @@
-#include "artdaq-demo/Generators/ToySimulator.hh"
+#include "artdaq-demo/Generators/PatternSimulator.hh"
 
 #include "art/Utilities/Exception.h"
 #include "artdaq/Application/GeneratorMacros.hh"
@@ -41,15 +41,13 @@ namespace {
 
 
 
-demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
+demo::PatternSimulator::PatternSimulator(fhicl::ParameterSet const & ps)
   :
   CommandableFragmentGenerator(ps),
   nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
   fragment_type_(toFragmentType(ps.get<std::string>("fragment_type"))),
   throttle_usecs_(ps.get<size_t>("throttle_usecs", 100000)),
-  throttle_usecs_check_(ps.get<size_t>("throttle_usecs_check", 10000)),
-  engine_(ps.get<int64_t>("random_seed", 314159)),
-  uniform_distn_(new std::uniform_int_distribution<int>(0, pow(2, typeToADC( fragment_type_ ) ) - 1 ))
+  throttle_usecs_check_(ps.get<size_t>("throttle_usecs_check", 10000))
 {
 
   // Check and make sure that the fragment type will be one of the "toy" types
@@ -58,18 +56,18 @@ demo::ToySimulator::ToySimulator(fhicl::ParameterSet const & ps)
     {FragmentType::TOY1, FragmentType::TOY2 };
 
   if (std::find( ftypes.begin(), ftypes.end(), fragment_type_) == ftypes.end() ) {
-    throw cet::exception("Error in ToySimulator: unexpected fragment type supplied to constructor");
+    throw cet::exception("Error in PatternSimulator: unexpected fragment type supplied to constructor");
   }
 
   if (throttle_usecs_ > 0 && (throttle_usecs_check_ >= throttle_usecs_ ||
 			      throttle_usecs_ % throttle_usecs_check_ != 0) ) {
-    throw cet::exception("Error in ToySimulator: disallowed combination of throttle_usecs and throttle_usecs_check (see ToySimulator.hh for rules)");
+    throw cet::exception("Error in PatternSimulator: disallowed combination of throttle_usecs and throttle_usecs_check (see PatternSimulator.hh for rules)");
   }
     
 }
 
 
-bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
+bool demo::PatternSimulator::getNext_(artdaq::FragmentPtrs & frags) {
 
   // JCF, 9/23/14
 
@@ -141,16 +139,18 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
   // not-too-physical example of how one could generate simulated
   // data)
 
+  //int maxADC = pow(2, typeToADC( fragment_type_ ) ) - 1;
+  //int step = maxADC / nADCcounts_;
+  //int current = ev_counter() - step;
+
   std::generate_n(newfrag.dataBegin(), nADCcounts_,
   		  [&]() {
-  		    return static_cast<ToyFragment::adc_t>
-  		      ((*uniform_distn_)( engine_ ));
+                    //current += step;
+  		    return static_cast<ToyFragment::adc_t>(ev_counter());
+ 		     // (current % maxADC);
   		  }
   		  );
 
-  if(metricMan_ != nullptr) {
-    metricMan_->sendMetric("Fragments Sent",ev_counter(), "Events", 3);
-  }
   // Check and make sure that no ADC values in this fragment are
   // larger than the max allowed
 
@@ -162,4 +162,4 @@ bool demo::ToySimulator::getNext_(artdaq::FragmentPtrs & frags) {
 }
 
 // The following macro is defined in artdaq's GeneratorMacros.hh header
-DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::ToySimulator) 
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::PatternSimulator) 

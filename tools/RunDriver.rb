@@ -20,6 +20,8 @@
 # cdcvs.fnal.gov/redmine/projects/artdaq-demo/wiki
 
 require File.join( File.dirname(__FILE__), 'generateToy' )
+require File.join( File.dirname(__FILE__), 'generateNormal' )
+require File.join( File.dirname(__FILE__), 'generatePattern' )
 
 # A common way to de-facto forward declare functions in Ruby (as is
 # the case here with generateToy) is to bundle the main program flow
@@ -32,28 +34,29 @@ def main
   # command line processing
 
   if ! ARGV.length.between?(2,4)
-    puts "Usage: " + __FILE__.split("/")[-1] + " <fragment type = TOY1, TOY2> "  + " <# of events> (nADCcounts) (saveFHiCL)"
+    puts "Usage: " + __FILE__.split("/")[-1] + " <fragment type = TOY1, TOY2> "  + " <# of events> <generator = Uniform, Normal, Pattern> (nADCcounts) (saveFHiCL)"
     exit 1
   end
 
   fragtype = ARGV[0]
   nEvents = ARGV[1]
+  generator = ARGV[2]
 
   # We'll pass "nADCcounts" to the generateToy function. If nADCcounts
   # is "nil", generateToy will search for a FHiCL file called
   # "ToySimulator.fcl" for the definition of nADCcounts
 
 
-  if ARGV.length >= 3
-    if (ARGV[2] != "0" && ARGV[2] != "false" && ARGV[2] != "nil")
+  if ARGV.length >= 4
+    if (ARGV[3] != "0" && ARGV[3] != "false" && ARGV[3] != "nil")
       saveFHiCL = true
     end
   else
     saveFHiCL = false
   end
 
-  if ARGV.length >= 4
-    nADCcounts = ARGV[3]
+  if ARGV.length >= 5
+    nADCcounts = ARGV[4]
   else
     nADCcounts = nil
   end
@@ -65,8 +68,17 @@ def main
 
     # def generateToy(startingFragmentId, boardId, 
     # fragmentType, throttleUsecs, nADCcounts = nil)
-
-    generatorCode = generateToy(0, 0, fragtype, 0, nADCcounts)
+    case generator
+    when "Uniform"
+        generatorCode = generateToy(0, 0, fragtype, 0, nADCcounts)
+    when "Normal"
+        generatorCode = generateNormal(0, 0, fragtype, 0, nADCcounts)
+    when "Pattern"
+        generatorCode = generatePattern(0, 0, fragtype, 0, nADCcounts)
+    else
+        puts "Invalid Generator Type Supplied!"
+        exit
+    end
   
   else
 
@@ -93,7 +105,7 @@ def main
   # Note that since the backticks return stdout, we just stick the
   # call in front of a "puts" command to see the driver's output
 
-  cmd = "driver -c " + filename
+  cmd = "demo_driver -c " + filename
   puts `#{cmd}`
 
   # Either remove or save the FHiCL file
