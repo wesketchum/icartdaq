@@ -64,3 +64,17 @@ simple_plugin(AsciiSimulator "generator"
   ${FHICLCPP}
   ${CETLIB}
   )
+
+simple_plugin(UDPReceiver "generator"
+    artdaq-core-demo_Overlays
+    artdaq_Application
+    artdaq_DAQdata
+    artdaq-core_Utilities
+    artdaq-core_Data
+  ${ART_UTILITIES}
+    ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
+    ${CETLIB}
+    )
+
