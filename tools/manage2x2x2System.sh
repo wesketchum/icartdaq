@@ -22,7 +22,7 @@ THIS_NODE=`hostname -s`
 # 14) the desired event size in bytes
 # 15) generator to use for toy1
 # 16) generator to use for toy2
-# 17) Output onmon file
+# 17) Output directory for onmon file
 function launch() {
   ebComp=$3
   agComp=$3
@@ -37,9 +37,11 @@ function launch() {
   if [[ "${13}" == "1" ]]; then
       enableSerial="-e"
   fi
-  onmonFile=${17}
-  if [[ "x${onmonFile}" == "x" ]]; then
-    onmonFile=/dev/null
+  onmonFile=1
+  onmonPath=${17}
+  if [[ "x${onmonPath}" == "x" ]]; then
+    onmonFile=0
+    onmonPath="/tmp"
   fi
 
   DemoControl.rb ${enableSerial} -s -c $1 \
@@ -158,7 +160,7 @@ while getopts "hc:N:o:t:T:m:M:Dn:d:s:w:v-:" opt; do
             onmonEnable=${OPTARG}
             ;;
         M)
-            onmonFile=${OPTARG}
+            onmonDir=${OPTARG}
             ;;
         o)
             dataDir=${OPTARG}
@@ -289,11 +291,11 @@ if [[ "$command" == "shutdown" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     # stop the MPI program
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
@@ -305,11 +307,11 @@ elif [[ "$command" == "restart" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     # stop the MPI program
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
@@ -320,11 +322,11 @@ elif [[ "$command" == "reinit" ]]; then
     # first send a stop command to end the run (in case it is needed)
     launch "stop" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     # next send a shutdown command to move the processes to their ground state
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     # stop the MPI program
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     # clean up any stale shared memory segment
@@ -335,11 +337,11 @@ elif [[ "$command" == "reinit" ]]; then
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
 elif [[ "$command" == "exit" ]]; then
     launch "shutdown" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
     ssh ${AGGREGATOR_NODE} "ipcs | grep ${shmKeyString} | awk '{print \$2}' | xargs ipcrm -m 2>/dev/null"
@@ -358,7 +360,7 @@ elif [[ "$command" == "fast-reinit" ]]; then
     sleep 5
     launch "init" $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonDir
 elif [[ "$command" == "fast-exit" ]]; then
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.stopSystem
     xmlrpc ${THIS_NODE}:${ARTDAQDEMO_PMT_PORT}/RPC2 pmt.exit
@@ -367,5 +369,6 @@ elif [[ "$command" == "fast-exit" ]]; then
 else
     launch $command $runNumber $compressionLevel $onmonEnable $dataDir \
         $logFile $diskWriting $runEventCount $runDuration $fileSize \
-        $fileEventCount $fileDuration $verbose $eventSize $toy1Generator $toy2Generator $onmonFile
+        $fileEventCount $fileDuration $verbose $eventSize \
+        $toy1Generator $toy2Generator $onmonDir
 fi

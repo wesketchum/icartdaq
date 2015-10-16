@@ -28,6 +28,7 @@ require File.join( File.dirname(__FILE__), 'generatePattern' )
 require File.join( File.dirname(__FILE__), 'generateNormal' )
 require File.join( File.dirname(__FILE__), 'generateV1720' )
 require File.join( File.dirname(__FILE__), 'generateAscii' )
+require File.join( File.dirname(__FILE__), 'generateUDP' )
 require File.join( File.dirname(__FILE__), 'generateWFViewer' )
 
 require File.join( File.dirname(__FILE__), 'generateBoardReaderMain' )
@@ -172,7 +173,7 @@ daq: {
     xmlrpcClients = ""
 #    boardreaders = Array.new + @options.v1720s + @options.toys
 #    boardreaders.each do |proc|
-    (cmdLineOptions.v1720s + cmdLineOptions.toys + cmdLineOptions.asciis).each do |proc|
+    (cmdLineOptions.v1720s + cmdLineOptions.toys + cmdLineOptions.asciis + cmdLineOptions.udps).each do |proc|
       br = cmdLineOptions.boardReaders[proc.board_reader_index]
       if br.hasBeenIncludedInXMLRPCList
         next
@@ -213,6 +214,7 @@ class CommandLineParser
     @options.toys = []
     @options.asciis = []
     @options.pbrs = []
+    @options.udps = []
     @options.boardReaders = []
     @options.dataDir = nil
     @options.command = nil
@@ -412,7 +414,7 @@ class CommandLineParser
         v1720Config.board_id = Integer(v1720[2])
         v1720Config.kind = "V1720"
         v1720Config.fragType = "V1720"
-        v1720Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
+        v1720Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs + @options.udps).length
         v1720Config.board_reader_index = addToBoardReaderList(v1720Config.host, v1720Config.port,
                                                               v1720Config.kind, v1720Config.index)
         @options.v1720s << v1720Config
@@ -431,7 +433,7 @@ class CommandLineParser
         v1724Config.board_id = Integer(v1724[2])
         v1724Config.kind = "V1724"
         v1724Config.fragType = "V1724"
-        v1724Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
+        v1724Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).length
         v1724Config.board_reader_index = addToBoardReaderList(v1724Config.host, v1724Config.port,
                                                               v1724Config.kind, v1724Config.index)
         # NOTE that we're simply adding this to the 1720 list...
@@ -455,7 +457,7 @@ class CommandLineParser
           asciiConfig.string1 = ascii[3]
           asciiConfig.string2 = ascii[4]
         end
-        asciiConfig.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
+        asciiConfig.index = (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).length
         asciiConfig.board_reader_index = addToBoardReaderList(asciiConfig.host, asciiConfig.port,
                                                               asciiConfig.kind, asciiConfig.index)
         @options.asciis << asciiConfig
@@ -483,7 +485,7 @@ class CommandLineParser
         if toy1.length > 3 && toy1[3] != "na"
           toy1Config.eventSize = Integer(toy1[3])
         end
-        toy1Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
+        toy1Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).length
         toy1Config.board_reader_index = addToBoardReaderList(toy1Config.host, toy1Config.port,
                                                               toy1Config.kind, toy1Config.index, toy1Config.eventSize)
         @options.toys << toy1Config
@@ -512,17 +514,32 @@ class CommandLineParser
         if toy2.length > 3 && toy2[3] != "na"
           toy2Config.eventSize = Integer(toy2[3])
         end
-        toy2Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).length
+        toy2Config.index = (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).length
         toy2Config.board_reader_index = addToBoardReaderList(toy2Config.host, toy2Config.port,
                                                               toy2Config.kind, toy2Config.index, toy2Config.eventSize)
 
         @options.toys << toy2Config
       end
 
-      opts.on("-M", "--onmon-file [file name]",
-              "Specify a file name that the online monitoring will save to, for downstream consumers.") do |onmonFile|
-        @options.onmonFileEnabled = 1
-        @options.onmonFile = onmonFile
+      opts.on("--udp [host,port,board_id,udp_host,udp_port]", Array, 
+              "Add a UDP fragment receiver that runs on the specified host, port, ",
+              "and board ID. It will connect to a data source at udp_host:udp_port.") do |udp|
+        if udp.length < 5
+          puts "You must specifiy a host, port, and board ID."
+          exit
+        end
+        udpConfig = OpenStruct.new
+        udpConfig.host = udp[0]
+        udpConfig.port = Integer(udp[1])
+        udpConfig.board_id = Integer(udp[2])
+        udpConfig.kind = "UDP"
+        udpConfig.udp_host = udp[3]
+        udpConfig.udp_port = Integer(udp[4])
+        udpConfig.index = (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).length
+        udpConfig.board_reader_index = addToBoardReaderList(udpConfig.host, udpConfig.port,
+                                                              udpConfig.kind, udpConfig.index)
+
+        @options.udps << udpConfig
       end
 
       opts.on("-d", "--data-dir [data dir]", 
@@ -530,10 +547,11 @@ class CommandLineParser
         @options.dataDir = dataDir
       end
 
-      opts.on("-m", "--online-monitoring [enabled]", Array,
+      opts.on("-m", "--online-monitoring [enabled,file_path]", Array,
               "Whether to run the online monitoring modules,", 
               "also whether and whither to send file output from the online monitoring" ) do |runOnmon|
-        @options.runOnmon = Integer(runOnmon)
+        @options.runOnmon = Integer(runOnmon[0])
+        @options.onmonFile = runOnmon[1]
       end
 
       opts.on("-w", "--write-data [enable flag (0 or 1)]", 
@@ -650,7 +668,7 @@ class CommandLineParser
     # is running on which host.
     puts "Configuration Summary:"
     hostMap = {}
-    (@options.eventBuilders + @options.v1720s + @options.toys + @options.aggregators + @options.asciis + @options.pbrs).each do |proc|
+    (@options.eventBuilders + @options.v1720s + @options.toys + @options.aggregators + @options.asciis + @options.udps + @options.pbrs).each do |proc|
       if not hostMap.keys.include?(proc.host)
         hostMap[proc.host] = []
       end
@@ -680,6 +698,9 @@ class CommandLineParser
              item.port,
              item.index,
              item.board_id]
+        when "UDP"
+          puts "    FragmentGenerator, UDPReceiver, port %d, rank %d, board_id %d" %
+             [ item.port, item.index, item.board_id ]
         end
       end
       puts ""
@@ -713,8 +734,9 @@ class SystemControl
     totalv1724s = 0
     totaltoy1s = 0
     totaltoy2s = 0
-    totalasciis = 0
-    totalpbrs = 0
+    totalasciis = @options.asciis.length
+    totalpbrs = @options.pbrs.length
+    totaludps = @options.udps.length
     @options.v1720s.each do |proc|
       case proc.kind
       when "V1720"
@@ -731,13 +753,7 @@ class SystemControl
         totaltoy2s += 1
       end
     end
-    @options.asciis.each do |proc|
-      totalasciis += 1
-    end
-    @options.pbrs.each do |proc|
-      totalpbrs += 1
-    end
-    totalBoards = @options.v1720s.length + @options.toys.length + @options.asciis.length + @options.pbrs.length
+    totalBoards = @options.v1720s.length + @options.toys.length + @options.asciis.length + @options.udps.length + @options.pbrs.length
     totalFRs = @options.boardReaders.length
     totalEBs = @options.eventBuilders.length
     totalAGs = @options.aggregators.length
@@ -756,7 +772,7 @@ class SystemControl
 
     # John F., 1/21/14 -- added the toy fragment generators
 
-    (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).each { |boardreaderOptions|
+    (@options.v1720s + @options.toys + @options.asciiss + @options.udps + @options.pbrs).each { |boardreaderOptions|
       br = @options.boardReaders[boardreaderOptions.board_reader_index]
       listIndex = 0
       br.kindList.each do |kind|
@@ -791,6 +807,9 @@ class SystemControl
           elsif kind == "ASCII"
             generatorCode = generateAscii(boardreaderOptions.index, 
                                          boardreaderOptions.board_id, kind, 100000)
+          elsif kind == "UDP"
+            generatorCode = generateUDP(boardreaderOptions.index, boardreaderOptions.board_id,
+                                        boardreaderOptions.udp_port, boardreaderOptions.udp_host )
           elsif kind == "TOY1" || kind == "TOY2"
         
             # The third argument refers to the pause, in us, before
@@ -828,7 +847,7 @@ class SystemControl
 
     threads = []
 
-    (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).each { |proc|
+    (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).each { |proc|
       br = @options.boardReaders[proc.board_reader_index]
       if br.boardCount > 1
         if br.commandHasBeenSent
@@ -878,8 +897,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(ebOptions.host, "/RPC2", 
                                           ebOptions.port)
 
-        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.board_id },
-                                        (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.fragType }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).map { |board| board.fragType }
                                        )
 
         puts "HAVE %d v1720s and %d v1724s" % [ totalv1720s, totalv1724s ]
@@ -917,8 +936,8 @@ class SystemControl
         xmlrpcClient = XMLRPC::Client.new(agOptions.host, "/RPC2", 
                                           agOptions.port)
 
-        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.board_id },
-                                        (@options.v1720s + @options.toys + @options.asciis + @options.pbrs).map { |board| board.fragType }
+        fclWFViewer = generateWFViewer( (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).map { |board| board.board_id },
+                                        (@options.v1720s + @options.toys + @options.asciis + @options.udps + @options.pbrs).map { |board| board.fragType }
                                         )
 
         if @options.onmon_modules = "" || @options.onmon_modules = nil
@@ -934,7 +953,8 @@ class SystemControl
                                  @options.fileDurationSeconds,
                                  @options.eventsInFile, fclWFViewer, ONMON_EVENT_PRESCALE,
                                  @options.onmon_modules, agOptions.host, agOptions.port,
-                                 @options.onmonFileEnabled, @options.onmonFile)
+                                 @options.onmonFileEnabled, @options.onmonFile,
+                                 agOptions.host, agOptions.port)
 
         if @options.serialize
           fileName = "Aggregator_%s_%d.fcl" % [agOptions.host, agOptions.port]
@@ -966,6 +986,7 @@ class SystemControl
     self.sendCommandSet("start", @options.pbrs, runNumber)
     self.sendCommandSet("start", @options.toys, runNumber)
     self.sendCommandSet("start", @options.asciis, runNumber)
+    self.sendCommandSet("start", @options.udps, runNumber)
   end
 
   def sendCommandSet(commandName, procs, commandArg = nil)
@@ -1033,6 +1054,9 @@ class SystemControl
         when "ASCII"
           puts "%s: ASCII FragmentReceiver on %s:%d result: %s" %
             [currentTime, proc.host, proc.port, result]
+        when "UDP"
+          puts "%s: UDP FragmentReceiver on %s:%d result: %s" %
+            [currentTime, proc.host, proc.port, result]
         when "multi-board"
           puts "%s: multi-board FragmentReceiver on %s:%d result: %s" %
             [currentTime, proc.host, proc.port, result]
@@ -1053,6 +1077,7 @@ class SystemControl
     self.sendCommandSet("shutdown", @options.toys)
     self.sendCommandSet("shutdown", @options.asciis)
     self.sendCommandSet("shutdown", @options.pbrs)
+    self.sendCommandSet("shutdown", @options.udps)
     self.sendCommandSet("shutdown", @options.eventBuilders)
     self.sendCommandSet("shutdown", @options.aggregators)
   end
@@ -1062,6 +1087,7 @@ class SystemControl
     self.sendCommandSet("pause", @options.toys)
     self.sendCommandSet("pause", @options.asciis)
     self.sendCommandSet("pause", @options.pbrs)
+    self.sendCommandSet("pause", @options.udps)
     self.sendCommandSet("pause", @options.eventBuilders)
     self.sendCommandSet("pause", @options.aggregators)
   end
@@ -1199,6 +1225,7 @@ class SystemControl
     self.sendCommandSet("stop", @options.toys)
     self.sendCommandSet("stop", @options.asciis)
     self.sendCommandSet("stop", @options.pbrs)
+    self.sendCommandSet("stop", @options.udps)
     self.sendCommandSet("stop", @options.eventBuilders)
     @options.aggregators.each do |proc|
       tmpList = []
@@ -1214,6 +1241,7 @@ class SystemControl
     self.sendCommandSet("resume", @options.toys)
     self.sendCommandSet("resume", @options.asciis)
     self.sendCommandSet("resume", @options.pbrs)
+    self.sendCommandSet("resume", @options.udps)
   end
 
   def checkStatus()
@@ -1223,6 +1251,7 @@ class SystemControl
     self.sendCommandSet("status", @options.toys)
     self.sendCommandSet("status", @options.asciis)
     self.sendCommandSet("status", @options.pbrs)
+    self.sendCommandSet("status", @options.udps)
   end
 
   def getLegalCommands()
@@ -1232,6 +1261,7 @@ class SystemControl
     self.sendCommandSet("legal_commands", @options.toys)
     self.sendCommandSet("legal_commands", @options.asciis)
     self.sendCommandSet("legal_commands", @options.pbrs)
+    self.sendCommandSet("legal_commands", @options.udps)
   end
 end
 
