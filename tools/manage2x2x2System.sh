@@ -51,7 +51,7 @@ function launch() {
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[1]},$ebComp \
     --ag `hostname`,${ARTDAQDEMO_AG_PORT[0]},1,$agComp \
     --ag `hostname`,${ARTDAQDEMO_AG_PORT[1]},1,$agComp \
-    --data-dir ${5} --online-monitoring ${4},${onmonFile},${onmonPath} \
+    --data-dir ${5} --online-monitoring ${4},${onmonFile} \
     --write-data ${7} --run-event-count ${8} \
     --run-duration ${9} --file-size ${10} \
     --file-event-count ${11} --file-duration ${12} \

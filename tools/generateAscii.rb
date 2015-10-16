@@ -12,7 +12,7 @@ def generateAscii(startingFragmentId, boardId,
     fragment_id: %{starting_fragment_id}
     board_id: %{board_id}
     sleep_on_stop_us: 500000 " \
-                          + read_fcl("PatternSimulator.fcl") )
+                          + read_fcl("AsciiSimulator.fcl") )
   
   asciiConfig.gsub!(/\%\{starting_fragment_id\}/, String(startingFragmentId))
   asciiConfig.gsub!(/\%\{board_id\}/, String(boardId))

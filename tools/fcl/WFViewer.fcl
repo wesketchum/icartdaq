@@ -15,6 +15,6 @@ digital_sum_only: false
 #num_x_plots: 3
 #num_y_plots: 1
 
-%{enable_onmon} write_to_file: %{write_to_file}
-%{enable_onmon} %{onmon_fileName}
+%{onmon_file_enable} write_to_file: true
+%{onmon_file_enable} %{onmon_fileName}
 
