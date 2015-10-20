@@ -228,17 +228,17 @@ elif [[ -n ${productsdir:-} ]] ; then
 fi
 
 
-$git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
+$git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
 if [ $? -eq 0 ]; then
 	echo doing the demo
 
-    $artdaq_demo_dir/tools/xt_cmd.sh $git_working_path --geom '132x33 -sl 2500' \
+    $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
         -c '. ./setupARTDAQDEMO' \
         -c examples/asciiSimulator/start1x2x2System.sh
     sleep 2
 
-    $artdaq_demo_dir/tools/xt_cmd.sh $git_working_path --geom 132 \
+    $git_working_path/tools/xt_cmd.sh $root --geom 132 \
         -c '. ./setupARTDAQDEMO' \
         -c ':,sleep 10' \
         -c 'examples/asciiSimulator/manage1x2x2System.sh init' \
@@ -249,6 +249,8 @@ if [ $? -eq 0 ]; then
         -c ':,sleep 5' \
         -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
         -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
+        -c ': To see the output from the ASCII Simulator, run' \
+        -c ': art -c ../artdaq-demo/artdaq-demo/ArtModules/fcl/asciiDump.fcl /tmp/artdaqdemo_r000101_sr01_*.root;cat out.bin' \
         -c ':: manage1x2x2System.sh --help' \
         -c ':: manage1x2x2System.sh exit'
 else

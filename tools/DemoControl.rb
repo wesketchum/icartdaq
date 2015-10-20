@@ -381,7 +381,7 @@ class CommandLineParser
         @options.eventBuilders << ebConfig
       end
 
-      opts.on("--ag [host,port,bunch_size,compression_level]", Array,
+      opts.on("--ag [host,port,bunch_size,compression_level,demoPrescale]", Array,
               "Add an aggregator that runs on the",
               "specified host and port.  Also specify the",
               "number of events to pass to art per bunch,",
@@ -397,6 +397,9 @@ class CommandLineParser
         agConfig.kind = "ag"
         agConfig.bunch_size = Integer(ag[2])
         agConfig.compression_level = Integer(ag[3])
+        if ag.length == 5
+            agConfig.demoPrescale = Integer(ag[4])
+        end
         agConfig.index = @options.aggregators.length
         @options.aggregators << agConfig
       end
@@ -948,7 +951,7 @@ class SystemControl
                                  totalFRs, totalEBs, agOptions.bunch_size,
                                  agOptions.compression_level,
                                  totalv1720s, totalv1724s,
-                                 @options.runOnmon, @options.writeData,
+                                 @options.runOnmon, @options.writeData, agOptions.demoPrescale,
                                  agIndexThread, totalAGs, inputBuffSizeWords,
                                  xmlrpcClients, @options.fileSizeThreshold,
                                  @options.fileDurationSeconds,

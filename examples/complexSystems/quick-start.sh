@@ -79,10 +79,9 @@ test -n "${do_help-}" -o $# -ge 2 && echo "$USAGE" && exit
 test $# -eq 1 && root=$1
 
 #check that $0 is in a git repo
-tools_path=`dirname $0`
-tools_path=`cd "$tools_path" >/dev/null;pwd`
-tools_dir=`basename $tools_path`
-git_working_path=`dirname $tools_path`
+example_path=`dirname $0`
+example_path=`cd "$example_path/.." >/dev/null;pwd`
+git_working_path=`dirname $example_path`
 cd "$git_working_path" >/dev/null
 git_working_path=$PWD
 
@@ -105,7 +104,7 @@ exec 2> >(tee "$root/log/$stderr_file")
 
 git_status=`git status 2>/dev/null`
 git_sts=$?
-if [ $git_sts -ne 0 -o $tools_dir != tools ];then
+if [ $git_sts -ne 0 ];then
     echo problem with git or quick-start.sh script is not from/in a git repository
     exit 1
 fi
@@ -120,9 +119,9 @@ if [ "$branch" = develop -a -z "${opt_HEAD-}" ];then
     git status | grep -q 'working directory clean' || git stash
     echo "checking out tag $tag"
     git checkout $tag
-elif [ -n "${opt_HEAD-}" -a "$branch" != develop ];then # opt_HEAD is set (nonzero length)
-    echo "checking out develop"
-    git checkout develop
+#elif [ -n "${opt_HEAD-}" -a "$branch" != develop ];then # opt_HEAD is set (nonzero length)
+#    echo "checking out develop"
+#    git checkout develop
 else
     echo "no checkout -- branch = $branch"
 fi
@@ -167,8 +166,8 @@ fi
 #    echo error: missing tools/downloadDeps.sh
 #    exit 1
 #fi
-if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
-    echo error: missing tools/installArtDaqDemo.sh
+if [ ! -x $git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ];then
+    echo error: missing examples/asciiSimulator/installArtDaqDemo.sh
     exit 1
 fi
 
@@ -229,14 +228,36 @@ elif [[ -n ${productsdir:-} ]] ; then
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
+$git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
+if [ $? -eq 0 ]; then
+	echo doing the demo
 
+    $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
+        -c '. ./setupARTDAQDEMO' \
+        -c examples/asciiSimulator/start1x2x2System.sh
+    sleep 2
+
+    $git_working_path/tools/xt_cmd.sh $root --geom 132 \
+        -c '. ./setupARTDAQDEMO' \
+        -c ':,sleep 10' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh init' \
+        -c ':,sleep 5' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh -N 101 start' \
+        -c ':,sleep 10' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh stop' \
+        -c ':,sleep 5' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
+        -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
+        -c ': To see the output from the ASCII Simulator, run' \
+        -c ': art -c ../artdaq-demo/artdaq-demo/ArtModules/fcl/asciiDump.fcl /tmp/artdaqdemo_r000101_sr01_*.root;cat out.bin' \
+        -c ':: manage1x2x2System.sh --help' \
+        -c ':: manage1x2x2System.sh exit'
+else
+    echo "BUILD ERROR!!! SOMETHING IS VERY WRONG!!!"
+fi
 
 endtime=`date`
 
 echo $starttime
 echo $endtime
-
-
-

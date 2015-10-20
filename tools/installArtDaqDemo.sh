@@ -6,7 +6,6 @@ USAGE="\
 example: `basename $0` products artdaq-demo --run-demo
 <demo_products>    where products were installed (products/)
 <artdaq-demo_root> directory where artdaq-demo was cloned into.
---run-demo   runs the demo
 --HEAD        all git repo'd packages checked out from HEAD of develop branches
 --debug      perform a debug build
 -c           \"clean\" build dirs -- may be need during development
@@ -31,7 +30,6 @@ while [ -n "${1-}" ];do
         \?*|h*)    eval $op1chr; do_help=1;;
         v*)        eval $op1chr; opt_v=`expr $opt_v + 1`;;
         x*)        eval $op1chr; set -x;;
-        -run-demo) opt_run_demo=--run-demo;;
 	    -HEAD) opt_HEAD=--HEAD;;
         -debug)    opt_debug=--debug;;
         c*)        eval $op1chr; opt_clean=1;;
@@ -43,7 +41,7 @@ while [ -n "${1-}" ];do
 done
 eval "set -- $args \"\$@\""; unset args aa
 
-test -n "${do_help-}" -o $# -ne 2 && echo "$USAGE" && exit
+test -n "${do_help-}" -o $# -ne 2 && echo "$USAGE" && exit 2
 
 test -d $1 || { echo "products directory ($1) not found"; exit 1; }
 products_dir=`cd "$1" >/dev/null;pwd`
@@ -85,35 +83,36 @@ function install_package {
     echo IN $PWD: about to . ../$packagename/ups/setup_for_development
     . ../$packagename/ups/setup_for_development -${build_arg} $@
     echo FINISHED ../$packagename/ups/setup_for_development
-    buildtool ${opt_clean+-c} -i
+    buildtool ${opt_clean+-c} -i && res=0 || res=1
     cd ..
+    return $res
 }
 
 . $products_dir/setup
 
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq-core develop
+install_package artdaq-core develop || exit 1
 else
-install_package artdaq-core v1_04_17 e7 s15
+install_package artdaq-core v1_04_17 e7 s15 || exit 1
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq-core-demo develop
+install_package artdaq-core-demo develop || exit 1
 else
-install_package artdaq-core-demo v1_04_01 e7 s15
+install_package artdaq-core-demo v1_04_01 e7 s15 || exit 1
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-    install_package artdaq-utilities develop
+    install_package artdaq-utilities develop || exit 1
 else
-    install_package artdaq-utilities v1_00_00 e7 s15
+    install_package artdaq-utilities v1_00_00 e7 s15 || exit 1
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq develop
+install_package artdaq develop || exit 1
 else
-install_package artdaq v1_12_12a e7 s15 eth
+install_package artdaq v1_12_12a e7 s15 eth || exit 1
 fi
 
 if [  -n "${opt_HEAD-}" ];then
@@ -154,29 +153,5 @@ fi
 echo "Building artdaq-demo..."
 cd $ARTDAQDEMO_BUILD
 . $demo_dir/setupARTDAQDEMO
-buildtool ${opt_clean+-c}
+buildtool ${opt_clean+-c} && exit 0 || exit 1
 
-echo "Installation and build complete; please see https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/wiki/Running_a_sample_artdaq-demo_system for instructions on how to run"
-
-if [ -n "${opt_run_demo-}" ];then
-    echo doing the demo
-
-    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom '132x33 -sl 2500' \
-        -c '. ./setupARTDAQDEMO' \
-        -c start2x2x2System.sh
-    sleep 2
-
-    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132 \
-        -c '. ./setupARTDAQDEMO' \
-        -c ':,sleep 10' \
-        -c 'manage2x2x2System.sh -m on init' \
-        -c ':,sleep 5' \
-        -c 'manage2x2x2System.sh -N 101 start' \
-        -c ':,sleep 10' \
-        -c 'manage2x2x2System.sh stop' \
-        -c ':,sleep 5' \
-        -c 'manage2x2x2System.sh shutdown' \
-        -c ': For additional commands, see output from: manage2x2x2System.sh --help' \
-        -c ':: manage2x2x2System.sh --help' \
-        -c ':: manage2x2x2System.sh exit'
-fi

@@ -229,9 +229,32 @@ elif [[ -n ${productsdir:-} ]] ; then
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
+$git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
+if [ $? -eq 0 ]; then
+	echo doing the demo
 
+    $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
+        -c '. ./setupARTDAQDEMO' \
+        -c start2x2x2System.sh
+    sleep 2
+
+    $git_working_path/tools/xt_cmd.sh $root --geom 132 \
+        -c '. ./setupARTDAQDEMO' \
+        -c ':,sleep 10' \
+        -c 'manage2x2x2System.sh -m on init' \
+        -c ':,sleep 5' \
+        -c 'manage2x2x2System.sh -N 101 start' \
+        -c ':,sleep 10' \
+        -c 'manage2x2x2System.sh stop' \
+        -c ':,sleep 5' \
+        -c 'manage2x2x2System.sh shutdown' \
+        -c ': For additional commands, see output from: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh exit'
+else
+    echo "BUILD ERROR!!! SOMETHING IS VERY WRONG!!!"
+fi
 
 endtime=`date`
 

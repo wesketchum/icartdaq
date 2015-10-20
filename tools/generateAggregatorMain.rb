@@ -7,7 +7,7 @@ require File.join( File.dirname(__FILE__), 'generateCompression' )
 
 def generateAggregatorMain(dataDir, runNumber, totalFRs, totalEBs, bunchSize,
                            compressionLevel, totalv1720s, totalv1724s, onmonEnable,
-                           diskWritingEnable, agIndex, totalAGs, fragSizeWords,
+                           diskWritingEnable, demoPrescale, agIndex, totalAGs, fragSizeWords,
                            xmlrpcClientList, fileSizeThreshold, fileDuration,
                            fileEventCount, fclWFViewer, onmonEventPrescale, 
                            onmon_modules, onmonFileEnable, onmonOutputDir,
@@ -38,19 +38,19 @@ outputs: {
   %{root_output}  compressionLevel: 0
   %{root_output}}
 
-  %{root_output}normalOutputMod2: {
-  %{root_output}  module_type: RootOutput
-  %{root_output}  fileName: \"%{output_file_mod2}\"
-  %{root_output}  SelectEvents: { SelectEvents: [ pmod2 ] }
-  %{root_output}  compressionLevel: 0
-  %{root_output}}
+  %{root_output2}normalOutputMod2: {
+  %{root_output2}  module_type: RootOutput
+  %{root_output2}  fileName: \"%{output_file_mod2}\"
+  %{root_output2}  SelectEvents: { SelectEvents: [ pmod2 ] }
+  %{root_output2}  compressionLevel: 0
+  %{root_output2}}
 
-  %{root_output}normalOutputMod3: {
-  %{root_output}  module_type: RootOutput
-  %{root_output}  fileName: \"%{output_file_mod3}\"
-  %{root_output}  SelectEvents: { SelectEvents: [ pmod3 ] }
-  %{root_output}  compressionLevel: 0
-  %{root_output}}
+  %{root_output2}normalOutputMod3: {
+  %{root_output2}  module_type: RootOutput
+  %{root_output2}  fileName: \"%{output_file_mod3}\"
+  %{root_output2}  SelectEvents: { SelectEvents: [ pmod3 ] }
+  %{root_output2}  compressionLevel: 0
+  %{root_output2}}
 
 }
 physics: {
@@ -175,6 +175,11 @@ process_name: DAQAG"
     agConfig.gsub!(/\%\{root_output\}/, "")
   else
     agConfig.gsub!(/\%\{root_output\}/, "#")
+  end
+  if Integer(demoPrescale) != 0
+    agConfig.gsub!(/\%\{root_output2\}/,"")
+  else
+    agConfig.gsub!(/\%\{root_output2\}/,"#")
   end
   if Integer(onmonEnable) != 0
     agConfig.gsub!(/\%\{phys_anal_onmon_cfg\}/, fclWFViewer )
