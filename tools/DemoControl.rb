@@ -269,6 +269,7 @@ class CommandLineParser
         dlConfig.kind = "ag"
         dlConfig.bunch_size = 1
         dlConfig.compression_level = 0
+        dlConfig.demoPrescale =0
         dlConfig.index = 0
         @options.aggregators << dlConfig
         omConfig = OpenStruct.new
@@ -277,6 +278,7 @@ class CommandLineParser
         omConfig.kind = "ag"
         omConfig.bunch_size = 1
         omConfig.compression_level = 0
+        omConfig.demoPrescale = 0
         omConfig.index = 1
         @options.aggregators << omConfig
 
@@ -399,6 +401,8 @@ class CommandLineParser
         agConfig.compression_level = Integer(ag[3])
         if ag.length == 5
             agConfig.demoPrescale = Integer(ag[4])
+        else
+            agConfig.demoPrescale = 0
         end
         agConfig.index = @options.aggregators.length
         @options.aggregators << agConfig

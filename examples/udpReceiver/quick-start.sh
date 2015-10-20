@@ -166,8 +166,8 @@ fi
 #    echo error: missing tools/downloadDeps.sh
 #    exit 1
 #fi
-if [ ! -x $git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ];then
-    echo error: missing examples/asciiSimulator/installArtDaqDemo.sh
+if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
+    echo error: missing tools/installArtDaqDemo.sh
     exit 1
 fi
 
@@ -235,22 +235,24 @@ if [ $? -eq 0 ]; then
 
     $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
         -c '. ./setupARTDAQDEMO' \
-        -c examples/asciiSimulator/start1x2x2System.sh
+        -c examples/udpReceiver/start1x2x2System.sh
     sleep 2
 
     $git_working_path/tools/xt_cmd.sh $root --geom 132 \
         -c '. ./setupARTDAQDEMO' \
         -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh init' \
+        -c 'examples/udpReceiver/manage1x2x2System.sh init' \
         -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh -N 101 start' \
-        -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh stop' \
+        -c 'examples/udpReceiver/manage1x2x2System.sh -N 201 start' \
+        -c ':,sleep 2' \
+        -c 'multi_udp_send_artdaq.py localhost:3001 0 50 0 1' \
         -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
+        -c 'examples/udpReceiver/manage1x2x2System.sh stop' \
+        -c ':,sleep 5' \
+        -c 'examples/udpReceiver/manage1x2x2System.sh shutdown' \
         -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
-        -c ': To see the output from the ASCII Simulator, run' \
-        -c ': art -c ../artdaq-demo/artdaq-demo/ArtModules/fcl/asciiDump.fcl /tmp/artdaqdemo_r000101_sr01_*.root;cat out.bin' \
+        -c ': To see the output from the UDP Receiver, run' \
+        -c ': art -c readRoot.fcl /tmp/artdaqdemo_r000201_sr01_*.root' \
         -c ':: manage1x2x2System.sh --help' \
         -c ':: manage1x2x2System.sh exit'
 else

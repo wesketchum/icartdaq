@@ -94,7 +94,8 @@ physics: {
 
   %{enable_onmon}a1: %{onmon_modules}
 
-  %{root_output}my_output_modules: [ normalOutput, normalOutputMod2, normalOutputMod3 ]
+  %{root_output}my_output_modules: [ normalOutput ]
+  %{root_output2}my_output_modules: [ normalOutput, normalOutputMod2, normalOutputMod3 ]
 }
 process_name: DAQAG"
 )

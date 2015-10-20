@@ -166,8 +166,8 @@ fi
 #    echo error: missing tools/downloadDeps.sh
 #    exit 1
 #fi
-if [ ! -x $git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ];then
-    echo error: missing examples/asciiSimulator/installArtDaqDemo.sh
+if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
+    echo error: missing tools/installArtDaqDemo.sh
     exit 1
 fi
 
