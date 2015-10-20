@@ -41,7 +41,7 @@ while [ -n "${1-}" ];do
 done
 eval "set -- $args \"\$@\""; unset args aa
 
-test -n "${do_help-}" -o $# -ne 2 && echo "$USAGE" && exit
+test -n "${do_help-}" -o $# -ne 2 && echo "$USAGE" && exit 2
 
 test -d $1 || { echo "products directory ($1) not found"; exit 1; }
 products_dir=`cd "$1" >/dev/null;pwd`
@@ -83,35 +83,36 @@ function install_package {
     echo IN $PWD: about to . ../$packagename/ups/setup_for_development
     . ../$packagename/ups/setup_for_development -${build_arg} $@
     echo FINISHED ../$packagename/ups/setup_for_development
-    buildtool ${opt_clean+-c} -i
+    buildtool ${opt_clean+-c} -i && res=0 || res=1
     cd ..
+    return $res
 }
 
 . $products_dir/setup
 
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq-core develop
+install_package artdaq-core develop || exit 1
 else
-install_package artdaq-core v1_04_17 e7 s15
+install_package artdaq-core v1_04_17 e7 s15 || exit 1
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq-core-demo develop
+install_package artdaq-core-demo develop || exit 1
 else
-install_package artdaq-core-demo v1_04_01 e7 s15
+install_package artdaq-core-demo v1_04_01 e7 s15 || exit 1
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-    install_package artdaq-utilities develop
+    install_package artdaq-utilities develop || exit 1
 else
-    install_package artdaq-utilities v1_00_00 e7 s15
+    install_package artdaq-utilities v1_00_00 e7 s15 || exit 1
 fi
 
 if [ -n "${opt_HEAD-}" ];then
-install_package artdaq develop
+install_package artdaq develop || exit 1
 else
-install_package artdaq v1_12_12a e7 s15 eth
+install_package artdaq v1_12_12a e7 s15 eth || exit 1
 fi
 
 if [  -n "${opt_HEAD-}" ];then
@@ -152,25 +153,5 @@ fi
 echo "Building artdaq-demo..."
 cd $ARTDAQDEMO_BUILD
 . $demo_dir/setupARTDAQDEMO
-buildtool ${opt_clean+-c}
+buildtool ${opt_clean+-c} && exit 0 || exit 1
 
-    echo doing the demo
-
-    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom '132x33 -sl 2500' \
-        -c '. ./setupARTDAQDEMO' \
-        -c examples/asciiSimulator/start1x2x2System.sh
-    sleep 2
-
-    $artdaq_demo_dir/tools/xt_cmd.sh $demo_dir --geom 132 \
-        -c '. ./setupARTDAQDEMO' \
-        -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh -m on init' \
-        -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh -N 101 start' \
-        -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh stop' \
-        -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
-        -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
-        -c ':: manage1x2x2System.sh --help' \
-        -c ':: manage1x2x2System.sh exit'

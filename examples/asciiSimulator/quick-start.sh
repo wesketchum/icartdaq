@@ -119,9 +119,9 @@ if [ "$branch" = develop -a -z "${opt_HEAD-}" ];then
     git status | grep -q 'working directory clean' || git stash
     echo "checking out tag $tag"
     git checkout $tag
-elif [ -n "${opt_HEAD-}" -a "$branch" != develop ];then # opt_HEAD is set (nonzero length)
-    echo "checking out develop"
-    git checkout develop
+#elif [ -n "${opt_HEAD-}" -a "$branch" != develop ];then # opt_HEAD is set (nonzero length)
+#    echo "checking out develop"
+#    git checkout develop
 else
     echo "no checkout -- branch = $branch"
 fi
@@ -230,12 +230,32 @@ fi
 
 $git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
+if [ $? -eq 0 ]; then
+	echo doing the demo
 
+    $artdaq_demo_dir/tools/xt_cmd.sh $git_working_path --geom '132x33 -sl 2500' \
+        -c '. ./setupARTDAQDEMO' \
+        -c examples/asciiSimulator/start1x2x2System.sh
+    sleep 2
+
+    $artdaq_demo_dir/tools/xt_cmd.sh $git_working_path --geom 132 \
+        -c '. ./setupARTDAQDEMO' \
+        -c ':,sleep 10' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh init' \
+        -c ':,sleep 5' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh -N 101 start' \
+        -c ':,sleep 10' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh stop' \
+        -c ':,sleep 5' \
+        -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
+        -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
+        -c ':: manage1x2x2System.sh --help' \
+        -c ':: manage1x2x2System.sh exit'
+else
+    echo "BUILD ERROR!!! SOMETHING IS VERY WRONG!!!"
+fi
 
 endtime=`date`
 
 echo $starttime
 echo $endtime
-
-
-
