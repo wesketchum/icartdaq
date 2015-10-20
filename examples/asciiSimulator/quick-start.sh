@@ -79,10 +79,9 @@ test -n "${do_help-}" -o $# -ge 2 && echo "$USAGE" && exit
 test $# -eq 1 && root=$1
 
 #check that $0 is in a git repo
-tools_path=`dirname $0`
-tools_path=`cd "$tools_path" >/dev/null;pwd`
-tools_dir=`basename $tools_path`
-git_working_path=`dirname $tools_path`
+example_path=`dirname $0`
+example_path=`cd "$example_path/.." >/dev/null;pwd`
+git_working_path=`dirname $example_path`
 cd "$git_working_path" >/dev/null
 git_working_path=$PWD
 
@@ -105,7 +104,7 @@ exec 2> >(tee "$root/log/$stderr_file")
 
 git_status=`git status 2>/dev/null`
 git_sts=$?
-if [ $git_sts -ne 0 -o $tools_dir != tools ];then
+if [ $git_sts -ne 0 ];then
     echo problem with git or quick-start.sh script is not from/in a git repository
     exit 1
 fi
@@ -167,8 +166,8 @@ fi
 #    echo error: missing tools/downloadDeps.sh
 #    exit 1
 #fi
-if [ ! -x $git_working_path/tools/installArtDaqDemo.sh ];then
-    echo error: missing tools/installArtDaqDemo.sh
+if [ ! -x $git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ];then
+    echo error: missing examples/asciiSimulator/installArtDaqDemo.sh
     exit 1
 fi
 
@@ -229,7 +228,7 @@ elif [[ -n ${productsdir:-} ]] ; then
 fi
 
 
-$git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_run_demo-} ${opt_debug-} ${opt_HEAD-}
+$git_working_path/examples/asciiSimulator/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
 
 
