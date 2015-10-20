@@ -145,6 +145,9 @@ ad_qual=`grep ^${add_defaultqual}:${build_type} $git_working_path/ups/product_de
 # pullProducts expects a qualifier like "s6-e6", get that out of the full ARTDAQ qualifier
 defaultqual=`echo $ad_qual|grep -oE "s[0-9]+"`-`echo $ad_qual|grep -oE "e[0-9]+"`
 defaultqualWithS=$defaultqual
+# Scisoft stores them the other way around...go figure
+defaultqualForScisoft=`echo $ad_qual|grep -oE "e[0-9]+"`-`echo $ad_qual|grep -oE "s[0-9]+"`
+defaultqualForUPS=`echo $defaultqualForScisoft:$build_type|sed 's/-/:/g'`
 
 # JCF, 5/26/15
 # More fun - we now want to strip away the "sX" part of the qualifier...
@@ -213,6 +216,14 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type"
     ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type
 #    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
+
+    (source ../products/setups;setup artdaq_mfextensions v1_0_3 -q$defaultqualForUPS && exit 0 || exit 1)
+    if [ $? -ne 0 ]; then
+        echo "artdaq_mfextensions not found, installing..."
+        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_mfextensions/v1_0_3/artdaq_mfextensions-1.0.3-slf6-x86_64-$defaultqualForScisoft-$build_type.tar.bz2
+        cd ../products
+        tar -xf ../download/artdaq_mfextensions*.tar.bz2
+    fi
     cd ..
 
 elif [[ -n ${productsdir:-} ]] ; then 
@@ -235,24 +246,23 @@ if [ $? -eq 0 ]; then
 
     $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
         -c '. ./setupARTDAQDEMO' \
-        -c examples/asciiSimulator/start1x2x2System.sh
+        -c "setup artdaq_mfextensions v1_0_3 -q$defaultqualForUPS" \
+        -c examples/mfextensions/start2x2x2System.sh
     sleep 2
 
     $git_working_path/tools/xt_cmd.sh $root --geom 132 \
         -c '. ./setupARTDAQDEMO' \
         -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh init' \
+        -c 'examples/mfextensions/manage2x2x2System.sh init' \
         -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh -N 101 start' \
+        -c 'examples/mfextensions/manage2x2x2System.sh -N 101 start' \
         -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh stop' \
+        -c 'examples/mfextensions/manage2x2x2System.sh stop' \
         -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
+        -c 'examples/mfextensions/manage2x2x2System.sh shutdown' \
         -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
-        -c ': To see the output from the ASCII Simulator, run' \
-        -c ': art -c ../artdaq-demo/artdaq-demo/ArtModules/fcl/asciiDump.fcl /tmp/artdaqdemo_r000101_sr01_*.root;cat out.bin' \
-        -c ':: manage1x2x2System.sh --help' \
-        -c ':: manage1x2x2System.sh exit'
+        -c ':: manage2x2x2System.sh --help' \
+        -c ':: manage2x2x2System.sh exit'
 else
     echo "BUILD ERROR!!! SOMETHING IS VERY WRONG!!!"
 fi
