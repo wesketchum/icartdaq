@@ -54,5 +54,5 @@ else
   makeLogDirs $logroot
 
   # start PMT
-  pmt.rb -p ${ARTDAQ_BASE_PORT} -C $configFile --logpath ${logroot} --display ${DISPLAY}
+  pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -C $configFile --logpath ${logroot} --display ${DISPLAY}
 fi

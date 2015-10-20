@@ -562,6 +562,12 @@ class CommandLineParser
         @options.onmonFile = runOnmon[2]
       end
 
+      opts.on("--onmon-file [file_path]",
+              "File name for onmon output") do |onmonFile|
+        @options.onmonFileEnabled = 1
+        @options.onmonFile = onmonFile
+      end
+
       opts.on("-w", "--write-data [enable flag (0 or 1)]", 
               "Whether to write data to disk.") do |writeData|
         @options.writeData = writeData

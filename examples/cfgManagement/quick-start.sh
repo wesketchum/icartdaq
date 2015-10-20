@@ -233,26 +233,14 @@ $git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_worki
 if [ $? -eq 0 ]; then
 	echo doing the demo
 
-    $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
-        -c '. ./setupARTDAQDEMO' \
-        -c examples/asciiSimulator/start1x2x2System.sh
+    $git_working_path/tools/xt_cmd.sh $root/build_artdaq-utilities/node.js --geom '132x33 -sl 2500' \
+        -c './setupNodeServer.sh' \
+        -c 'node serverbase.js'
     sleep 2
 
     $git_working_path/tools/xt_cmd.sh $root --geom 132 \
-        -c '. ./setupARTDAQDEMO' \
-        -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh init' \
-        -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh -N 101 start' \
-        -c ':,sleep 10' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh stop' \
-        -c ':,sleep 5' \
-        -c 'examples/asciiSimulator/manage1x2x2System.sh shutdown' \
-        -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
-        -c ': To see the output from the ASCII Simulator, run' \
-        -c ': art -c ../artdaq-demo/artdaq-demo/ArtModules/fcl/asciiDump.fcl /tmp/artdaqdemo_r000101_sr01_*.root;cat out.bin' \
-        -c ':: manage1x2x2System.sh --help' \
-        -c ':: manage1x2x2System.sh exit'
+       -c 'get-cert -i' \
+       -c 'firefox https://`hostname -f`:8081'
 else
     echo "BUILD ERROR!!! SOMETHING IS VERY WRONG!!!"
 fi
