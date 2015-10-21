@@ -24,5 +24,5 @@ mkdir -p -m 0777 ${logroot}/aggregator
 msgviewer -c $ARTDAQ_MFEXTENSIONS_FQ_DIR/bin/msgviewer.fcl 2>&1 >/dev/null &
 
 # start PMT
-pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --logfhicl "$ARTDAQDEMO_REPO/examples/mfextensions/fcl/MessageFacility.fcl" --display ${DISPLAY}
+pmt.rb -p ${ARTDAQDEMO_PMT_PORT} -d $tempFile --logpath ${logroot} --logfhicl "$ARTDAQDEMO_REPO/examples/metrics/fcl/MessageFacility.fcl" --display ${DISPLAY}
 rm $tempFile

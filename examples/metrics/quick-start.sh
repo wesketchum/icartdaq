@@ -224,6 +224,21 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
         cd ../products
         tar -xf ../download/artdaq_mfextensions*.tar.bz2
     fi
+    (source ../products/setups;setup artdaq_ganglia_plugin v1_0_8 -q$defaultqualForUPS:g371 && exit 0 || exit 1)
+    if [ $? -ne 0 ]; then
+        echo "artdaq_ganglia_plugin not found, installing..."
+        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_ganglia_plugin/v1_0_8/artdaq_ganglia_plugin-1.0.8-slf6-x86_64-e7-g371-s15-$build_type.tar.bz2
+        cd ../products
+        tar -xf ../download/artdaq_ganglia_plugin*.tar.bz2
+    fi
+    # 10/21/15 ELF: artdaq_epics_plugin not on scisoft yet...
+    #(source ../products/setups;setup artdaq_epics_plugin v1_0_0-q$defaultqualForUPS && exit 0 || exit 1)
+    #if [ $? -ne 0 ]; then
+    #    echo "artdaq_epics_plugin not found, installing..."
+    #    wget http://scisoft.fnal.gov/scisoft/packages/artdaq_epics_plugin/v1_0_0/artdaq_epics_plugin-1.0.0-slf6-x86_64-$defaultqualForScisoft-$build_type.tar.bz2
+    #    cd ../products
+    #    tar -xf ../download/artdaq_epics_plugin*.tar.bz2
+    #fi
     cd ..
 
 elif [[ -n ${productsdir:-} ]] ; then 
@@ -247,19 +262,20 @@ if [ $? -eq 0 ]; then
     $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
         -c '. ./setupARTDAQDEMO' \
         -c "setup artdaq_mfextensions v1_0_3 -q$defaultqualForUPS" \
-        -c examples/mfextensions/start2x2x2System.sh
+        -c "setup artdaq_ganglia_plugin v1_0_8 -q$defaultqualForUPS:g371" \
+        -c examples/metrics/start2x2x2System.sh
     sleep 2
 
     $git_working_path/tools/xt_cmd.sh $root --geom 132 \
         -c '. ./setupARTDAQDEMO' \
         -c ':,sleep 10' \
-        -c 'examples/mfextensions/manage2x2x2System.sh init' \
+        -c 'examples/metrics/manage2x2x2System.sh init' \
         -c ':,sleep 5' \
-        -c 'examples/mfextensions/manage2x2x2System.sh -N 101 start' \
+        -c 'examples/metrics/manage2x2x2System.sh -N 101 start' \
         -c ':,sleep 10' \
-        -c 'examples/mfextensions/manage2x2x2System.sh stop' \
+        -c 'examples/metrics/manage2x2x2System.sh stop' \
         -c ':,sleep 5' \
-        -c 'examples/mfextensions/manage2x2x2System.sh shutdown' \
+        -c 'examples/metrics/manage2x2x2System.sh shutdown' \
         -c ': For additional commands, see output from: manage1x2x2System.sh --help' \
         -c ':: manage2x2x2System.sh --help' \
         -c ':: manage2x2x2System.sh exit'
