@@ -2,6 +2,7 @@
 
 
 require "erb"
+require "open3"
 
 firstport = 5200
 
@@ -29,19 +30,21 @@ class ConfigWriter
   def initialize config, xmlrpclist, firstport
     @@firstport = firstport
     @rank = config["rank"]
-    @tier = config["tier"]        
-    @infile = config["conf"][0]
-    @outfile = "%s_%s_%s.fcl.out" % [config["name"] , config["host"], (@@firstport + config["rank"]).to_s ]
-    #@xmlrpc_clients = xmlrpc_client_list_from	
+    @tier = config["tier"]
+    @infile = File.expand_path(File.dirname(__FILE__)) + "/../../snippets/" + config["conf"][0]
+    @outfile = "%s_%s_%s." % [config["name"] , config["host"], (@@firstport + config["rank"]).to_s ]
     @conf = config["conf"][1]
     @xmlrpclist = xmlrpclist
   end
 
   def write
-    result = ERB.new(File.read(@infile)).result( binding )
-    outputFile = File.new(@outfile,File::CREAT|File::TRUNC|File::RDWR)        
-    outputFile.write(result)
-    outputFile.close
+    templated_fcl = File.new(@outfile+"template.fcl",File::CREAT|File::TRUNC|File::RDWR)        
+    templated_fcl.write(ERB.new(File.read(@infile)).result( binding ))
+    templated_fcl.close
+
+    expanded_fcl = File.new(@outfile+"fcl",File::CREAT|File::TRUNC|File::RDWR)
+    Open3.popen3("readfhicl","-c",@outfile+"template.fcl") { |i, o,e, t| expanded_fcl.write(o.read) }
+    expanded_fcl.close
   end
 end
 
