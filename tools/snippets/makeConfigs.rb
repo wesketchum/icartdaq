@@ -31,7 +31,11 @@ class ConfigWriter
     @@firstport = firstport
     @rank = config["rank"]
     @tier = config["tier"]
-    @infile = File.expand_path(File.dirname(__FILE__)) + "/../../snippets/" + config["conf"][0]
+    basePath = ENV['ARTDAQ_DEMO_DIR']
+    if ! ENV['ARTDAQ_DEMO_DIR']
+      basePath = ENV['ARTDAQDEMO_REPO']
+    end
+    @infile = basePath + "/snippets/" + config["conf"][0]
     @outfile = "%s_%s_%s." % [config["name"] , config["host"], (@@firstport + config["rank"]).to_s ]
     @conf = config["conf"][1]
     @xmlrpclist = xmlrpclist

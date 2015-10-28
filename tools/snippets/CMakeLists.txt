@@ -8,12 +8,5 @@ file(GLOB FCL_TEMPLATES "templates/*.fcl")
 install( FILES ${FCL_TEMPLATES}
          DESTINATION ${flavorqual_dir}/../snippets/templates )
 
-art_make_exec(readfhicl
-  LIBRARIES
-  ${FHICLCPP}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  ${CETLIB}
-  )
-
 # Is this necessary?
 #install_source()

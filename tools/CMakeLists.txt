@@ -22,7 +22,14 @@ art_make_exec(demo_driver
   ${MPI_C_LIBRARIES}
   ${CETLIB}
   )
-  
+
+art_make_exec(readfhicl
+  LIBRARIES
+  ${FHICLCPP}
+  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+  ${CETLIB}
+  )  
+
 add_subdirectory(snippets)
 
 # Is this necessary?

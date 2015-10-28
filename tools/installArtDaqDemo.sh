@@ -136,7 +136,7 @@ if [ ! -e ./setupARTDAQDEMO -o "${opt_clean-}" == 1 ]; then
 
 	export ARTDAQDEMO_BUILD="$demo_dir/build_artdaq-demo"
 	export ARTDAQDEMO_REPO="$artdaq_demo_dir"
-	export FHICL_FILE_PATH=.:\$ARTDAQDEMO_REPO/tools/fcl:\$FHICL_FILE_PATH
+	export FHICL_FILE_PATH=.:\$ARTDAQDEMO_REPO/tools/snippets:\$ARTDAQDEMO_REPO/tools/fcl:\$FHICL_FILE_PATH
 
 	echo changing directory to \$ARTDAQDEMO_BUILD
 	cd \$ARTDAQDEMO_BUILD  # note: next line adjusts PATH based one cwd
