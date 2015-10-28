@@ -23,6 +23,7 @@ art_make_exec(demo_driver
   ${CETLIB}
   )
   
+add_subdirectory(snippets)
 
 # Is this necessary?
 #install_source()
