@@ -268,6 +268,7 @@ if [ $? -eq 0 ]; then
 
     $git_working_path/tools/xt_cmd.sh $root --geom 132 \
         -c '. ./setupARTDAQDEMO' \
+        -c 'export FHICL_FILE_PATH=$PWD/examples/metrics/fhicl:$FHICL_FILE_PATH' \
         -c ':,sleep 10' \
         -c 'examples/metrics/manage2x2x2System.sh init' \
         -c ':,sleep 5' \
