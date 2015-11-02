@@ -1,4 +1,4 @@
-cet_script(makeConfigs.rb)
+# cet_script(makeConfigs.rb)
 
 file(GLOB ERBFCL_TEMPLATES "*.erb.fcl")
 install( FILES ${ERBFCL_TEMPLATES}

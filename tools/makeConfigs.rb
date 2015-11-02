@@ -35,7 +35,7 @@ class ConfigWriter
     if ! ENV['ARTDAQ_DEMO_DIR']
       basePath = ENV['ARTDAQDEMO_REPO']
     end
-    @infile = basePath + "/snippets/" + config["conf"][0]
+    @infile = basePath + "/tools/snippets/" + config["conf"][0]
     @outfile = "%s_%s_%s." % [config["name"] , config["host"], (@@firstport + config["rank"]).to_s ]
     @conf = config["conf"][1]
     @xmlrpclist = xmlrpclist
