@@ -227,7 +227,7 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     (source ../products/setups;setup artdaq_ganglia_plugin v1_0_8 -q$defaultqualForUPS:g371 && exit 0 || exit 1)
     if [ $? -ne 0 ]; then
         echo "artdaq_ganglia_plugin not found, installing..."
-        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_ganglia_plugin/v1_0_8/artdaq_ganglia_plugin-1.0.8-slf6-x86_64-e7-g371-s15-$build_type.tar.bz2
+        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_ganglia_plugin/v1_0_9/artdaq_ganglia_plugin-1.0.9-slf6-x86_64-e7-g371-s15-$build_type.tar.bz2
         cd ../products
         tar -xf ../download/artdaq_ganglia_plugin*.tar.bz2
     fi
@@ -262,7 +262,7 @@ if [ $? -eq 0 ]; then
     $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
         -c '. ./setupARTDAQDEMO' \
         -c "setup artdaq_mfextensions v1_0_3 -q$defaultqualForUPS" \
-        -c "setup artdaq_ganglia_plugin v1_0_8 -q$defaultqualForUPS:g371" \
+        -c "setup artdaq_ganglia_plugin v1_0_9 -q$defaultqualForUPS:g371" \
         -c examples/metrics/start2x2x2System.sh
     sleep 2
 
@@ -273,7 +273,7 @@ if [ $? -eq 0 ]; then
         -c 'examples/metrics/manage2x2x2System.sh init' \
         -c ':,sleep 5' \
         -c 'examples/metrics/manage2x2x2System.sh -N 101 start' \
-        -c ':,sleep 10' \
+        -c ':,sleep 90' \
         -c 'examples/metrics/manage2x2x2System.sh stop' \
         -c ':,sleep 5' \
         -c 'examples/metrics/manage2x2x2System.sh shutdown' \

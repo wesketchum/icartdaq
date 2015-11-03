@@ -44,7 +44,7 @@ function launch() {
     onmonPath="/tmp"
   fi
 
-  DemoControl.rb ${enableSerial} -s -c $1 \
+  examples/metrics/DemoControl.rb ${enableSerial} -s -c $1 \
     --toy1 `hostname`,${ARTDAQDEMO_BR_PORT[0]},0,${14},${15} \
     --toy2 `hostname`,${ARTDAQDEMO_BR_PORT[1]},1,${14},${16} \
     --eb `hostname`,${ARTDAQDEMO_EB_PORT[0]},$ebComp \

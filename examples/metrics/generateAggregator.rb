@@ -31,25 +31,25 @@ daq: {
     }
     ganglia: {
       metricPluginType: \"ganglia\"
-      level: 0
+      level: 3
       reporting_interval: 15.0
 
       configFile: \"/etc/ganglia/gmond.conf\"
       group: \"ARTDAQ\"
     }
     msgfac: {
-       level: 0 
+       level: 3
        metricPluginType: \"msgFacility\"
        output_message_application_name: \"ARTDAQ Metric\"
        output_message_severity: 0 
     }
-    graphite: {
-      level: 0
-      metricPluginType: \"graphite\"
-      host: \"localhost\"
-      port: 2003
-      namespace: \"artdaq.\"
-    }
+    #graphite: {
+    #  level: 0
+    #  metricPluginType: \"graphite\"
+    #  host: \"localhost\"
+    #  port: 20030
+    #  namespace: \"artdaq.\"
+    #}
   }
 }" )
 
