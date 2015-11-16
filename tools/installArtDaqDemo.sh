@@ -90,12 +90,16 @@ function install_package {
 
 . $products_dir/setup
 
-
-if [ -n "${opt_HEAD-}" ];then
-install_package artdaq-core develop || exit 1
-else
+# ELF 11/16/15
+# Removing artdaq-core from the develop products list, as it frequently changes.
+# I'm assuming that anyone who wants to do development in artdaq-core can figure
+# out how to get it anyway.
+# if [ -n "${opt_HEAD-}" ];then
+# install_package artdaq-core develop || exit 1
+# else
+# install_package artdaq-core v1_04_20 e7 s15 || exit 1
+# fi
 install_package artdaq-core v1_04_20 e7 s15 || exit 1
-fi
 
 if [ -n "${opt_HEAD-}" ];then
 install_package artdaq-core-demo develop || exit 1

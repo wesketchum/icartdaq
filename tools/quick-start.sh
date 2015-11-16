@@ -231,7 +231,7 @@ fi
 
 $git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
-if [ $? -eq 0 ]; then
+if [ $? -eq 0 ] && [ "x${opt_run_demo}" != "x" ]; then
 	echo doing the demo
 
     $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
