@@ -231,7 +231,9 @@ fi
 
 $git_working_path/tools/installArtDaqDemo.sh ${productsdir:-products} $git_working_path ${opt_debug-} ${opt_HEAD-}
 
-if [ $? -eq 0 ] && [ "x${opt_run_demo}" != "x" ]; then
+installStatus=$?
+
+if [ $installStatus -eq 0 ] && [ "x${opt_run_demo-}" != "x" ]; then
 	echo doing the demo
 
     $git_working_path/tools/xt_cmd.sh $root --geom '132x33 -sl 2500' \
@@ -252,14 +254,20 @@ if [ $? -eq 0 ] && [ "x${opt_run_demo}" != "x" ]; then
         -c ': For additional commands, see output from: manage2x2x2System.sh --help' \
         -c ':: manage2x2x2System.sh --help' \
         -c ':: manage2x2x2System.sh exit'
+elif [ $installStatus -eq 0 ]; then
+    echo "artdaq-demo has been installed correctly. Please see: "
+    echo "https://cdcvs.fnal.gov/redmine/projects/artdaq-demo/wiki/Running_a_sample_artdaq-demo_system"
+    echo "for instructions on how to run, or re-run this script with the --run-demo option"
+    echo
 else
     echo "BUILD ERROR!!! SOMETHING IS VERY WRONG!!!"
+    echo
 fi
 
 endtime=`date`
 
-echo $starttime
-echo $endtime
+echo "Build start time: $starttime"
+echo "Build end time:   $endtime"
 
 
 
