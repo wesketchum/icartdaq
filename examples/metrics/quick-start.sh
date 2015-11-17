@@ -213,21 +213,26 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
     chmod +x pullProducts
     version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
-    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type"
-    ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type
+    
+    echo "Cloning cetpkgsupport to determine current OS"
+    git clone http://cdcvs.fnal.gov/projects/cetpkgsupport
+    os=`./cetpkgsupport/bin/get-directory-name os`
+
+    echo "Running ./pullProducts ../products ${os} artdaq-${version} $defaultqualWithS $build_type"
+    ./pullProducts ../products ${os} artdaq-${version} $defaultqualWithS $build_type
 #    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
 
     (source ../products/setups;setup artdaq_mfextensions v1_0_3 -q$defaultqualForUPS && exit 0 || exit 1)
     if [ $? -ne 0 ]; then
         echo "artdaq_mfextensions not found, installing..."
-        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_mfextensions/v1_0_3/artdaq_mfextensions-1.0.3-slf6-x86_64-$defaultqualForScisoft-$build_type.tar.bz2
+        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_mfextensions/v1_0_3/artdaq_mfextensions-1.0.3-${os}-x86_64-$defaultqualForScisoft-$build_type.tar.bz2
         cd ../products
         tar -xf ../download/artdaq_mfextensions*.tar.bz2
     fi
     (source ../products/setups;setup artdaq_ganglia_plugin v1_0_8 -q$defaultqualForUPS:g371 && exit 0 || exit 1)
     if [ $? -ne 0 ]; then
         echo "artdaq_ganglia_plugin not found, installing..."
-        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_ganglia_plugin/v1_0_9/artdaq_ganglia_plugin-1.0.9-slf6-x86_64-e7-g371-s15-$build_type.tar.bz2
+        wget http://scisoft.fnal.gov/scisoft/packages/artdaq_ganglia_plugin/v1_0_9/artdaq_ganglia_plugin-1.0.9-${os}-x86_64-e7-g371-s15-$build_type.tar.bz2
         cd ../products
         tar -xf ../download/artdaq_ganglia_plugin*.tar.bz2
     fi
@@ -235,7 +240,7 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     #(source ../products/setups;setup artdaq_epics_plugin v1_0_0-q$defaultqualForUPS && exit 0 || exit 1)
     #if [ $? -ne 0 ]; then
     #    echo "artdaq_epics_plugin not found, installing..."
-    #    wget http://scisoft.fnal.gov/scisoft/packages/artdaq_epics_plugin/v1_0_0/artdaq_epics_plugin-1.0.0-slf6-x86_64-$defaultqualForScisoft-$build_type.tar.bz2
+    #    wget http://scisoft.fnal.gov/scisoft/packages/artdaq_epics_plugin/v1_0_0/artdaq_epics_plugin-1.0.0-${os}-x86_64-$defaultqualForScisoft-$build_type.tar.bz2
     #    cd ../products
     #    tar -xf ../download/artdaq_epics_plugin*.tar.bz2
     #fi

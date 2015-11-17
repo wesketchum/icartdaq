@@ -210,8 +210,13 @@ if [[ ! -n ${productsdir:-} && ( ! -d products || ! -d download || -n "${opt_for
     wget http://scisoft.fnal.gov/scisoft/bundles/tools/pullProducts
     chmod +x pullProducts
     version=`grep "^artdaq " $git_working_path/ups/product_deps | awk '{print $2}'`
-    echo "Running ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type"
-    ./pullProducts ../products slf6 artdaq-${version} $defaultqualWithS $build_type
+    
+    echo "Cloning cetpkgsupport to determine current OS"
+    git clone http://cdcvs.fnal.gov/projects/cetpkgsupport
+    os=`./cetpkgsupport/bin/get-directory-name os`
+
+    echo "Running ./pullProducts ../products ${os} artdaq-${version} $defaultqualWithS $build_type"
+    ./pullProducts ../products ${os} artdaq-${version} $defaultqualWithS $build_type
 #    $git_working_path/tools/downloadDeps.sh  ../products $defaultqual $build_type
     cd ..
 
