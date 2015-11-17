@@ -14,3 +14,7 @@ digital_sum_only: false
 
 #num_x_plots: 3
 #num_y_plots: 1
+
+%{onmon_file_enable} write_to_file: true
+%{onmon_file_enable} %{onmon_fileName}
+

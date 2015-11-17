@@ -74,6 +74,10 @@ add_subdirectory(test)
 # tools
 add_subdirectory(tools)
 
+# examples
+FILE(COPY examples DESTINATION .)
+INSTALL(DIRECTORY examples DESTINATION ${product}/${version})
+
 # ups - table and config files
 add_subdirectory(ups)
 
