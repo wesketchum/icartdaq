@@ -62,7 +62,7 @@ void demo::CAEN2795Dump::analyze(art::Event const & evt)
   // look for raw CAEN2795 data
 
   art::Handle<artdaq::Fragments> raw;
-  evt.getByLabel(raw_data_label_, frag_type_, raw);
+  evt.getByLabel(raw_data_label_, raw);
 
   if(!raw.isValid()){
     std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
@@ -119,7 +119,7 @@ void demo::CAEN2795Dump::analyze(art::Event const & evt)
       std::ofstream output ("out.bin", std::ios::out | std::ios::app | std::ios::binary );
       for (uint32_t i_adc = 0; i_adc < num_adcs_to_show_; ++i_adc) {
 	output.write((char*)(bb.dataBegin() + i_adc),sizeof(CAEN2795Fragment::adc_t));
-	std::cout << std::hex << std::setfill(0) << std::setw(4) << *(bb.dataBegin() + i_adc);
+	std::cout << std::hex << std::setfill('0') << std::setw(4) << *(bb.dataBegin() + i_adc);
 	if(i_adc%8==7) std::cout << std::endl;
       }
       output.close();
@@ -127,8 +127,6 @@ void demo::CAEN2795Dump::analyze(art::Event const & evt)
       std::cout << std::endl;
     }
   }
-}
-
 }
 
 DEFINE_ART_MODULE(demo::CAEN2795Dump)

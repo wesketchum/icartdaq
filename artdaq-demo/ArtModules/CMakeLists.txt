@@ -46,6 +46,7 @@ simple_plugin(ArtdaqDemoBuildInfo "module"
  simple_plugin(DataCharacterizer "module")
  simple_plugin(EventDump "module")
 simple_plugin(ToyDump "module")
+simple_plugin(CAEN2795Dump "module")
 simple_plugin(ASCIIDump "module")
 simple_plugin(CompressionChecker "module" ${ARTDAQ_DAQDATA} ${ARTDAQ-CORE_DATA})
 
