@@ -20,6 +20,12 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#define PBLT_SIZE     (61440)                     // in byte
+#define RECORD_LENGTH (4*1024)                    // waveform length (in samples)
+#define EVENT_SIZE    ((RECORD_LENGTH * 32) + 3)  // Event Size in lwords
+#define NEV_READ      (1)                         // num of event to read with one BLT
+#define BUFFER_SIZE   (EVENT_SIZE * NEV_READ)     // readout buffer size
+
 namespace {
 
   size_t typeToADC(demo::FragmentType type)
@@ -193,7 +199,78 @@ void demo::CAEN2795::stop() {
   start();
 }
 
+// ---------------------------------------------------------------------------
+// Read a block of data (32 events???) and get the waveforms
+// ---------------------------------------------------------------------------
+int ReadEvent(int handle,int *nb)
+{
+  uint32_t* buff;   // Max ev size = 4K sample per channel = 4*1024*32+3
+  int ret, nw, nword, s;
+  
+  //int32_t OneSample[32];
+  //unsigned short CHeSample;
+  //unsigned short CHoSample;
+  int record_length=4096;
+  
+  
+  
+  // malloc BLT buffer 
+  buff = (uint32_t*)malloc(BUFFER_SIZE*4);
+  
+  
+  // Execute Readout
+  nword=0;
+  
+  ret = CAENComm_BLTRead(handle, A_OutputBuffer, buff, BUFFER_SIZE, &nw);
+  if ((ret != CAENComm_Success) && (ret != CAENComm_Terminated)){
+    printf("BLTReadCycle Error on Module (ret = %d)\n", ret);
+    //getch();
+    //return 2;
+  }
+  nword=nword+(nw);
+  auto Evnum = buff[0] & 0x00FFFFFF;
+  auto Timestamp = buff[1];
+
+  std::cout << "EventNumber and Timestamp are " << Evnum << ", " << Timestamp << std::endl;
+  
+  for(s=0; s<record_length; s++){  // HACK: iterare su pi� eventi
+    // 1 sample 32 word
+    for(nw=0; nw<32; nw++){
+      //OneSample[nw] = buff[(32*s)+nw+2];
+    }
+    /*
+    for(ch=0;ch<64;ch++){
+      if ((ch%2)==0){ // ch even
+	CHeSample = (unsigned short)(0x0000FFFF & OneSample[(ch/2)]);
+	acq.wave[ch][s] = CHeSample;
+      }
+      else {          // ch odd
+	CHoSample = (unsigned short)((0xFFFF0000 & OneSample[(ch/2)]) >> 16);
+	acq.wave[ch][s] = CHoSample;
+      }
+    }
+    */
+  }
+  *nb=nword*4;
+  
+  free(buff);
+  
+  return 0;
+}
+
 bool demo::CAEN2795::getNext_(artdaq::FragmentPtrs & frags) {
+
+  
+  unsigned int data;
+  CAENComm_Read32(LinkHandle[0], A_StatusReg, &data);
+  data = (data & STATUS_DRDY);
+
+  int nb;
+  if ((data & STATUS_DRDY) != 0)
+    ReadEvent(LinkHandle[0],&nb);
+
+  std::cout << "nb val is " << nb << std::endl;
+
 
   // JCF, 9/23/14
 
