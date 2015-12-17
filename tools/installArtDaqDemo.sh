@@ -49,7 +49,7 @@ artdaq_demo_dir=`cd "$2" >/dev/null;pwd`
 demo_dir=`dirname "$artdaq_demo_dir"`
 
 export CETPKG_INSTALL=$products_dir
-export CETPKG_J=16
+export CETPKG_J=1
 
 test -d "$demo_dir/build_artdaq-demo" || mkdir "$demo_dir/build_artdaq-demo" 
 
@@ -83,7 +83,7 @@ function install_package {
     echo IN $PWD: about to . ../$packagename/ups/setup_for_development
     . ../$packagename/ups/setup_for_development -${build_arg} $@
     echo FINISHED ../$packagename/ups/setup_for_development
-    buildtool ${opt_clean+-c} -i && res=0 || res=1
+    buildtool -j1 ${opt_clean+-c} -i && res=0 || res=1
     cd ..
     return $res
 }
@@ -157,5 +157,5 @@ fi
 echo "Building artdaq-demo..."
 cd $ARTDAQDEMO_BUILD
 . $demo_dir/setupARTDAQDEMO
-buildtool ${opt_clean+-c} && exit 0 || exit 1
+buildtool -j1 ${opt_clean+-c} && exit 0 || exit 1
 
