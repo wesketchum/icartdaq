@@ -10,6 +10,8 @@
 #include "artdaq-core/Utilities/SimpleLookupPolicy.h"
 
 #include "CAENComm.h"
+//#include "keyb.h"
+//#include "keyb.c"
 
 #include <fstream>
 #include <iomanip>
@@ -56,8 +58,6 @@ demo::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-  int LinkHandle[8];
-  int LinkInit[8];
   int board_num  = 1;
   //uint32_t data;
   CAENComm_ErrorCode ret = CAENComm_Success;
@@ -69,34 +69,32 @@ demo::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
   ret = CAENComm_OpenDevice(CAENComm_OpticalLink, 0, 0, 0, &LinkHandle[0]);
 
   std::cout << "After OpenDevice. We have a ret code: " << ret << std::endl;
-
+  
   if (ret != CAENComm_Success) 
-     {
-     printf("Error opening the Optical Node (%d). \n", 0);
-     //getch();
-     //return 2;
-     }
+    {
+      printf("Error opening the Optical Node (%d). \n", 0);
+      return;
+    }
   else
-     {
-       std::cout << "After OpenDevice. Ret was success!  " << ret << std::endl;
-       LinkInit[0] = 1;
-     }
+    {
+      std::cout << "After OpenDevice. Ret was success!  " << ret << std::endl;
+      LinkInit[0] = 1;
+    }
   // sveglio eventuali SLAVE
   if (board_num > 1)
-     {
-     for (i = 1; i < board_num; i++)
+    {
+      for (i = 1; i < board_num; i++)
         {
-	//ret = CAENComm_OpenDevice(CAENComm_OpticalLink, 0, i, 0, &LinkHandle[i]);
-	if (ret != CAENComm_Success) 
-	   {
-	   printf("Error opening the Optical Node (%d). \n", board_num);
-	   //getch();
-	   //return 2;
-	   }
-	else {LinkInit[i] = 1;}
+	  ret = CAENComm_OpenDevice(CAENComm_OpticalLink, 0, i, 0, &LinkHandle[i]);
+	  if (ret != CAENComm_Success) 
+	    {
+	      printf("Error opening the Optical Node (%d). \n", board_num);
+	      return;
+	    }
+	  else {LinkInit[i] = 1;}
 	}
-     }
-  //CAENComm_Write32(LinkHandle[0], A_Signals, SIGNALS_TTLINK_ALIGN);
+    }
+  CAENComm_Write32(LinkHandle[0], A_Signals, SIGNALS_TTLINK_ALIGN);
   std::cout<<"LinkInit[0] = "<<LinkInit[0]<<std::endl;
   usleep(100);
 //-------------------------------------------------------------------------------------  
@@ -116,8 +114,84 @@ demo::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
     throw cet::exception("Error in CAEN2795: disallowed combination of throttle_usecs and throttle_usecs_check (see CAEN2795.hh for rules)");
   }
     
+
+  start();
 }
 
+//taken from SW_MULTI::test7
+void demo::CAEN2795::start() {
+
+  int loc_conet_node = 0;
+  //int loc_conet_handle;
+  int ret;
+  unsigned int data;
+  //unsigned int data_ap;
+  
+  printf("BOARD CONET NODE: (Default is %d) ", loc_conet_node);
+  //scanf("%d", &loc_conet_node);
+  
+  if (loc_conet_node <8){
+    // la scheda non è inizializzata
+    if ((!LinkInit[loc_conet_node])) {  
+      // inizializzo
+      ret = CAENComm_OpenDevice(CAENComm_OpticalLink, 0, loc_conet_node, 0, &LinkHandle[loc_conet_node]);  // init locale
+      if (ret != CAENComm_Success)
+	printf("Error opening the Conet Node (ret = %d). A2795 not found\n", ret);
+      else{
+	LinkInit[loc_conet_node] = 1;
+      }
+    }
+    
+    // RUN/NOT RUN
+    ret = CAENComm_Read32(LinkHandle[loc_conet_node], A_ControlReg, &data);
+    if ((data & CTRL_ACQRUN) == 0){ 
+      ret = CAENComm_Write32(LinkHandle[loc_conet_node], A_ControlReg_Set, CTRL_ACQRUN);
+      printf("\nBOARD RUNNING...\n");
+    }
+    else{
+      ret = CAENComm_Write32(LinkHandle[loc_conet_node], A_ControlReg_Clear, CTRL_ACQRUN);
+      printf("\nBOARD NOT RUNNING...\n");
+    }		
+  }
+  else{  // Parlo col MASTER
+    // il master non è inizializzato
+    if ((!LinkInit[0])) {  
+      // inizializzo
+      ret = CAENComm_OpenDevice(CAENComm_OpticalLink, 0, 0, 0, &LinkHandle[0]);  // init locale
+      if (ret != CAENComm_Success)
+	printf("Error opening the Conet Node 0 (ret = %d). A2795 MASTER not found\n", ret);
+      else{
+	LinkInit[0] = 1;
+      }
+    }
+    
+    usleep(100);
+    
+    // leggo se il master è già in run per decidere se dare SOR o EOR
+    CAENComm_Read32(LinkHandle[0], A_StatusReg, &data);
+    
+    //data_ap = (data & STATUS_RUNNING);
+    
+    if ((data & STATUS_RUNNING) == 0){
+      // Start Acq
+      CAENComm_Write32(LinkHandle[0], A_Signals, SIGNALS_TTLINK_SOR);  
+      printf("\nTTLink SOR...\n");
+    }
+    else{
+      CAENComm_Write32(LinkHandle[0], A_Signals, SIGNALS_TTLINK_EOR);  
+      printf("\nTTLink EOR...\n");
+    }
+    CAENComm_Read32(LinkHandle[0], A_StatusReg, &data);
+    //data_ap = (data & STATUS_RUNNING);
+    
+  }
+  
+  usleep(100);
+}
+
+void demo::CAEN2795::stop() {
+  start();
+}
 
 bool demo::CAEN2795::getNext_(artdaq::FragmentPtrs & frags) {
 

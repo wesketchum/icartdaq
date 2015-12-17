@@ -44,6 +44,8 @@ namespace demo {
     // getNext_ function declared in CommandableFragmentGenerator
 
     bool getNext_(artdaq::FragmentPtrs & output) override;
+    void start() override;
+    void stop() override;
 
     // FHiCL-configurable variables. Note that the C++ variable names
     // are the FHiCL variable names with a "_" appended
@@ -58,6 +60,14 @@ namespace demo {
 
     std::mt19937 engine_;
     std::unique_ptr<std::uniform_int_distribution<int>> uniform_distn_;
+
+
+
+
+    int LinkHandle[8];
+    int LinkInit[8];
+
+
   };
 }
 
