@@ -33,9 +33,9 @@
 
 namespace demo {    
 
-  class CAEN2795_FakeData : public artdaq::CommandableFragmentGenerator {
+  class CAEN2795FakeData : public artdaq::CommandableFragmentGenerator {
   public:
-    explicit CAEN2795_FakeData(fhicl::ParameterSet const & ps);
+    explicit CAEN2795FakeData(fhicl::ParameterSet const & ps);
 
   private:
 

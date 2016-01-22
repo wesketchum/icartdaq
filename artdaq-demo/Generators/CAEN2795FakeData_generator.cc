@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 
-demo::CAEN2795_FakeData::CAEN2795_FakeData(fhicl::ParameterSet const & ps)
+demo::CAEN2795FakeData::CAEN2795FakeData(fhicl::ParameterSet const & ps)
   :
   CommandableFragmentGenerator(ps),
   nSamplesPerChannel_(ps.get<uint32_t>("nSamplesPerChannel",3000)),
@@ -39,7 +39,7 @@ demo::CAEN2795_FakeData::CAEN2795_FakeData(fhicl::ParameterSet const & ps)
     
 }
 
-bool demo::CAEN2795_FakeData::getNext_(artdaq::FragmentPtrs & frags) {
+bool demo::CAEN2795FakeData::getNext_(artdaq::FragmentPtrs & frags) {
 
   // JCF, 9/23/14
 
@@ -99,6 +99,8 @@ bool demo::CAEN2795_FakeData::getNext_(artdaq::FragmentPtrs & frags) {
 						      ev_counter(), fragment_id(),
 						      demo::detail::FragmentType::CAEN2795, metadata) );
 
+  std::cout << "Initialized data of size " << frags.back()->dataSize() << std::endl;
+
   // Then any overlay-specific quantities next; will need the
   // ToyFragmentWriter class's setter-functions for this
 
@@ -127,6 +129,8 @@ bool demo::CAEN2795_FakeData::getNext_(artdaq::FragmentPtrs & frags) {
 		    );
   }
 
+  std::cout << "Sending data of size " << frags.back()->dataSize() << std::endl;
+
   if(metricMan_ != nullptr) {
     metricMan_->sendMetric("Fragments Sent",ev_counter(), "Events", 3);
   }
@@ -141,4 +145,4 @@ bool demo::CAEN2795_FakeData::getNext_(artdaq::FragmentPtrs & frags) {
 }
 
 // The following macro is defined in artdaq's GeneratorMacros.hh header
-DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::CAEN2795_FakeData) 
+DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(demo::CAEN2795FakeData) 

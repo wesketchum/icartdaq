@@ -53,6 +53,7 @@ demo::CAEN2795Dump::~CAEN2795Dump()
 
 void demo::CAEN2795Dump::analyze(art::Event const & evt)
 {
+
   art::EventNumber_t eventNumber = evt.event();
 
   // ***********************
@@ -61,13 +62,13 @@ void demo::CAEN2795Dump::analyze(art::Event const & evt)
 
   // look for raw CAEN2795 data
 
-  art::Handle<artdaq::Fragments> raw;
-  evt.getByLabel(raw_data_label_, raw);
+  art::Handle< std::vector<artdaq::Fragment> > raw;
+  evt.getByLabel(raw_data_label_, "CAEN2795", raw);
 
   if(!raw.isValid()){
     std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
               << ", event " << eventNumber << " has zero"
-              << " CAEN2795 fragments." << std::endl;
+              << " CAEN2795 fragments " << " in module " << raw_data_label_ << std::endl;
     std::cout << std::endl;
     return;
   }
@@ -118,8 +119,9 @@ void demo::CAEN2795Dump::analyze(art::Event const & evt)
       
       std::ofstream output ("out.bin", std::ios::out | std::ios::app | std::ios::binary );
       for (uint32_t i_adc = 0; i_adc < num_adcs_to_show_; ++i_adc) {
-	output.write((char*)(bb.dataBegin() + i_adc),sizeof(CAEN2795Fragment::adc_t));
-	std::cout << std::hex << std::setfill('0') << std::setw(4) << *(bb.dataBegin() + i_adc);
+	output.write((char*)(bb.dataTotalBegin() + i_adc),sizeof(CAEN2795Fragment::adc_t));
+	std::cout << std::hex << std::setfill('0') << std::setw(4) << *(bb.dataTotalBegin() + i_adc);
+	std::cout << " ";
 	if(i_adc%8==7) std::cout << std::endl;
       }
       output.close();
