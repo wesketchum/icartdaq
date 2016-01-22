@@ -61,6 +61,19 @@ simple_plugin(CAEN2795 "generator"
   ${CETLIB}
   )
 
+simple_plugin(CAEN2795FakeData "generator"
+  artdaq-core-demo_Overlays
+  artdaq_Application
+  artdaq_DAQdata
+  artdaq-core_Utilities
+  artdaq-core_Data
+  ${ART_UTILITIES}
+  ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
+  ${CETLIB}
+  )
+
 simple_plugin(NormalSimulator "generator"
   artdaq-core-demo_Overlays
   artdaq_Application

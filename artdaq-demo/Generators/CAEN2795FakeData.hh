@@ -1,5 +1,5 @@
-#ifndef artdaq_demo_Generators_CAEN2795_hh
-#define artdaq_demo_Generators_CAEN2795_hh
+#ifndef artdaq_demo_Generators_CAEN2795_FAKEDATA_hh
+#define artdaq_demo_Generators_CAEN2795_FAKEDATA_hh
 
 // CAEN2795 is a simple type of fragment generator intended to be
 // studied by new users of artdaq as an example of how to create such
@@ -33,9 +33,9 @@
 
 namespace demo {    
 
-  class CAEN2795 : public artdaq::CommandableFragmentGenerator {
+  class CAEN2795_FakeData : public artdaq::CommandableFragmentGenerator {
   public:
-    explicit CAEN2795(fhicl::ParameterSet const & ps);
+    explicit CAEN2795_FakeData(fhicl::ParameterSet const & ps);
 
   private:
 
@@ -44,14 +44,15 @@ namespace demo {
     // getNext_ function declared in CommandableFragmentGenerator
 
     bool getNext_(artdaq::FragmentPtrs & output) override;
-    void start() override;
-    void stop() override;
 
     // FHiCL-configurable variables. Note that the C++ variable names
     // are the FHiCL variable names with a "_" appended
 
-    std::size_t const  nADCcounts_;     // ADC values per fragment per event
-    FragmentType const fragment_type_; // Type of fragment (see FragmentType.hh)
+    uint32_t const  nSamplesPerChannel_;
+    uint8_t  const  nADCBits_;
+    uint16_t const  nChannelsPerBoard_;
+    uint16_t const  nBoards_;
+    uint32_t const  RunNumber_;
     std::size_t const  throttle_usecs_;        // Sleep at start of each call to getNext_(), in us
     std::size_t const  throttle_usecs_check_;  // Period between checks for stop/pause during the sleep (must be less than, and an integer divisor of, throttle_usecs_)
 
@@ -61,13 +62,7 @@ namespace demo {
     std::unique_ptr<std::uniform_int_distribution<int>> uniform_distn_;
 
 
-    //Members for the hardware initialization
-
-    int LinkHandle[8];
-    int LinkInit[8];
-
-
   };
 }
 
-#endif /* artdaq_demo_Generators_CAEN2795_hh */
+#endif /* artdaq_demo_Generators_CAEN2795_FAKEDATA_hh */
