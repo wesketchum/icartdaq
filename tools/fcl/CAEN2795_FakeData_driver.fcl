@@ -2,7 +2,7 @@
 #  about the FHiCL language, please look at
 #  cdcvs.fnal.gov/redmine/documents/327 , the "FHiCL Quick Start Guide"
 
-events_to_generate: 2
+events_to_generate: 5
 run_number: 101
 
 fragment_receiver: {
@@ -19,9 +19,9 @@ fragment_receiver: {
 
    nADCBits: 12
    
-   nSamplesPerChannel: 16
-   nChannelsPerBoard: 64
-   nBoards: 1
+   nSamplesPerChannel: 4
+   nChannelsPerBoard: 4
+   nBoards: 4
    RunNumber: 001
    throttle_usecs: 1e5
    throttle_usecs_check: 1e4
@@ -50,7 +50,7 @@ physics:
     {
       module_type: CAEN2795Dump
       raw_data_label: "daq"
-      num_adcs_to_show: 20   # Obviously this should be no more than ADC counts per fragment
+      num_adcs_to_show: 50   # Obviously this should be no more than ADC counts per fragment
     }
   }
 

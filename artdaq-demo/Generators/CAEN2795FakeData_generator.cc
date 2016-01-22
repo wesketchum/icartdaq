@@ -108,7 +108,7 @@ bool demo::CAEN2795FakeData::getNext_(artdaq::FragmentPtrs & frags) {
 
   newfrag.set_hdr_run_number(RunNumber_);
 
-  newfrag.resize(nSamplesPerChannel_*nChannelsPerBoard_*nBoards_*2 + 2);
+  newfrag.resize(nSamplesPerChannel_*nChannelsPerBoard_*nBoards_ + 4*nBoards_);
 
   // And generate nADCcounts ADC values ranging from 0 to max with an
   // equal probability over the full range (a specific and perhaps
@@ -118,9 +118,9 @@ bool demo::CAEN2795FakeData::getNext_(artdaq::FragmentPtrs & frags) {
   uint32_t time_stamp = ev_counter() + 100;
 
   for(size_t i_b=0; i_b<nBoards_; i_b++){
-    newfrag.CAEN2795_hdr()->ev_num = (ev_counter() & 0xffffff);
-    newfrag.CAEN2795_hdr()->unused1 = 0;
-    newfrag.CAEN2795_hdr()->time_st = time_stamp;
+    newfrag.CAEN2795_hdr(i_b)->ev_num = (ev_counter() & 0xffffff);
+    newfrag.CAEN2795_hdr(i_b)->unused1 = 0;
+    newfrag.CAEN2795_hdr(i_b)->time_st = time_stamp;
     std::generate_n(newfrag.dataBegin(i_b), nSamplesPerChannel_*nChannelsPerBoard_,
 		    [&]() {
 		      return static_cast<CAEN2795Fragment::adc_t>
