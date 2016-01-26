@@ -56,16 +56,10 @@ physics:
 
   producers:
   {
-  artdaqDemoBuildInfo:
-  {
-   module_type: ArtdaqDemoBuildInfo
-
-   ArtdaqDemoBuildInfo: myInstanceName
-   }
   }
 
   a1: [ dump ]
-  p1: [ artdaqDemoBuildInfo ]
+  p1: [ ]
   e1: [ out1, rootout ]
   end_paths: [ e1, a1 ]
   #end_paths: [ e1 ]
@@ -93,7 +87,7 @@ source:
 module_type: RawInput
 waiting_time: 900
 resume_after_timeout: true
-fragment_type_map: [ [10, "CAEN2795" ] ]
+fragment_type_map: [ [2, "CAEN2795" ] ]
 }
 
 process_name: Driver

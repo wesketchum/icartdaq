@@ -1,5 +1,5 @@
 # ======================================================================
-#  artdaq-demo main build file
+#  icartdaq main build file
 #
 #  cd .../path/to/build/directory
 #  source .../path/to/artdaq-demo/ups/setup_for_development
@@ -11,7 +11,7 @@
 cmake_minimum_required (VERSION 2.8)
 
 
-project(artdaq-demo)
+project(icartdaq)
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
@@ -40,7 +40,7 @@ find_ups_product( cetbuildtools v3_03_00 )
 find_ups_product( artdaq v0_04_02 )
 find_ups_product( artdaq_utilities v1_00_00)
 find_ups_product( artdaq_core v1_00_00 )
-find_ups_product( artdaq_core_demo v0_00_01 )
+find_ups_product( icartdaq_core v0_00_01 )
 find_ups_product( art v1_06_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
@@ -66,17 +66,17 @@ include(BuildPlugins)
 include(CetTest)
 
 # source
-add_subdirectory(artdaq-demo)
+add_subdirectory(icartdaq)
 
 # testing
-add_subdirectory(test)
+#add_subdirectory(test)
 
 # tools
-add_subdirectory(tools)
+#add_subdirectory(tools)
 
 # examples
-FILE(COPY examples DESTINATION .)
-INSTALL(DIRECTORY examples DESTINATION ${product}/${version})
+#FILE(COPY examples DESTINATION .)
+#INSTALL(DIRECTORY examples DESTINATION ${product}/${version})
 
 # ups - table and config files
 add_subdirectory(ups)
