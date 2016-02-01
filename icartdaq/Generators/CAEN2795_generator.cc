@@ -29,8 +29,11 @@
 demo::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
   :
   CommandableFragmentGenerator(ps),
-  nADCcounts_(ps.get<size_t>("nADCcounts", 600000)),
-  fragment_type_(toFragmentType(ps.get<std::string>("fragment_type"))),
+  nSamplesPerChannel_(ps.get<uint32_t>("nSamplesPerChannel",3000)),
+  nADCBits_(ps.get<uint8_t>("nADCBits",12)),
+  nChannelsPerBoard_(ps.get<uint16_t>("nChannelsPerBoard",64)),
+  nBoards_(ps.get<uint16_t>("nBoards",9)),
+  RunNumber_(ps.get<uint32_t>("RunNumber",999)),
   throttle_usecs_(ps.get<size_t>("throttle_usecs", 100000)),
   throttle_usecs_check_(ps.get<size_t>("throttle_usecs_check", 10000)),
   engine_(ps.get<int64_t>("random_seed", 314159)),
@@ -170,9 +173,9 @@ void demo::CAEN2795::stop() {
 // ---------------------------------------------------------------------------
 // Read a block of data (32 events???) and get the waveforms
 // ---------------------------------------------------------------------------
-int ReadEvent(int handle,int *nb)
+int ReadEvent(int handle,int *nb,uint32_t* buff)
 {
-  uint32_t* buff;   // Max ev size = 4K sample per channel = 4*1024*32+3
+  //uint32_t* buff;   // Max ev size = 4K sample per channel = 4*1024*32+3
   int ret, nw, nword, s;
   
   //int32_t OneSample[32];
@@ -183,7 +186,7 @@ int ReadEvent(int handle,int *nb)
   
   
   // malloc BLT buffer 
-  buff = (uint32_t*)malloc(BUFFER_SIZE*4);
+  //buff = (uint32_t*)malloc(BUFFER_SIZE*4);
   
   
   // Execute Readout
@@ -201,6 +204,11 @@ int ReadEvent(int handle,int *nb)
 
   std::cout << "EventNumber and Timestamp are " << Evnum << ", " << Timestamp << std::endl;
   
+  for(size_t i_p=0; i_p<10*8; i_p++){
+    std::cout << "0x" << std::hex << buff[i_p] << " " << std::dec;
+    if(i_p%8==7) std::cout << std::endl;
+  }
+
   for(s=0; s<record_length; s++){  // HACK: iterare su pi� eventi
     // 1 sample 32 word
     for(nw=0; nw<32; nw++){
@@ -221,36 +229,14 @@ int ReadEvent(int handle,int *nb)
   }
   *nb=nword*4;
   
-  free(buff);
+  //free(buff);
   
   return 0;
 }
 
 bool demo::CAEN2795::getNext_(artdaq::FragmentPtrs & frags) {
 
-  
-  unsigned int data;
-  CAENComm_Read32(LinkHandle[0], A_StatusReg, &data);
-  data = (data & STATUS_DRDY);
-
-  int nb;
-  if ((data & STATUS_DRDY) != 0)
-    ReadEvent(LinkHandle[0],&nb);
-
-  std::cout << "nb val is " << nb << std::endl;
-
-
-  // JCF, 9/23/14
-
-  // If throttle_usecs_ is greater than zero (i.e., user requests a
-  // sleep interval before generating the pseudodata) then during that
-  // interval perform a periodic check to see whether a stop request
-  // has been received
-
-  // Values for throttle_usecs_ and throttle_usecs_check_ will have
-  // been tested for validity in constructor
-
-  if (throttle_usecs_ > 0) {
+    if (throttle_usecs_ > 0) {
     size_t nchecks = throttle_usecs_ / throttle_usecs_check_;
 
     for (size_t i_c = 0; i_c < nchecks; ++i_c) {
@@ -269,66 +255,72 @@ bool demo::CAEN2795::getNext_(artdaq::FragmentPtrs & frags) {
   // Set fragment's metadata
 
   CAEN2795Fragment::Metadata metadata;
-  //ToyFragment::Metadata metadata;
-  //metadata.board_serial_number = 999;
-  //metadata.num_adc_bits = typeToADC(fragment_type_);
-
-  // And use it, along with the artdaq::Fragment header information
-  // (fragment id, sequence id, and user type) to create a fragment
-
-  // We'll use the static factory function 
-
-  // artdaq::Fragment::FragmentBytes(std::size_t payload_size_in_bytes, sequence_id_t sequence_id,
-  //  fragment_id_t fragment_id, type_t type, const T & metadata)
-
-  // which will then return a unique_ptr to an artdaq::Fragment
-  // object. The advantage of this approach over using the
-  // artdaq::Fragment constructor is that, if we were to want to
-  // initialize the artdaq::Fragment with a nonzero-size payload (data
-  // after the artdaq::Fragment header and metadata), we could provide
-  // the size of the payload in bytes, rather than in units of the
-  // artdaq::Fragment's RawDataType (8 bytes, as of 3/26/14). The
-  // artdaq::Fragment constructor itself was not altered so as to
-  // maintain backward compatibility.
+  metadata.samples_per_channel = nSamplesPerChannel_;
+  metadata.num_adc_bits = nADCBits_;
+  metadata.channels_per_board = nChannelsPerBoard_;
+  metadata.num_boards = nBoards_;
 
   std::size_t initial_payload_size = 0;
 
   frags.emplace_back( artdaq::Fragment::FragmentBytes(initial_payload_size,  
 						      ev_counter(), fragment_id(),
-						      fragment_type_, metadata) );
+						      demo::detail::FragmentType::CAEN2795, metadata) );
+
+  std::cout << "Initialized data of size " << frags.back()->dataSize() << std::endl;
+
+  //CAEN2795Fragment newfrag(*frags.back());
+
+  unsigned int data;
+  CAENComm_Read32(LinkHandle[0], A_StatusReg, &data);
+  data = (data & STATUS_DRDY);
+
+  frags.back()->resizeBytes(BUFFER_SIZE*4);
+
+  std::cout << "Initialized data of size " << frags.back()->dataSize() << std::endl;
+
+  int nb;
+  if ((data & STATUS_DRDY) != 0)
+    ReadEvent(LinkHandle[0],&nb,(uint32_t*)frags.back()->dataBeginBytes());
+
+  std::cout << "nb val is " << nb << std::endl;
+
+
   /*
-  // Then any overlay-specific quantities next; will need the
-  // ToyFragmentWriter class's setter-functions for this
+  CAEN2795FragmentWriter newfrag(*frags.back());
 
-  ToyFragmentWriter newfrag(*frags.back());
+  newfrag.set_hdr_run_number(RunNumber_);
 
-  newfrag.set_hdr_run_number(999);
+  newfrag.resize(nSamplesPerChannel_*nChannelsPerBoard_*nBoards_ + 4*nBoards_);
 
-  newfrag.resize(nADCcounts_);
+  uint32_t time_stamp = ev_counter() + 100;
 
-  // And generate nADCcounts ADC values ranging from 0 to max with an
-  // equal probability over the full range (a specific and perhaps
-  // not-too-physical example of how one could generate simulated
-  // data)
+  for(size_t i_b=0; i_b<nBoards_; i_b++){
+    newfrag.CAEN2795_hdr(i_b)->ev_num = (ev_counter() & 0xffffff);
+    newfrag.CAEN2795_hdr(i_b)->unused1 = 0;
+    newfrag.CAEN2795_hdr(i_b)->time_st = time_stamp;
+    std::generate_n(newfrag.dataBegin(i_b), nSamplesPerChannel_*nChannelsPerBoard_,
+		    [&]() {
+		      return static_cast<CAEN2795Fragment::adc_t>
+			((*uniform_distn_)( engine_ ));
+		    }
+		    );
+  }
+  */
+  std::cout << "Sending data of size " << frags.back()->dataSize() << std::endl;
 
-  std::generate_n(newfrag.dataBegin(), nADCcounts_,
-  		  [&]() {
-  		    return static_cast<ToyFragment::adc_t>
-  		      ((*uniform_distn_)( engine_ ));
-  		  }
-  		  );
+  for(size_t i_p=0; i_p<10*8; i_p++){
+    std::cout << "0x" << std::hex << *((uint32_t*)frags.back()->headerBeginBytes() + i_p) << " " << std::dec;
+    if(i_p%8==7) std::cout << std::endl;
+  }
 
   if(metricMan_ != nullptr) {
     metricMan_->sendMetric("Fragments Sent",ev_counter(), "Events", 3);
   }
-  // Check and make sure that no ADC values in this fragment are
-  // larger than the max allowed
-
-  newfrag.fastVerify( metadata.num_adc_bits );
 
   ev_counter_inc();
-  */
+
   return true;
+
 }
 
 // The following macro is defined in artdaq's GeneratorMacros.hh header
