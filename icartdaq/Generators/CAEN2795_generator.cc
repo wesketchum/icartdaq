@@ -42,7 +42,7 @@ demo::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-  int board_num  = 1;
+  //int board_num  = 4;
   //uint32_t data;
   CAENComm_ErrorCode ret = CAENComm_Success;
   int i;
@@ -65,14 +65,14 @@ demo::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
       LinkInit[0] = 1;
     }
   // sveglio eventuali SLAVE
-  if (board_num > 1)
+  if (nBoards_ > 1)
     {
-      for (i = 1; i < board_num; i++)
+      for (i = 1; i < nBoards_; i++)
         {
 	  ret = CAENComm_OpenDevice(CAENComm_OpticalLink, 0, i, 0, &LinkHandle[i]);
 	  if (ret != CAENComm_Success) 
 	    {
-	      printf("Error opening the Optical Node (%d). \n", board_num);
+	      printf("Error opening the Optical Node (%d). \n", i);
 	      return;
 	    }
 	  else {LinkInit[i] = 1;}
@@ -268,7 +268,7 @@ bool demo::CAEN2795::getNext_(artdaq::FragmentPtrs & frags) {
 
   std::cout << "Initialized data of size " << frags.back()->dataSize() << std::endl;
 
-  //CAEN2795Fragment newfrag(*frags.back());
+  CAEN2795Fragment newfrag(*frags.back());
 
   unsigned int data;
   CAENComm_Read32(LinkHandle[0], A_StatusReg, &data);
@@ -278,34 +278,23 @@ bool demo::CAEN2795::getNext_(artdaq::FragmentPtrs & frags) {
 
   std::cout << "Initialized data of size " << frags.back()->dataSize() << std::endl;
 
+
+
+  std::cout << "frags.back()->hasMetadata(): " << frags.back()->hasMetadata() << std::endl;
+  std::cout << "frags.back()->sizeBytes(): " << frags.back()->sizeBytes() << std::endl;
+  std::cout << "frags.back()->dataSizeBytes(): " << frags.back()->dataSizeBytes() << std::endl;
+  std::cout << "static_cast<void*>( frags.back()->headerBeginBytes() ): " << static_cast<void*>( frags.back()->headerBeginBytes() ) << std::endl;
+  std::cout << "static_cast<void*>( frags.back()->dataBeginBytes() ): " << static_cast<void*>( frags.back()->dataBeginBytes() ) << std::endl;
+  if(frags.back()->hasMetadata())
+    std::cout << "static_cast<void*>( frags.back()->metadata() ): " << static_cast<void*>( frags.back()->metadata<CAEN2795Fragment::Metadata>() ) << std::endl;
+  std::cout << "newfrag.dataTotalBegin(): " << newfrag.dataTotalBegin() << std::endl;
+
   int nb;
   if ((data & STATUS_DRDY) != 0)
-    ReadEvent(LinkHandle[0],&nb,(uint32_t*)frags.back()->dataBeginBytes());
+    ReadEvent(LinkHandle[0],&nb,(uint32_t*)newfrag.dataTotalBegin());
 
   std::cout << "nb val is " << nb << std::endl;
 
-
-  /*
-  CAEN2795FragmentWriter newfrag(*frags.back());
-
-  newfrag.set_hdr_run_number(RunNumber_);
-
-  newfrag.resize(nSamplesPerChannel_*nChannelsPerBoard_*nBoards_ + 4*nBoards_);
-
-  uint32_t time_stamp = ev_counter() + 100;
-
-  for(size_t i_b=0; i_b<nBoards_; i_b++){
-    newfrag.CAEN2795_hdr(i_b)->ev_num = (ev_counter() & 0xffffff);
-    newfrag.CAEN2795_hdr(i_b)->unused1 = 0;
-    newfrag.CAEN2795_hdr(i_b)->time_st = time_stamp;
-    std::generate_n(newfrag.dataBegin(i_b), nSamplesPerChannel_*nChannelsPerBoard_,
-		    [&]() {
-		      return static_cast<CAEN2795Fragment::adc_t>
-			((*uniform_distn_)( engine_ ));
-		    }
-		    );
-  }
-  */
   std::cout << "Sending data of size " << frags.back()->dataSize() << std::endl;
 
   for(size_t i_p=0; i_p<10*8; i_p++){

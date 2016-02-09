@@ -2,7 +2,7 @@
 #  about the FHiCL language, please look at
 #  cdcvs.fnal.gov/redmine/documents/327 , the "FHiCL Quick Start Guide"
 
-events_to_generate: 1
+events_to_generate: 10
 run_number: 101
 
 fragment_receiver: {
@@ -19,7 +19,7 @@ fragment_receiver: {
    nChannelsPerBoard: 4
    nBoards: 4
    RunNumber: 001
-   throttle_usecs: 1e5
+   throttle_usecs: 2e6
    throttle_usecs_check: 1e4
    random_seed: 314159
 }  		  

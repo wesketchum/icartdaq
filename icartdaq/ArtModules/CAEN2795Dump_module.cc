@@ -105,6 +105,9 @@ void demo::CAEN2795Dump::analyze(art::Event const & evt)
     if (num_adcs_to_show_ == 0) {
       num_adcs_to_show_ = bb.total_adc_values();
     }
+
+    std::cout << "\tCrate event number: " << bb.CAEN2795_hdr_ev_num() << std::endl;
+    std::cout << "\tCrate time stamp: " << bb.CAEN2795_hdr_time_st() << std::endl;
     
     if (num_adcs_to_show_ > 0) {
       
