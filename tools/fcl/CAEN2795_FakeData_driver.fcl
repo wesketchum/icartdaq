@@ -19,13 +19,15 @@ fragment_receiver: {
 
    nADCBits: 12
    
-   nSamplesPerChannel: 4
-   nChannelsPerBoard: 4
+   SamplesPerChannel: 4
+   ChannelsPerBoard: 4
    nBoards: 4
+   BoardIDs: [ 0x101, 0x102, 0x103, 0x104 ]
    RunNumber: 001
    throttle_usecs: 1e5
    throttle_usecs_check: 1e4
    random_seed: 314159
+
 
 }  		  
 

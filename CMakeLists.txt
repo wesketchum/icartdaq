@@ -72,7 +72,7 @@ add_subdirectory(icartdaq)
 #add_subdirectory(test)
 
 # tools
-#add_subdirectory(tools)
+add_subdirectory(tools)
 
 # examples
 #FILE(COPY examples DESTINATION .)

@@ -143,7 +143,11 @@ int main(int argc, char * argv[]) try
 
   artdaq::FragmentPtrs frags;
 
+  std::cout << "Gonna generate fragments now ... " << std::endl;
+
   while (events_to_generate >=0 && gen->getNext(frags)) {
+
+    std::cout << "Generated. Events to generate is " << events_to_generate << std::endl;
 
     for (auto & val : frags) {
 
@@ -156,12 +160,16 @@ int main(int argc, char * argv[]) try
       if (events_to_generate != 0 && event_count > events_to_generate) 
 	gen.get ()->StopCmd (timeout, timestamp);
 
+      std::cout << "Problem here?" << std::endl;
+
       store.insert(std::move(val));
     }
     frags.clear();
 
     if (events_to_generate != 0 && event_count >= events_to_generate) 
       gen.get ()->StopCmd (timeout, timestamp);
+
+    std::cout << "\tNext event ..." << std::endl;
   }
 
   int readerReturnValue;

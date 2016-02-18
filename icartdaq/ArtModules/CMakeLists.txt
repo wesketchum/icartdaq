@@ -8,7 +8,8 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
 #  LIB_LIBRARIES artdaq-core-demo_Overlays 
 #)
 
-simple_plugin(CAEN2795Dump "module")
+simple_plugin(CAEN2795Dump "module"
+              icartdaq-core_Overlays)
 
 # Subdirectories.
-add_subdirectory(DQM)
+#add_subdirectory(DQM)
