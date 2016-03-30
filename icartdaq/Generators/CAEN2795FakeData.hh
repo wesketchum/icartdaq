@@ -11,17 +11,9 @@ namespace icarus {
   public:
 
     explicit CAEN2795FakeData(fhicl::ParameterSet const & ps);
-    virtual ~CAEN2795FakeData();
 
   private:
-    /*
-    bool getNext_(artdaq::FragmentPtrs & output) override;
-    { return getNext_Base(); }
-    void start() override;
-    { start_Base(); }
-    void stop() override;
-    { stop_Base(); }
-    */
+
     void ConfigureStart(); //called in start()
     void ConfigureStop();  //called in stop()
 

@@ -13,18 +13,12 @@ icarus::CAEN2795FakeData::CAEN2795FakeData(fhicl::ParameterSet const & ps)
   :
   CAEN2795_GeneratorBase(ps)
 {
-  Initialize();
-  start();
-}
-
-icarus::CAEN2795FakeData::~CAEN2795FakeData(){
-  stop();
-  Cleanup();
 }
 
 void icarus::CAEN2795FakeData::ConfigureStart(){
   engine_ = std::mt19937(ps_.get<int64_t>("random_seed", 314159));
   uniform_distn_.reset(new std::uniform_int_distribution<int>(0, std::pow(2,metadata_.num_adc_bits() - 1 )));
+  std::cout << "CONFIGURED FAKE DATA GENERATOR." << std::endl;
 }
 
 void icarus::CAEN2795FakeData::ConfigureStop(){}

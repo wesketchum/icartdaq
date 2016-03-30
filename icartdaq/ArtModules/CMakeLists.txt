@@ -10,6 +10,8 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
 
 simple_plugin(CAEN2795Dump "module"
               icartdaq-core_Overlays)
+simple_plugin(CAEN2795WriteICARUSDataFile "module"
+              icartdaq-core_Overlays)
 
 # Subdirectories.
 #add_subdirectory(DQM)

@@ -13,15 +13,23 @@ fragment_receiver: {
    fragment_id: 0
    board_id: 0
 
-   nADCBits: 12
-   
-   nSamplesPerChannel: 4
-   nChannelsPerBoard: 4
+
+   RunNumber: @local::run_number
+   EventsPerSubrun: 1
    nBoards: 4
-   RunNumber: 001
-   throttle_usecs: 2e6
-   throttle_usecs_check: 1e4
-   random_seed: 314159
+   BoardIDs: [0x1,0x2,0x3,0x4]
+
+   BoardConfig:{
+     fullScale: 10
+     thresh: 10
+     offset: 10
+   }
+
+   TriggerConfig:{
+     mode: 10
+     trigmode: 10
+   }
+
 }  		  
 
 event_builder: {
@@ -47,13 +55,20 @@ physics:
       raw_data_label: "daq"
       num_adcs_to_show: 50   # Obviously this should be no more than ADC counts per fragment
     }
+    qscan:
+    {
+     module_type: CAEN2795WriteICARUSDataFile
+     raw_data_label: "daq"
+     file_output_location: "/Data1/icartdaq"
+     file_output_name: "icartdaq_qscanFormat"
+    }
   }
 
   producers:
   {
   }
 
-  a1: [ dump ]
+  a1: [ qscan ]
   p1: [ ]
   e1: [ out1, rootout ]
   end_paths: [ e1, a1 ]
