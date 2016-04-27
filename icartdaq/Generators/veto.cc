@@ -29,7 +29,7 @@ int vetoOn()
     if (retval<0) printf("Lost udp packet\n");
   } while (retval<0);
    
-//   printf("veto ON\n");
+   printf("veto ON\n");
 return 0;
 }
 
@@ -52,7 +52,7 @@ int vetoOff()
     if (retval<0) printf("Lost udp packet\n");
   } while (retval<0);
 
-   //printf("veto OFF\n");
+   printf("veto OFF\n");
 return 0;
 }
 

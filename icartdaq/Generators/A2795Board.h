@@ -24,7 +24,6 @@ class A2795Board
         
         int boardId; 
         int nSamples;
-
         A2795Board(int nbr, int id);
         ~A2795Board();
         void configure(BoardConf conf);

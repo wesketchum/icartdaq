@@ -13,10 +13,15 @@
 
 #define HOST 1
 
-
-
-A2795Board::A2795Board(int nbr, int id) : boardNbr(nbr), boardId(id) 
+A2795Board::A2795Board(int nbr, int id) : 
+  boardNbr(nbr), serialNbr(0),busNbr(0),slotNbr(0),preSamples(0),mThre(0),bdhandle(0),boardId(id),nSamples(0)
 {
+
+
+
+
+
+
 #ifndef _simulate_
 // Acqrs_getInstrumentData(boardId, boardname, &serialNbr, &busNbr, &slotNbr);
   int ret;
@@ -184,6 +189,8 @@ A2795Board::fillHeader(DataTile* buf)
 //   buf->Header.timeinfo= htonl((int) rValue[0]);
 //   buf->Header.chID= htonl(serialNbr);
 
+     printf("Filled header...\n");
+
      return 0;
 }
 
@@ -211,6 +218,8 @@ A2795Board::getData(int channel,char* buf)
   int nw;
 
      //  totwords=nSamples/4;
+
+  printf("Before BLT Read call: %d, %d, %d\n",bdhandle, A_OutputBuffer,BUFFER_SIZE);
 
    ret = CAENComm_BLTRead(bdhandle, A_OutputBuffer,(uint32_t*) buf, BUFFER_SIZE, &nw);
    if ((ret != CAENComm_Success) && (ret != CAENComm_Terminated))

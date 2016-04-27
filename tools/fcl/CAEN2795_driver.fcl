@@ -3,7 +3,7 @@
 #  cdcvs.fnal.gov/redmine/documents/327 , the "FHiCL Quick Start Guide"
 
 events_to_generate: 10
-run_number: 101
+run_number: 102
 
 fragment_receiver: {
 

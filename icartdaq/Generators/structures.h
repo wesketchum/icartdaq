@@ -1,3 +1,4 @@
+
 #ifndef _structures_
 #define _structures_
 
@@ -35,7 +36,7 @@ typedef struct
     int presamples;
 } TrigConf;
 
-typedef struct {
+typedef struct{
        struct Header {
             int token; 
             int info1;
@@ -44,8 +45,8 @@ typedef struct {
             unsigned int timeinfo;
             int chID;
             int packSize;
-            } Header;
-  char* data;
+       } Header;
+  char data[1];
 } DataTile;
 
 #endif

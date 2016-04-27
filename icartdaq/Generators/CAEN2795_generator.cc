@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-
+#include <arpa/inet.h>
 
 icarus::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
   :
@@ -20,9 +20,6 @@ icarus::CAEN2795::CAEN2795(fhicl::ParameterSet const & ps)
 void icarus::CAEN2795::InitializeHardware(){
   physCr.reset(new PhysCrate());
   physCr->initialize();
-  physCr->configureTrig(GetTrigConf());
-  //physCr->configure(GetBoardConf());
-  physCr->start();
 }
 
 BoardConf icarus::CAEN2795::GetBoardConf(){
@@ -65,12 +62,14 @@ void icarus::CAEN2795::ConfigureStart(){
 
   //physCr->configureTrig(GetTrigConf());
   //physCr->configure(GetBoardConf());
-  //physCr->start();
+  physCr->start();
 }
 
 void icarus::CAEN2795::ConfigureStop(){}
 
 int icarus::CAEN2795::GetData(size_t & data_size, uint32_t* data_loc){
+
+  physCr->ArmTrigger();
 
   std::cout << "Calling GetData..." << std::endl;
 
@@ -79,10 +78,17 @@ int icarus::CAEN2795::GetData(size_t & data_size, uint32_t* data_loc){
   physCr->waitData();
   while(physCr->dataAvail()){
     auto data_ptr = physCr->getData();
+    std::cout << "Got the data! It has size " << ntohl(data_ptr->Header.packSize) << std::endl;
+    std::cout << "Current data size in fragment is " << data_size << std::endl;
+    std::cout << "Data ptr is " << data_ptr << std::endl;
+    std::cout << "End Data ptr is " << data_ptr+ntohl(data_ptr->Header.packSize) << std::endl;
+    std::cout << "Data loc is " << data_loc << std::endl;
+    std::cout << "Data loc now is " << data_loc+data_size << std::endl;
+
     std::copy((char*)data_ptr,
-	      (char*)data_ptr+data_ptr->Header.packSize,
+	      (char*)data_ptr+ntohl(data_ptr->Header.packSize),
 	      (char*)data_loc+data_size);
-    data_size += data_ptr->Header.packSize;
+    data_size += ntohl(data_ptr->Header.packSize);
   }
 
   //now add on the stat pack....
@@ -94,10 +100,14 @@ int icarus::CAEN2795::GetData(size_t & data_size, uint32_t* data_loc){
   pack.memstat2 = 0;
   pack.size = htonl(28);
 
+  std::cout << "statpack initilized..." << std::endl;
+
   std::copy((char*)(&pack),
-	    (char*)(&pack)+pack.size,
+	    (char*)(&pack)+28,
 	    (char*)data_loc + data_size);
   data_size += pack.size;
+
+  std::cout << "statpack copied in..." << std::endl;
 
   return 0;
 }

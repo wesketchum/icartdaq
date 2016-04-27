@@ -25,9 +25,11 @@
 #include <fstream>
 #include <sstream>
 
+#include <arpa/inet.h>
+
 #include "packs.h"
 
-#define EVEN 0x4546454E
+#define EVEN 0x4556454E
 #define DATA 0x44415441
 #define STAT 0x53544154
 
@@ -68,17 +70,12 @@ icarus::CAEN2795WriteICARUSDataFile::~CAEN2795WriteICARUSDataFile()
   
 }
 
-void icarus::CAEN2795WriteICARUSDataFile::beginSubRun(art::SubRun const& subrun)
+void icarus::CAEN2795WriteICARUSDataFile::beginSubRun(art::SubRun const&)
 {
 
-  std::stringstream fn;
-  fn << file_output_location_ << "/" << file_output_name_ << "_"
-     << subrun.run() << "_" << subrun.subRun() << ".qscan";
-  output_file_.open(fn.str(),std::ofstream::binary | std::ofstream::out);
 }
 void icarus::CAEN2795WriteICARUSDataFile::endSubRun(art::SubRun const&)
 {
-  output_file_.close();
 }
 
 void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
@@ -86,6 +83,11 @@ void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
   
   art::EventNumber_t eventNumber = evt.event();
   
+  std::stringstream fn;
+  fn << file_output_location_ << "/" << file_output_name_ << "_"
+     << evt.run() << "_" << evt.subRun() << "_" << eventNumber << ".qscan";
+  output_file_.open(fn.str(),std::ofstream::binary | std::ofstream::out);
+
   // ***********************
   // *** CAEN2795 Fragments ***
   // ***********************
@@ -111,13 +113,13 @@ void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
 	    << " CAEN2795 fragment(s)." << std::endl;
 
   evHead header;
-  header.token = (int)EVEN;
-  header.Run = (int)evt.run();
-  header.Event = (int)eventNumber;
-  header.ToD = 0;
-  header.AbsTime = 0;
-  header.Conf = 0;
-  header.Size = 28;
+  header.token = (int)htonl(EVEN);
+  header.Run = (int)htonl(evt.run());
+  header.Event = (int)htonl(eventNumber);
+  header.ToD = htonl(0);
+  header.AbsTime = htonl(0);
+  header.Conf = htonl(1); //number of crates
+  header.Size = htonl(28);
 
   output_file_.write((char*)&header,sizeof(evHead));
   
@@ -125,6 +127,8 @@ void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
     const auto& frag((*raw)[idx]);
     output_file_.write((char*)frag.dataBeginBytes(),frag.dataSizeBytes());
   }
+
+  output_file_.close();
 
 }
 

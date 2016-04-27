@@ -109,7 +109,7 @@ bool icarus::CAEN2795_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
   std::cout << "Current frags size is " << frags.size() << std::endl;
 
   //frags.emplace_back( artdaq::Fragment::FragmentBytes(metadata_.ExpectedDataSize()*10,  
-  frags.emplace_back( artdaq::Fragment::FragmentBytes(524328,  
+  frags.emplace_back( artdaq::Fragment::FragmentBytes(524328*10,  
 						      event_number_, fragment_id(),
 						      icarus::detail::FragmentType::CAEN2795, metadata_) );
 
