@@ -91,7 +91,11 @@ int icarus::CAEN2795::GetData(size_t & data_size, uint32_t* data_loc){
     data_size += ntohl(data_ptr->Header.packSize);
   }
 
-  //now add on the stat pack....
+  return 0;
+}
+
+statpack icars::CAEN2795::GetStatPack()
+{
   statpack pack;
   memcpy(&(pack.token), "STAT", 4);
   //pack->crateid = htonl(158);
@@ -102,14 +106,7 @@ int icarus::CAEN2795::GetData(size_t & data_size, uint32_t* data_loc){
 
   std::cout << "statpack initilized..." << std::endl;
 
-  std::copy((char*)(&pack),
-	    (char*)(&pack)+28,
-	    (char*)data_loc + data_size);
-  data_size += pack.size;
-
-  std::cout << "statpack copied in..." << std::endl;
-
-  return 0;
+  return pack;
 }
 
 DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(icarus::CAEN2795) 

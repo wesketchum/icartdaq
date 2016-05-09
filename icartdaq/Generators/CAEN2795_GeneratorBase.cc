@@ -34,18 +34,15 @@ void icarus::CAEN2795_GeneratorBase::Initialize(){
   EventsPerSubrun_ = ps_.get<uint32_t>("EventsPerSubrun",10);
   SamplesPerChannel_ = ps_.get<uint32_t>("SamplesPerChannel",3000);
   nADCBits_ = ps_.get<uint8_t>("nADCBits",12);
-  ChannelsPerBoard_ = ps_.get<uint16_t>("ChannelsPerBoard",64);
+  ChannelsPerBoard_ = ps_.get<uint16_t>("ChannelsPerBoard",16);
   nBoards_ = ps_.get<uint16_t>("nBoards",9);
   CrateID_ = ps_.get<uint8_t>("CrateID",0x1);
   BoardIDs_ = ps_.get< std::vector<CAEN2795FragmentMetadata::id_t> >("BoardIDs");
 
   throttle_usecs_ = ps_.get<size_t>("throttle_usecs", 100000);
   throttle_usecs_check_ = ps_.get<size_t>("throttle_usecs_check", 10000);
-  metadata_ = CAEN2795FragmentMetadata(RunNumber_,0,0,
-				       SamplesPerChannel_,nADCBits_,
-				       ChannelsPerBoard_,nBoards_,
-				       CrateID_,BoardIDs_);
-
+  metadata_ = CAEN2795FragmentMetadata();
+  metadata_.SetDataFormat(nBoards_,ChannelsPerBoard_,SamplesPerChannel_,nADCBits_);
 
   if (throttle_usecs_ > 0 && (throttle_usecs_check_ >= throttle_usecs_ ||
 			      throttle_usecs_ % throttle_usecs_check_ != 0) ) {
@@ -99,8 +96,8 @@ bool icarus::CAEN2795_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
 
   //CAEN2795FragmentMetadata m = metadata_;
 
-  metadata_.SetSubrunNumber(current_subrun_);
-  metadata_.SetEventNumber(event_number_);
+  //metadata_.SetSubrunNumber(current_subrun_);
+  //metadata_.SetEventNumber(event_number_);
   
   std::cout << metadata_ << std::endl;
 
@@ -109,7 +106,7 @@ bool icarus::CAEN2795_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
   std::cout << "Current frags size is " << frags.size() << std::endl;
 
   //frags.emplace_back( artdaq::Fragment::FragmentBytes(metadata_.ExpectedDataSize()*10,  
-  frags.emplace_back( artdaq::Fragment::FragmentBytes(524328*10,  
+  frags.emplace_back( artdaq::Fragment::FragmentBytes(metadata_.ExpectedDataSize()*1.5,  
 						      event_number_, fragment_id(),
 						      icarus::detail::FragmentType::CAEN2795, metadata_) );
 
