@@ -8,19 +8,16 @@
 #include <netdb.h>
 
 #define kMaxSize 950000
-#define kMaxBoards 8
-#define EVEN 0x4556454E
-#define DATA 0x44415441
-#define STAT 0x53544154
+#define kMaxBoards 32 
+#define kMaxBoardsonLink 5
+#define kMaxLinks 2 
 
 
 PhysCrate::PhysCrate() {}
 
 PhysCrate::~PhysCrate() 
 { 
-  //	delete(tilebuf);
-
-	delete[] tilebuf;
+	delete(tilebuf);
 }
 
 #ifndef _simulate_
@@ -30,23 +27,30 @@ PhysCrate::initialize()
 {
     printf("PhysCrate::initialize(): Initializing crate.\n");
     //int status;
-    //int boardId;
+    int boardId=0;
+    int nBus,nDev;
     
     boards = new A2795Board*[kMaxBoards];
     
     nBoards=0;
+    nDev=0;
+    nBus=0;
     do {
-        boards[nBoards]=new A2795Board(nBoards,nBoards);
+      do {
+        printf("trying %d %d\n",nBus,nDev);
+        boards[nBoards]=new A2795Board(nDev,nBus);
+        nDev++;
         if (boards[nBoards]->boardId>-1)
         { 
-              printf("PhysCrate::initialize(): Created board (%d, %d)\n", nBoards, boards[nBoards]->boardId);
+              printf("PhysCrate::initialize(): Created board (%d, %d, %d, %d)\n",nBus, nDev, nBoards, boardId);
              nBoards++;
         }
         else break;
-    } while (nBoards<kMaxBoards);
+      } while (nDev<kMaxBoardsonLink );
+      nBus++;
+      nDev=0;
+    } while (nBus < kMaxLinks);
 
-    presBoard=0;
-    mip=0;
 
     printf("PhysCrate::initialize(): %d A2795 boards found.\n", nBoards);
     
@@ -70,12 +74,8 @@ PhysCrate::initialize()
        sscanf(inet_ntoa(in),"%d",&mip);
     }
     printf("Set localID\n");
-    int size = sizeof(DataTile::Header)+2*kMaxSize*nBoards;
-    tilebuf = new char[size];
-    //int size = 2*kMaxSize*nBoards;
-    //tilebuf = new char[size];
-    //DataTile tile;
-    //tile.data = new char[size];
+  int size = sizeof(DataTile)+2*kMaxSize*nBoards;
+  tilebuf = new char[size];
 
 }
 #endif
@@ -97,7 +97,7 @@ PhysCrate::initialize()
         boards[i] = new A2795Board(i,0);
         printf("PhysCrate::initialize(): Created board %d\n");
     }
-  int size = sizeof(DataTile::Header)+2*kMaxSize*nBoards;
+  int size = sizeof(DataTile)+2*kMaxSize*nBoards;
   tilebuf = new char[size];
 }
 #endif
@@ -127,27 +127,14 @@ PhysCrate::configureTrig(TrigConf conf)
 void
 PhysCrate::start()
 {
-  /*
-    for (int i = 0; i < nBoards; i++)
-    {
-        boards[i]->startDPU();
-        boards[i]->write(A_Signals, SIGNALS_TTLINK_ALIGN);
-    }
-  */
-  //boards[0]->write(A_Signals, SIGNALS_TTLINK_ALIGN);
+    //for (int i = 0; i < nBoards; i++)
+    //{
+    //    boards[i]->startDPU();
+    //}
+   //boards[0]->write(A_Signals, SIGNALS_TTLINK_ALIGN);
    boards[0]->write(A_Signals, SIGNALS_TTLINK_COMMA);
    sleep(3);
    boards[0]->write(A_Signals, SIGNALS_TTLINK_SOR);
-
-   int status;
-   boards[0]->read(A_ControlReg,&status);
-   printf("ControlReg: %d\n",status);
-   boards[0]->read(A_ControlReg2,&status);
-   printf("ControlReg2: %d\n",status);
-   boards[0]->read(A_DebugReg,&status);
-   printf("DebugReg: %d\n",status);
-   boards[0]->read(A_StatusReg,&status);
-   printf("StatusReg: %d\n",status);
 
 
   //vetoOn();
@@ -162,9 +149,9 @@ PhysCrate::start()
 void
 PhysCrate::waitData()
 {
-  //#ifdef _dbg_
+#ifdef _dbg_
     printf("PhysCrate::waitData() on %d boards\n", nBoards);
-    //#endif
+#endif
 
 #ifdef AUTO_TRIGGER
   //boards[0]->write(A_Signals, SIGNALS_TTLINK_GTRG);
@@ -174,16 +161,16 @@ PhysCrate::waitData()
     for (int i = 0; i < 1; i++)
     // for (int i = nBoards-1; i < nBoards; i++)
     {
-      //#ifdef _dbg_
+#ifdef _dbg_
         printf("PhysCrate::waitData(): waiting for board %d\n", i);
-	//#endif
+#endif
         printf("PhysCrate::waitData(): waiting for board %d\n", i);
 
         while(!(boards[i]->isDataRdy()));
         
-	//#ifdef _dbg_
+#ifdef _dbg_
         printf("Board %d ready.\n", i);
-	//#endif
+#endif
     }
 } // waitData()
 
@@ -198,21 +185,10 @@ PhysCrate::dataAvail()
 DataTile*
 PhysCrate::getData()
 {
-   int status;
-   boards[0]->read(A_ControlReg,&status);
-   printf("ControlReg: %d\n",status);
-   boards[0]->read(A_ControlReg2,&status);
-   printf("ControlReg2: %d\n",status);
-   boards[0]->read(A_DebugReg,&status);
-   printf("DebugReg: %d\n",status);
-   boards[0]->read(A_StatusReg,&status);
-   printf("StatusReg: %d\n",status);
-   //const int size = 2*kMaxSize*nBoards;
+  //int size = sizeof(DataTile)+2*nSamples*nBoards;
   //char* tilebuf = new char[size];
 
-  DataTile* tile = reinterpret_cast<DataTile*>(tilebuf);
-  //DataTile tile;
-  //tile.data = new char[size];
+  DataTile* tile = (DataTile*) tilebuf;
 
   // read all boards
    int i=presBoard;
@@ -224,12 +200,7 @@ PhysCrate::getData()
 
 //printf ("nSamp %d \n",boards[i]->nSamples);
 
-   tile->Header.token = htonl(DATA);
-   tile->Header.info1 = htonl(0xcdfcdf);
-
-   printf("Header.info1 %d\n",tile->Header.info1);
-
-   int nSamples=boards[i]->getData(1,tile->data);
+    int nSamples=boards[i]->getData(1,tile->data  );
 printf ("nSamp %d \n",nSamples);
 //    boards[i]->getData(2,tile->data + boards[i]->nSamples);
 
@@ -237,8 +208,7 @@ printf ("nSamp %d \n",nSamples);
 
     //tile->Header.packSize = htonl(size);
     //tile->Header.packSize = htonl(2*nSamples+sizeof(DataTile));
-    tile->Header.packSize = htonl(nSamples+sizeof(DataTile::Header));
-    //tile->Header.packSize = nSamples+sizeof(DataTile::Header);
+    tile->Header.packSize = htonl(nSamples+sizeof(DataTile));
     //tile->Header.packSize = htonl(2*boards[i]->nSamples+sizeof(DataTile));
     //tile->Header.chID = htonl(mip+i*256); 
     boards[i]->fillHeader(tile);
@@ -264,17 +234,17 @@ PhysCrate::ArmTrigger()
 DataTile*
 PhysCrate::getData()
 {
-  int size = sizeof(DataTile::Header)+2*nSamples*nBoards;
+  int size = sizeof(DataTile)+2*nSamples*nBoards;
   char* buf = new char[size];
   DataTile* tile = (DataTile*) buf;
   // read all boards
   for (int i = 0; i < nBoards; i++)
   {
-    boards[i]->getData(1,tile->data + 2*i*(sizeof(DataTile::Header)+nSamples));
-    tile->Header.packSize = htonl(sizeof(DataTile::Header)+nSamples);
+    boards[i]->getData(1,tile->data + 2*i*(sizeof(DataTile)+nSamples));
+    tile->Header.packSize = htonl(sizeof(DataTile)+nSamples);
 
-    boards[i]->getData(2,tile->data + (2*i+1)*(sizeof(DataTile::Header)+nSamples));
-    tile->Header.packSize = htonl(sizeof(DataTile::Header)+nSamples);
+    boards[i]->getData(2,tile->data + (2*i+1)*(sizeof(DataTile)+nSamples));
+    tile->Header.packSize = htonl(sizeof(DataTile)+nSamples);
   
   }
   //for (int i = 0; i< nBoards; i++)

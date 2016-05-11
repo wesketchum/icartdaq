@@ -105,7 +105,7 @@ int icarus::CAEN2795::GetData(size_t & data_size, uint32_t* data_loc){
   std::copy((char*)(&pack),
 	    (char*)(&pack)+28,
 	    (char*)data_loc + data_size);
-  data_size += pack.size;
+  data_size += 28;//pack.size;
 
   std::cout << "statpack copied in..." << std::endl;
 

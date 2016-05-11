@@ -32,9 +32,9 @@ void icarus::CAEN2795_GeneratorBase::Initialize(){
 
   RunNumber_ = ps_.get<uint32_t>("RunNumber",999);
   EventsPerSubrun_ = ps_.get<uint32_t>("EventsPerSubrun",10);
-  SamplesPerChannel_ = ps_.get<uint32_t>("SamplesPerChannel",3000);
+  SamplesPerChannel_ = ps_.get<uint32_t>("SamplesPerChannel",4096);
   nADCBits_ = ps_.get<uint8_t>("nADCBits",12);
-  ChannelsPerBoard_ = ps_.get<uint16_t>("ChannelsPerBoard",64);
+  ChannelsPerBoard_ = ps_.get<uint16_t>("ChannelsPerBoard",16);
   nBoards_ = ps_.get<uint16_t>("nBoards",9);
   CrateID_ = ps_.get<uint8_t>("CrateID",0x1);
   BoardIDs_ = ps_.get< std::vector<CAEN2795FragmentMetadata::id_t> >("BoardIDs");
@@ -108,8 +108,8 @@ bool icarus::CAEN2795_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
 
   std::cout << "Current frags size is " << frags.size() << std::endl;
 
-  //frags.emplace_back( artdaq::Fragment::FragmentBytes(metadata_.ExpectedDataSize()*10,  
-  frags.emplace_back( artdaq::Fragment::FragmentBytes(524328*10,  
+  frags.emplace_back( artdaq::Fragment::FragmentBytes((metadata_.ExpectedDataSize()+2*28),  
+						      //frags.emplace_back( artdaq::Fragment::FragmentBytes(524328*10,  
 						      event_number_, fragment_id(),
 						      icarus::detail::FragmentType::CAEN2795, metadata_) );
 
