@@ -10,10 +10,11 @@
 #include <arpa/inet.h>
 
 #include "icartdaq-core/Trace/trace_defines.h"
+#include "ica_base/PhysCrate.h"
 
 icarus::PhysCrateData::PhysCrateData(fhicl::ParameterSet const & ps)
   :
-  PhysCrateData_GeneratorBase(ps)
+  PhysCrate_GeneratorBase(ps)
 {
   InitializeHardware();
 }
@@ -71,28 +72,29 @@ void icarus::PhysCrateData::ConfigureStop(){}
 
 int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
 
-  physCr->ArmTrigger();
+  TRACE(TR_LOG,"PhysCrateData::GetData called.");
 
-  std::cout << "Calling GetData..." << std::endl;
+  physCr->ArmTrigger();
 
   data_size=0;
 
+  TRACE(TR_DEBUG,"PhysCrateData::GetData : Calling waitData()");
   physCr->waitData();
   while(physCr->dataAvail()){
+    TRACE(TR_DEBUG,"PhysCrateData::GetData : DataAvail!");
     auto data_ptr = physCr->getData();
-    std::cout << "Got the data! It has size " << ntohl(data_ptr->Header.packSize) << std::endl;
-    std::cout << "Current data size in fragment is " << data_size << std::endl;
-    std::cout << "Data ptr is " << data_ptr << std::endl;
-    std::cout << "End Data ptr is " << data_ptr+ntohl(data_ptr->Header.packSize) << std::endl;
-    std::cout << "Data loc is " << data_loc << std::endl;
-    std::cout << "Data loc now is " << data_loc+data_size << std::endl;
+    TRACE(TR_DEBUG,"PhysCrateData::GetData : Data acquired! Size is %u, with %lu already acquired.",
+	  ntohl(data_ptr->Header.packSize),data_size);
 
     std::copy((char*)data_ptr,
 	      (char*)data_ptr+ntohl(data_ptr->Header.packSize),
 	      (char*)data_loc+data_size);
     data_size += ntohl(data_ptr->Header.packSize);
+    TRACE(TR_DEBUG,"PhysCrateData::GetData : Data copied! Size was %u, with %lu now acquired.",
+	  ntohl(data_ptr->Header.packSize),data_size);
   }
 
+  TRACE(TR_LOG,"PhysCrateData::GetData completed. Status %d, Data size %lu",0,data_size);
   return 0;
 }
 
@@ -108,7 +110,7 @@ void icarus::PhysCrateData::FillStatPack( statpack & pack )
 
   std::cout << "statpack initilized..." << std::endl;
 
-  return pack;
+  //return pack;
 }
 
 DEFINE_ARTDAQ_COMMANDABLE_GENERATOR(icarus::PhysCrateData) 

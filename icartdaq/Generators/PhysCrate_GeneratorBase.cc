@@ -102,7 +102,7 @@ bool icarus::PhysCrate_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
 
   frags.emplace_back( artdaq::Fragment::FragmentBytes(metadata_.ExpectedDataSize(),  
 						      0, fragment_id(),
-						      icarus::detail::FragmentType::PHYSCRATE, metadata_) );
+						      icarus::detail::FragmentType::PHYSCRATEDATA, metadata_) );
 
   TRACE(TR_DEBUG,"\tPhysCrate_GeneratorBase::getNext_ Initialized data of size %lu",frags.back()->dataSizeBytes());
 
@@ -116,10 +116,11 @@ bool icarus::PhysCrate_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
 
   //give proper event number
   auto ev_num = newfrag.BoardEventNumber();
-  frags.back()->setSequenceId(ev_num);
+  frags.back()->setSequenceID(ev_num);
 
-  frags.emplace_back( artdaq::Fragment::Fragment(ev_num, fragment_id()+1000,
-						 icarus::detail::FragmentType::PHYSCRATESTAT) );
+  //create fragment with no metadata
+  frags.emplace_back( std::unique_ptr<artdaq::Fragment>( new artdaq::Fragment(ev_num, fragment_id()+1000,
+									      icarus::detail::FragmentType::PHYSCRATESTAT)) );
   frags.back()->resizeBytes( sizeof(statpack) );
   FillStatPack(last_stat_pack_);
   std::copy((char*)(&last_stat_pack_),(char*)(&last_stat_pack_)+sizeof(statpack),frags.back()->dataBeginBytes());

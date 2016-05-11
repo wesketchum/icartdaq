@@ -1,13 +1,15 @@
 #ifndef icartdaq_Generators_PhysCrateData_hh
 #define icartdaq_Generators_PhysCrateData_hh
 
-#include "ica_base/ica_base/PhysCrate.hh"
-#include "icartdaq/Generators/PhysCrateData_GeneratorBase.hh"
+//#include "ica_base/PhysCrate.h"
+#include "icartdaq/Generators/PhysCrate_GeneratorBase.hh"
 //#include <memory>
+
+class PhysCrate;
 
 namespace icarus {    
 
-  class PhysCrateData : public icarus::PhysCrateData_GeneratorBase {
+  class PhysCrateData : public icarus::PhysCrate_GeneratorBase {
     
   public:
     

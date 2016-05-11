@@ -5,7 +5,7 @@
 #include "icartdaq-core/Overlays/PhysCrateFragment.hh"
 #include "icartdaq-core/Overlays/PhysCrateStatFragment.hh"
 #include "icartdaq-core/Overlays/FragmentType.hh"
-#include "ica_base/ica_base/packs.h"
+#include "ica_base/packs.h"
 #include <unistd.h>
 #include <vector>
 #include <atomic>
@@ -50,7 +50,7 @@ namespace icarus {
 
     size_t   last_read_data_size_;
     int      last_status_;
-    statpack last_statpack_;
+    statpack last_stat_pack_;
 
   protected:
 

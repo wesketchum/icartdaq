@@ -66,6 +66,8 @@ include(ArtMake)
 include(BuildPlugins)
 include(CetTest)
 
+include_directories($ENV{CAENCOMMDIR}/include)
+
 # source
 add_subdirectory(icartdaq)
 
