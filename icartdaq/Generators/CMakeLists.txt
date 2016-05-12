@@ -30,3 +30,17 @@ simple_plugin(PhysCrateData "generator"
   ${MF_UTILITIES}
   ${CETLIB}
   )
+
+simple_plugin(PhysCrateFakeData "generator"
+  icartdaq_PhysCrate_GeneratorBase
+  icartdaq-core_Overlays
+  artdaq_Application
+  artdaq_DAQdata
+  artdaq-core_Utilities
+  artdaq-core_Data
+  ${ART_UTILITIES}
+  ${FHICLCPP}
+  ${MF_MESSAGELOGGER}
+  ${MF_UTILITIES}
+  ${CETLIB}
+  )
