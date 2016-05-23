@@ -63,6 +63,9 @@ TrigConf icarus::PhysCrateData::GetTrigConf(){
 
 void icarus::PhysCrateData::ConfigureStart(){
 
+  _tloop_start = std::chrono::high_resolution_clock::now();
+  _tloop_end = std::chrono::high_resolution_clock::now();
+
   //physCr->configureTrig(GetTrigConf());
   //physCr->configure(GetBoardConf());
   physCr->start();
@@ -78,8 +81,18 @@ int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
 
   data_size=0;
 
+  //end loop timer
+  _tloop_end = std::chrono::high_resolution_clock::now();
+  UpdateDuration();
+  TRACE(TR_TIMER,"PhysCrateData::GetData : waitData loop time was %lf seconds",_tloop_duration.count());
+
   TRACE(TR_DEBUG,"PhysCrateData::GetData : Calling waitData()");
   physCr->waitData();
+
+  //start loop timer
+  _tloop_start = std::chrono::high_resolution_clock::now();
+
+
   while(physCr->dataAvail()){
     TRACE(TR_DEBUG,"PhysCrateData::GetData : DataAvail!");
     auto data_ptr = physCr->getData();
