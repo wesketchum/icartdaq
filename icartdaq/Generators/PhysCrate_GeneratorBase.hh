@@ -10,6 +10,8 @@
 #include <vector>
 #include <atomic>
 
+#include "workerThread.h"
+
 namespace icarus {    
 
   class PhysCrate_GeneratorBase : public artdaq::CommandableFragmentGenerator{
@@ -47,6 +49,7 @@ namespace icarus {
     virtual void ConfigureStop() = 0;  //called in stop()
     virtual int  GetData(size_t&,uint32_t*) = 0;       //called in getNext_()
     virtual void FillStatPack(statpack&) = 0; //called in getNext_()
+    virtual bool Monitor() = 0; //called as separate thread
 
     size_t   last_read_data_size_;
     int      last_status_;
@@ -61,6 +64,10 @@ namespace icarus {
     virtual void Initialize();     //called in constructor
     virtual void Cleanup();        //called in destructor
 
+  private:
+    
+    share::WorkerThreadUPtr Monitor_thread_;
+    
   };
 }
 

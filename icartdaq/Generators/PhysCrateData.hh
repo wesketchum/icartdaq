@@ -21,6 +21,7 @@ namespace icarus {
 
     int  GetData(size_t&,uint32_t*);       //called in getNext_()
     void FillStatPack(statpack&);
+    bool Monitor();
 
     void InitializeHardware();
     BoardConf GetBoardConf();

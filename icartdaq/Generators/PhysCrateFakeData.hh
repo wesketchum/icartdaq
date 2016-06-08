@@ -19,6 +19,7 @@ namespace icarus {
 
     int  GetData(size_t&,uint32_t*);       //called in getNext_()
     void FillStatPack(statpack&);
+    bool Monitor();
 
     std::mt19937 engine_;
     std::unique_ptr<std::uniform_int_distribution<int>> uniform_distn_;

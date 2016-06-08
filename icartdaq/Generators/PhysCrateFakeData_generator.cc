@@ -27,6 +27,8 @@ void icarus::PhysCrateFakeData::ConfigureStart(){
 
 void icarus::PhysCrateFakeData::ConfigureStop(){}
 
+bool icarus::PhysCrateFakeData::Monitor(){ return true; }
+
 int icarus::PhysCrateFakeData::GetData(size_t & data_size, uint32_t* data_loc){
 
   data_size=0;

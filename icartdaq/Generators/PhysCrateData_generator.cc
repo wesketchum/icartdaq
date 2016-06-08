@@ -11,6 +11,8 @@
 
 #include "icartdaq-core/Trace/trace_defines.h"
 #include "ica_base/PhysCrate.h"
+#include "ica_base/A2795.h"
+#include "CAENComm.h"
 
 icarus::PhysCrateData::PhysCrateData(fhicl::ParameterSet const & ps)
   :
@@ -72,6 +74,15 @@ void icarus::PhysCrateData::ConfigureStart(){
 }
 
 void icarus::PhysCrateData::ConfigureStop(){}
+
+bool icarus::PhysCrateData::Monitor(){ 
+
+  for(int ib=0; ib<physCr->NBoards(); ++ib)
+    if( (physCr->BoardStatus(ib) & STATUS_BUSY)!=0)
+      TRACE(TR_ERROR,"PhysCrateData::Monitor : STATUS_BUSY on board %d!",ib);
+
+  return true; 
+}
 
 int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
 

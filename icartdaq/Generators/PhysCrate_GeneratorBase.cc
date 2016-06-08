@@ -61,9 +61,18 @@ void icarus::PhysCrate_GeneratorBase::Initialize(){
 void icarus::PhysCrate_GeneratorBase::start() {
   current_subrun_ = 0;
   ConfigureStart();
+
+  share::ThreadFunctor functor = std::bind(&PhysCrate_GeneratorBase::Monitor,this);
+  auto worker_functor = share::WorkerThreadFunctorUPtr(new share::WorkerThreadFunctor(functor,"MonitorWorkerThread"));
+  auto monitor_worker = share::WorkerThread::createWorkerThread(worker_functor);
+  Monitor_thread_.swap(monitor_worker);
+
+  Monitor_thread_->start();
 }
 
 void icarus::PhysCrate_GeneratorBase::stop() {
+  Monitor_thread_->stop();
+
   ConfigureStop();
 }
 

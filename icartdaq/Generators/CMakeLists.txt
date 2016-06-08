@@ -1,10 +1,14 @@
 #include_directories(/home/icadaq/artdaq-demo-base/artdaq-demo/artdaq-demo)
 #set(HEADER_FILES /home/icadaq/artdaq-demo-base/artdaq-demo/artdaq-demo/A2795.h)
 
+art_make_library( LIBRARY_NAME share_WorkerThread
+		  SOURCE workerThread.cpp )
+
 art_make_library( LIBRARY_NAME icartdaq_PhysCrate_GeneratorBase
 		  SOURCE PhysCrate_GeneratorBase.cc
 		  LIBRARIES
 			icartdaq-core_Overlays
+			share_WorkerThread
 			artdaq_Application
 			artdaq_DAQdata
 			artdaq-core_Utilities
