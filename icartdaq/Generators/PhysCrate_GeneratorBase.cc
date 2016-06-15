@@ -117,6 +117,11 @@ bool icarus::PhysCrate_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
 
   PhysCrateFragment newfrag(*frags.back());
   last_status_ = GetData(last_read_data_size_,(uint32_t*)(frags.back()->dataBeginBytes()));
+
+  if(last_read_data_size_==0){
+    frags.pop_back();
+    return false;
+  }
   
   TRACE(TR_DEBUG,"\tPhysCrate_GeneratorBase::getNext_ : Read data status was %d, Read data size was %lu",
 	last_status_,last_read_data_size_);
@@ -124,7 +129,7 @@ bool icarus::PhysCrate_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
   frags.back()->resizeBytes(last_read_data_size_);
 
   //give proper event number
-  auto ev_num = newfrag.BoardEventNumber();
+  auto ev_num = newfrag.BoardEventNumber()+1;
   frags.back()->setSequenceID(ev_num);
 
   //create fragment with no metadata

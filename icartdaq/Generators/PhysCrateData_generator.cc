@@ -110,6 +110,11 @@ int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
     TRACE(TR_DEBUG,"PhysCrateData::GetData : Data acquired! Size is %u, with %lu already acquired.",
 	  ntohl(data_ptr->Header.packSize),data_size);
 
+    if(ntohl(data_ptr->Header.packSize)==32) continue;
+
+    auto ev_ptr = reinterpret_cast<uint32_t*>(data_ptr->data);    
+    TRACE(TR_DEBUG,"PhysCrateData::GetData : Data event number is %#8X",*ev_ptr);
+    
     std::copy((char*)data_ptr,
 	      (char*)data_ptr+ntohl(data_ptr->Header.packSize),
 	      (char*)data_loc+data_size);

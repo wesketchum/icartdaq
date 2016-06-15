@@ -24,12 +24,12 @@ art_make_exec(test_driver
   ${CETLIB}
   )
 
-art_make_exec(readfhicl
-  LIBRARIES
-  ${FHICLCPP}
-  ${Boost_PROGRAM_OPTIONS_LIBRARY}
-  ${CETLIB}
-  )  
+#art_make_exec(readfhicl
+#  LIBRARIES
+#  ${FHICLCPP}
+#  ${Boost_PROGRAM_OPTIONS_LIBRARY}
+#  ${CETLIB}
+#  )  
 
 add_subdirectory(snippets)
 

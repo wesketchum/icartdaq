@@ -143,8 +143,10 @@ int main(int argc, char * argv[]) try
 
   artdaq::FragmentPtrs frags;
 
-  while (events_to_generate >=0 && gen->getNext(frags)) {
+  while (events_to_generate >=0) {
 
+    if(!gen->getNext(frags)) continue;
+    
     for (auto & val : frags) {
 
       std::cout << "Fragment: Seq ID: " << val->sequenceID() << ", Frag ID: " << val->fragmentID() << ", total size in bytes: " << val->size() * sizeof(artdaq::RawDataType) << std::endl;
@@ -153,16 +155,17 @@ int main(int argc, char * argv[]) try
         ++event_count;
         previous_sequence_id = val->sequenceID();
       }
-      if (events_to_generate != 0 && event_count > events_to_generate) 
+      if (events_to_generate != 0 && event_count > events_to_generate){ 
 	gen.get ()->StopCmd (timeout, timestamp);
-
+      }
       store.insert(std::move(val));
     }
     frags.clear();
 
-    if (events_to_generate != 0 && event_count >= events_to_generate) 
+    if (events_to_generate != 0 && event_count >= events_to_generate){
       gen.get ()->StopCmd (timeout, timestamp);
-
+      break;
+    }
   }
 
   int readerReturnValue;
