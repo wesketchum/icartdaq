@@ -8,9 +8,9 @@ art_make(NO_PLUGINS # WAnt different link lists for modues
 #  LIB_LIBRARIES artdaq-core-demo_Overlays 
 #)
 
-simple_plugin(CAEN2795Dump "module"
+simple_plugin(PhysCrateDump "module"
               icartdaq-core_Overlays)
-simple_plugin(CAEN2795WriteICARUSDataFile "module"
+simple_plugin(PhysCrateWriteICARUSDataFile "module"
               icartdaq-core_Overlays)
 
 # Subdirectories.

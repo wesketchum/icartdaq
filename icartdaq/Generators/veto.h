@@ -1,2 +1,0 @@
-int vetoOn();
-int vetoOff();

@@ -1,22 +1,23 @@
-//#ifndef icartdaq_Generators_CAEN2795_hh
-//#define icartdaq_Generators_CAEN2795_hh
-
 #include "fhiclcpp/fwd.h"
 #include "artdaq-core/Data/Fragments.hh" 
 #include "artdaq/Application/CommandableFragmentGenerator.hh"
 
-#include "icartdaq-core/Overlays/CAEN2795Fragment.hh"
+#include "icartdaq-core/Overlays/PhysCrateFragment.hh"
+#include "icartdaq-core/Overlays/PhysCrateStatFragment.hh"
 #include "icartdaq-core/Overlays/FragmentType.hh"
+#include "ica_base/packs.h"
 #include <unistd.h>
 #include <vector>
 #include <atomic>
 
+#include "workerThread.h"
+
 namespace icarus {    
 
-  class CAEN2795_GeneratorBase : public artdaq::CommandableFragmentGenerator{
+  class PhysCrate_GeneratorBase : public artdaq::CommandableFragmentGenerator{
   public:
-    explicit CAEN2795_GeneratorBase(fhicl::ParameterSet const & ps);
-    virtual ~CAEN2795_GeneratorBase();
+    explicit PhysCrate_GeneratorBase(fhicl::ParameterSet const & ps);
+    virtual ~PhysCrate_GeneratorBase();
 
     //private:
   protected:
@@ -26,15 +27,15 @@ namespace icarus {
     void stop() override;
 
     uint32_t RunNumber_;
-    uint32_t EventsPerSubrun_;
     
     uint32_t SamplesPerChannel_;
     uint8_t  nADCBits_;
     uint16_t ChannelsPerBoard_;
     uint16_t nBoards_;
+    uint32_t CompressionScheme_;
 
     uint8_t  CrateID_;
-    std::vector<CAEN2795FragmentMetadata::id_t> BoardIDs_;
+    std::vector<PhysCrateFragmentMetadata::id_t> BoardIDs_;
 
     std::size_t throttle_usecs_;        // Sleep at start of each call to getNext_(), in us
     std::size_t throttle_usecs_check_;  // Period between checks for stop/pause during the sleep (must be less than, and an integer divisor of, throttle_usecs_)
@@ -46,21 +47,28 @@ namespace icarus {
     //These functions MUST be defined by the derived classes
     virtual void ConfigureStart() = 0; //called in start()
     virtual void ConfigureStop() = 0;  //called in stop()
-    virtual int GetData(size_t&,uint32_t*) = 0;       //called in getNext_()
+    virtual int  GetData(size_t&,uint32_t*) = 0;       //called in getNext_()
+    virtual void FillStatPack(statpack&) = 0; //called in getNext_()
+    virtual bool Monitor() = 0; //called as separate thread
 
-    size_t last_read_data_size_;
-    int    last_status_;
+    size_t   last_read_data_size_;
+    int      last_status_;
+    statpack last_stat_pack_;
 
   protected:
 
-    CAEN2795FragmentMetadata metadata_;
+    PhysCrateFragmentMetadata metadata_;
     fhicl::ParameterSet const ps_;
 
     //These functions could be overwritten by the derived class
     virtual void Initialize();     //called in constructor
     virtual void Cleanup();        //called in destructor
 
+  private:
+    
+    share::WorkerThreadUPtr Monitor_thread_;
+    
   };
 }
 
-//#endif /* artdaq_demo_Generators_CAEN2795_hh */
+//#endif /* artdaq_demo_Generators_PhysCrate_hh */

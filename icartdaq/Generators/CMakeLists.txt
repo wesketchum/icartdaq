@@ -1,22 +1,14 @@
 #include_directories(/home/icadaq/artdaq-demo-base/artdaq-demo/artdaq-demo)
 #set(HEADER_FILES /home/icadaq/artdaq-demo-base/artdaq-demo/artdaq-demo/A2795.h)
 
-art_make_library( LIBRARY_NAME icartdaq_CAEN2795_A2795Board
-		  SOURCE Cudpux.cc A2795Board.cc veto.cc
-		  LIBRARIES
-		        CAENComm
-		)
+art_make_library( LIBRARY_NAME share_WorkerThread
+		  SOURCE workerThread.cpp )
 
-art_make_library( LIBRARY_NAME icartdaq_CAEN2795_PhysCrate
-		  SOURCE PhysCrate.cc
-		  LIBRARIES
-		        icartdaq_CAEN2795_A2795Board
-		)
-
-art_make_library( LIBRARY_NAME icartdaq_CAEN2795_GeneratorBase
-		  SOURCE CAEN2795_GeneratorBase.cc
+art_make_library( LIBRARY_NAME icartdaq_PhysCrate_GeneratorBase
+		  SOURCE PhysCrate_GeneratorBase.cc
 		  LIBRARIES
 			icartdaq-core_Overlays
+			share_WorkerThread
 			artdaq_Application
 			artdaq_DAQdata
 			artdaq-core_Utilities
@@ -28,9 +20,9 @@ art_make_library( LIBRARY_NAME icartdaq_CAEN2795_GeneratorBase
 			${CETLIB}
 		)
 
-simple_plugin(CAEN2795 "generator"
-  icartdaq_CAEN2795_PhysCrate
-  icartdaq_CAEN2795_GeneratorBase
+simple_plugin(PhysCrateData "generator"
+  ica_base_PhysCrate
+  icartdaq_PhysCrate_GeneratorBase
   icartdaq-core_Overlays
   artdaq_Application
   artdaq_DAQdata
@@ -43,8 +35,8 @@ simple_plugin(CAEN2795 "generator"
   ${CETLIB}
   )
 
-simple_plugin(CAEN2795FakeData "generator"
-  icartdaq_CAEN2795_GeneratorBase
+simple_plugin(PhysCrateFakeData "generator"
+  icartdaq_PhysCrate_GeneratorBase
   icartdaq-core_Overlays
   artdaq_Application
   artdaq_DAQdata

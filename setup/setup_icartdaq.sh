@@ -10,7 +10,7 @@ export LIBRARY_PATH=/usr/lib/x86_64-linux-gnu \
    UPS_OVERRIDE='-H Linux64bit+2.6-2.12' \
    CET_PLATINFO=Linux64bit+2.6-2.12:slf6:x86_64
 
-source setupICARTDAQ
+source icartdaq/setup/setupICARTDAQ
 
 echo ""
 echo ""

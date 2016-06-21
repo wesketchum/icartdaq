@@ -1,7 +1,7 @@
 ////////////////////////////////////////////////////////////////////////
-// Class:       CAEN2795WriteICARUSDataFile
+// Class:       PhysCrateWriteICARUSDataFile
 // Module Type: analyzer
-// File:        CAEN2795WriteICARUSDataFile_module.cc
+// File:        PhysCrateWriteICARUSDataFile_module.cc
 // Description: Writes data in a QSCAN ready format, hopefully...
 ////////////////////////////////////////////////////////////////////////
 
@@ -12,7 +12,8 @@
 #include "art/Framework/Principal/Handle.h"
 
 #include "art/Utilities/Exception.h"
-#include "icartdaq-core/Overlays/CAEN2795Fragment.hh"
+#include "icartdaq-core/Overlays/PhysCrateFragment.hh"
+#include "icartdaq-core/Overlays/PhysCrateStatFragment.hh"
 #include "artdaq-core/Data/Fragments.hh"
 
 #include <algorithm>
@@ -27,20 +28,20 @@
 
 #include <arpa/inet.h>
 
-#include "packs.h"
+#include "ica_base/packs.h"
 
 #define EVEN 0x4556454E
 #define DATA 0x44415441
 #define STAT 0x53544154
 
 namespace icarus {
-  class CAEN2795WriteICARUSDataFile;
+  class PhysCrateWriteICARUSDataFile;
 }
 
-class icarus::CAEN2795WriteICARUSDataFile : public art::EDAnalyzer {
+class icarus::PhysCrateWriteICARUSDataFile : public art::EDAnalyzer {
 public:
-  explicit CAEN2795WriteICARUSDataFile(fhicl::ParameterSet const & pset);
-  virtual ~CAEN2795WriteICARUSDataFile();
+  explicit PhysCrateWriteICARUSDataFile(fhicl::ParameterSet const & pset);
+  virtual ~PhysCrateWriteICARUSDataFile();
 
   virtual void analyze(art::Event const & evt);
 
@@ -56,7 +57,7 @@ private:
 };
 
 
-icarus::CAEN2795WriteICARUSDataFile::CAEN2795WriteICARUSDataFile(fhicl::ParameterSet const & pset)
+icarus::PhysCrateWriteICARUSDataFile::PhysCrateWriteICARUSDataFile(fhicl::ParameterSet const & pset)
   : EDAnalyzer(pset),
     raw_data_label_(pset.get<std::string>("raw_data_label")),
     file_output_name_(pset.get<std::string>("file_output_name")),
@@ -65,20 +66,20 @@ icarus::CAEN2795WriteICARUSDataFile::CAEN2795WriteICARUSDataFile(fhicl::Paramete
 {
 }
 
-icarus::CAEN2795WriteICARUSDataFile::~CAEN2795WriteICARUSDataFile()
+icarus::PhysCrateWriteICARUSDataFile::~PhysCrateWriteICARUSDataFile()
 {
   
 }
 
-void icarus::CAEN2795WriteICARUSDataFile::beginSubRun(art::SubRun const&)
+void icarus::PhysCrateWriteICARUSDataFile::beginSubRun(art::SubRun const&)
 {
 
 }
-void icarus::CAEN2795WriteICARUSDataFile::endSubRun(art::SubRun const&)
+void icarus::PhysCrateWriteICARUSDataFile::endSubRun(art::SubRun const&)
 {
 }
 
-void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
+void icarus::PhysCrateWriteICARUSDataFile::analyze(art::Event const & evt)
 {
   
   art::EventNumber_t eventNumber = evt.event();
@@ -89,18 +90,21 @@ void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
   output_file_.open(fn.str(),std::ofstream::binary | std::ofstream::out);
 
   // ***********************
-  // *** CAEN2795 Fragments ***
+  // *** PhysCrate Fragments ***
   // ***********************
   
-  // look for raw CAEN2795 data
+  // look for raw PhysCrate data
   
   art::Handle< std::vector<artdaq::Fragment> > raw;
-  evt.getByLabel(raw_data_label_, "CAEN2795", raw);
+  evt.getByLabel(raw_data_label_, "PHYSCRATEDATA", raw);
   
+  art::Handle< std::vector<artdaq::Fragment> > raw_stat;
+  evt.getByLabel(raw_data_label_, "PHYSCRATESTAT", raw_stat);
+
   if(!raw.isValid()){
     std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
               << ", event " << eventNumber << " has zero"
-              << " CAEN2795 fragments " << " in module " << raw_data_label_ << std::endl;
+              << " PhysCrate fragments " << " in module " << raw_data_label_ << std::endl;
     std::cout << std::endl;
     return;
   }
@@ -110,7 +114,7 @@ void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
   std::cout << std::endl;
   std::cout << "Run " << evt.run() << ", subrun " << evt.subRun()
 	    << ", event " << eventNumber << " has " << raw->size()
-	    << " CAEN2795 fragment(s)." << std::endl;
+	    << " PhysCrate fragment(s)." << std::endl;
 
   evHead header;
   header.token = (int)htonl(EVEN);
@@ -127,10 +131,14 @@ void icarus::CAEN2795WriteICARUSDataFile::analyze(art::Event const & evt)
     const auto& frag((*raw)[idx]);
     output_file_.write((char*)frag.dataBeginBytes(),frag.dataSizeBytes());
   }
+  for(size_t idx = 0; idx < raw_stat->size(); ++idx){
+    const auto& frag((*raw_stat)[idx]);
+    output_file_.write((char*)frag.dataBeginBytes(),frag.dataSizeBytes());
+  }
 
   output_file_.close();
 
 }
 
 
-DEFINE_ART_MODULE(icarus::CAEN2795WriteICARUSDataFile)
+DEFINE_ART_MODULE(icarus::PhysCrateWriteICARUSDataFile)
