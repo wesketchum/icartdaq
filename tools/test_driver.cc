@@ -199,6 +199,8 @@ int main(int argc, char * argv[]) try
     if (events_to_generate != 0 && event_count >= events_to_generate) 
       gen.get ()->StopCmd (timeout, timestamp);
 
+    std::cout << "Made it here, gonna go again!" << std::endl;
+    
   }
   fr_metricMan.do_stop();
   //evb_metricManPtr->do_stop();

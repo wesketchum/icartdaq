@@ -1,6 +1,7 @@
 #include "icartdaq/Generators/PhysCrateData.hh"
 #include "artdaq/Application/GeneratorMacros.hh"
 
+#include <cerrno>
 #include <iomanip>
 #include <iterator>
 #include <iostream>
@@ -24,10 +25,13 @@ icarus::PhysCrateData::PhysCrateData(fhicl::ParameterSet const & ps)
 
 void icarus::PhysCrateData::InitializeVeto(){
   veto_host_port = ps_.get<int>("VetoPort");
-  veto_host      = ps_.get<std::string>("VetoHost");
-  veto_udp       = Cudp(veto_host_port);
+  strcpy(veto_host,(ps_.get<std::string>("VetoHost")).c_str());
+  //veto_udp       = Cudp(veto_host_port);
+  //veto_udp = SendUDP();
   veto_state     = true; //defaults to on
 
+  printf("IP ADDRESS for veto is %s:%d\n",veto_host,veto_host_port);
+  
   _doVetoTest    = ps_.get<bool>("DoVetoTest",false);
   if(_doVetoTest){
     _vetoTestPeriod = ps_.get<unsigned int>("VetoTestPeriod",1e6);
@@ -40,15 +44,27 @@ void icarus::PhysCrateData::InitializeVeto(){
   
 void icarus::PhysCrateData::VetoOn(){
   TRACE(TR_LOG,"PhysCrateData::VetoOn called.");
-  std::string msg="ON";
-  veto_udp.SendTo(veto_host.c_str(),veto_host_port,msg.c_str(),2);
+
+  veto_udp = Cudp(veto_host_port);
+  char msg[]="ON";
+  int result = veto_udp.SendTo(veto_host,veto_host_port,msg,2);
+  TRACE(TR_LOG,"PhysCrateData::VetoOn called. Result %d",result);
+  if(result<0)
+    TRACE(TR_LOG,"PhysCrateData::VetoOn Error: %s",std::strerror(errno));
+  
   veto_state = true;
 }
 
 void icarus::PhysCrateData::VetoOff(){
   TRACE(TR_LOG,"PhysCrateData::VetoOff called.");
-  std::string msg="OF";
-  veto_udp.SendTo(veto_host.c_str(),veto_host_port,msg.c_str(),2);
+  
+  veto_udp = Cudp(veto_host_port);
+  char msg[]="OF";
+  int result = veto_udp.SendTo(veto_host,veto_host_port,msg,2);
+  TRACE(TR_LOG,"PhysCrateData::VetoOff called. Result %d",result);
+  if(result<0)
+    TRACE(TR_LOG,"PhysCrateData::VetoOff Error: %s",std::strerror(errno));
+  
   veto_state = false;
 }
 
@@ -117,7 +133,7 @@ bool icarus::PhysCrateData::Monitor(){
   for(int ib=0; ib<physCr->NBoards(); ++ib){
     auto status = physCr->BoardStatus(ib);
 
-    std::string varname = "PhysCrate.Board_"+std::to_string(ib)+"_Status.last";
+    std::string varname = ".Board_"+std::to_string(ib)+"_Status.last";
     metricMan_->sendMetric(varname,status,"Status",5,true,false);
     
     if( (status & STATUS_BUSY)!=0)
@@ -125,20 +141,22 @@ bool icarus::PhysCrateData::Monitor(){
   }
   
   if(veto_state)
-    metricMan_->sendMetric("PhysCrate.VetoState.last",1,"state",5,true,false);
+    metricMan_->sendMetric(".VetoState.last",1,"state",5,true,false);
   else
-    metricMan_->sendMetric("PhysCrate.VetoState.last",0,"state",5,true,false);    
-
+    metricMan_->sendMetric(".VetoState.last",0,"state",5,true,false);    
+  
   return true; 
 }
 
 bool icarus::PhysCrateData::VetoTest(){
+  
   if(veto_state)
     VetoOff();
   else
     VetoOn();
   usleep(_vetoTestPeriod);
-
+  
+  //veto_udp.Run(_vetoTestPeriod);
   return true;
 }
 
@@ -154,8 +172,8 @@ int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
   _tloop_end = std::chrono::high_resolution_clock::now();
   UpdateDuration();
   TRACE(TR_TIMER,"PhysCrateData::GetData : waitData loop time was %lf seconds",_tloop_duration.count());
-  metricMan_->sendMetric("PhysCrate.GetData.ReturnTime.last",_tloop_duration.count()*1000.,"ms",5,true,true);
-  metricMan_->sendMetric("PhysCrate.GetData.ReturnTime.max",_tloop_duration.count()*1000.,"ms",5,true,true);
+  metricMan_->sendMetric(".GetData.ReturnTime.last",_tloop_duration.count()*1000.,"ms",5,true,true);
+  metricMan_->sendMetric(".GetData.ReturnTime.max",_tloop_duration.count()*1000.,"ms",5,true,true);
 
   TRACE(TR_DEBUG,"PhysCrateData::GetData : Calling waitData()");
   physCr->waitData();
