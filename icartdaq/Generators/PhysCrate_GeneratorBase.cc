@@ -118,6 +118,11 @@ bool icarus::PhysCrate_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
   PhysCrateFragment newfrag(*frags.back());
   last_status_ = GetData(last_read_data_size_,(uint32_t*)(frags.back()->dataBeginBytes()));
 
+  metricMan_->sendMetric("PhysCrate.GetData.Size",last_read_data_size_,"bytes",5,true,true);
+  metricMan_->sendMetric("PhysCrate.GetData.Size.last",last_read_data_size_,"bytes",5,true,false);
+  metricMan_->sendMetric("PhysCrate.GetData.Size.min",last_read_data_size_,"bytes",5,true,false);
+  metricMan_->sendMetric("PhysCrate.GetData.Size.max",last_read_data_size_,"bytes",5,true,false);
+
   if(last_read_data_size_==0){
     frags.pop_back();
     return false;
@@ -131,6 +136,8 @@ bool icarus::PhysCrate_GeneratorBase::getNext_(artdaq::FragmentPtrs & frags) {
   //give proper event number
   auto ev_num = newfrag.BoardEventNumber()+1;
   frags.back()->setSequenceID(ev_num);
+
+  metricMan_->sendMetric("PhysCrate.getNext.EventNumber.last",(int)ev_num,"events",5,true,false);
 
   //create fragment with no metadata
   frags.emplace_back( std::unique_ptr<artdaq::Fragment>( new artdaq::Fragment(ev_num, fragment_id()+1000,

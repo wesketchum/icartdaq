@@ -3,6 +3,7 @@
 
 #include "icartdaq/Generators/PhysCrate_GeneratorBase.hh"
 #include <chrono>
+#include "ica_base/Cudpux.h"
 
 class PhysCrate;
 
@@ -39,6 +40,19 @@ namespace icarus {
 	std::chrono::duration_cast< std::chrono::duration<double> >(_tloop_end-_tloop_start);
     }
 
+    Cudp        veto_udp;
+    std::string veto_host;
+    int         veto_host_port;
+    bool        veto_state;
+    void VetoOn();
+    void VetoOff();
+    void InitializeVeto();
+
+    bool         VetoTest();
+    bool         _doVetoTest;
+    unsigned int _vetoTestPeriod;
+    share::WorkerThreadUPtr _vetoTestThread;
+    
  };
 }
 

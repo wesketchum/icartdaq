@@ -21,6 +21,7 @@ art_make_library( LIBRARY_NAME icartdaq_PhysCrate_GeneratorBase
 		)
 
 simple_plugin(PhysCrateData "generator"
+  ica_base_A2795Board
   ica_base_PhysCrate
   icartdaq_PhysCrate_GeneratorBase
   icartdaq-core_Overlays
