@@ -3,7 +3,7 @@
 
 #include "icartdaq/Generators/PhysCrate_GeneratorBase.hh"
 #include <chrono>
-#include "ica_base/SendUDP.h"
+#include "ica_base/VetoUDP.h"
 
 class PhysCrate;
 
@@ -40,9 +40,9 @@ namespace icarus {
 	std::chrono::duration_cast< std::chrono::duration<double> >(_tloop_end-_tloop_start);
     }
 
-    Cudp        veto_udp;
-    char        veto_host[128];
+    std::string veto_host;
     int         veto_host_port;
+    VetoUDP     veto_udp;
     bool        veto_state;
     void VetoOn();
     void VetoOff();

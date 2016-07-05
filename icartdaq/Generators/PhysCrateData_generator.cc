@@ -17,20 +17,19 @@
 
 icarus::PhysCrateData::PhysCrateData(fhicl::ParameterSet const & ps)
   :
-  PhysCrate_GeneratorBase(ps)
+  PhysCrate_GeneratorBase(ps),
+  veto_host(ps.get<std::string>("VetoHost")),
+  veto_host_port(ps.get<int>("VetoPort")),
+  veto_udp(veto_host.c_str(),veto_host_port)
 {
   InitializeHardware();
   InitializeVeto();
 }
 
 void icarus::PhysCrateData::InitializeVeto(){
-  veto_host_port = ps_.get<int>("VetoPort");
-  strcpy(veto_host,(ps_.get<std::string>("VetoHost")).c_str());
-  //veto_udp       = Cudp(veto_host_port);
-  //veto_udp = SendUDP();
   veto_state     = true; //defaults to on
 
-  printf("IP ADDRESS for veto is %s:%d\n",veto_host,veto_host_port);
+  TRACE(TR_LOG,"IP ADDRESS for veto is %s:%d\n",veto_host.c_str(),veto_host_port);
   
   _doVetoTest    = ps_.get<bool>("DoVetoTest",false);
   if(_doVetoTest){
@@ -45,26 +44,22 @@ void icarus::PhysCrateData::InitializeVeto(){
 void icarus::PhysCrateData::VetoOn(){
   TRACE(TR_LOG,"PhysCrateData::VetoOn called.");
 
-  veto_udp = Cudp(veto_host_port);
-  char msg[]="ON";
-  int result = veto_udp.SendTo(veto_host,veto_host_port,msg,2);
+  int result = veto_udp.VetoOn();
   TRACE(TR_LOG,"PhysCrateData::VetoOn called. Result %d",result);
   if(result<0)
     TRACE(TR_LOG,"PhysCrateData::VetoOn Error: %s",std::strerror(errno));
-  
+
   veto_state = true;
 }
 
 void icarus::PhysCrateData::VetoOff(){
   TRACE(TR_LOG,"PhysCrateData::VetoOff called.");
-  
-  veto_udp = Cudp(veto_host_port);
-  char msg[]="OF";
-  int result = veto_udp.SendTo(veto_host,veto_host_port,msg,2);
+
+  int result = veto_udp.VetoOff();
   TRACE(TR_LOG,"PhysCrateData::VetoOff called. Result %d",result);
   if(result<0)
     TRACE(TR_LOG,"PhysCrateData::VetoOff Error: %s",std::strerror(errno));
-  
+
   veto_state = false;
 }
 
@@ -156,7 +151,6 @@ bool icarus::PhysCrateData::VetoTest(){
     VetoOn();
   usleep(_vetoTestPeriod);
   
-  //veto_udp.Run(_vetoTestPeriod);
   return true;
 }
 
