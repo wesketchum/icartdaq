@@ -1,0 +1,48 @@
+services:
+{
+  TFileService: { fileName: "output_waveforms.root" }
+}
+
+physics:
+{
+
+  analyzers:
+  {
+    dump:
+    {
+      module_type: PhysCrateDump
+      raw_data_label: "daq"
+      num_adcs_to_show: 6e5   # Obviously this should be no more than ADC counts per fragment
+    }
+    view:
+    {
+      module_type: PhysCrateViewer
+      raw_data_label: "daq"
+    }
+  }
+
+  producers:
+  {
+
+  }   
+
+  a1: [ dump, view ]
+  a2: [ view ]
+  e1: [ ]
+  end_paths: [ a2 ]
+}
+
+outputs:
+{
+
+}
+
+source:
+{
+module_type: RootInput
+}
+
+process_name: ViewWaveform
+
+
+

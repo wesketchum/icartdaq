@@ -97,13 +97,13 @@ void icarus::PhysCrateViewer::analyze(art::Event const & evt)
 	    << ", event " << eventNumber << " has " << raw_data->size()
 	    << " PhysCrate fragment(s)." << std::endl;
 
-  std::stringstream ss_hist_title,ss_hist_name;
   
   for (size_t idx = 0; idx < raw_data->size(); ++idx) {
     const auto& frag((*raw_data)[idx]);
     
     PhysCrateFragment bb(frag);
     for(size_t i_b=0; i_b < bb.nBoards(); ++i_b){
+      std::stringstream ss_hist_title,ss_hist_name;
       ss_hist_title << "(Run,Event,Fragment,Board)=("
 		    << evt.run() <<","
 		    << eventNumber << ","
@@ -114,12 +114,28 @@ void icarus::PhysCrateViewer::analyze(art::Event const & evt)
 		   << eventNumber << "_"
 		   << idx << "_"
 		   << i_b;
+
+      std::cout << "going to create histogram " << ss_hist_name.str() << std::endl;
+
       hist_vector.push_back(tfs->make<TH2F>(ss_hist_name.str().c_str(),ss_hist_title.str().c_str(),
-					    bb.nChannels(),0,bb.nChannels(),
+					    bb.nChannelsPerBoard(),0,bb.nChannelsPerBoard(),
 					    bb.nSamplesPerChannel(),0,bb.nSamplesPerChannel()));
-      for(size_t i_t=0; i_t<bb.nSamplesPerChannel(); ++i_t)
-	for(size_t i_c=0; i_c<bb.nChannels(); ++i_c)
+
+      std::cout << "Created histo. Total histos is now " << hist_vector.size() << std::endl;
+
+      
+      std::cout << "Printing board " << i_b+1 << " / " << bb.nBoards() << std::endl;
+      std::cout << "\t Board (event,timestamp) = (0x" << std::hex << bb.BoardEventNumber(i_b) << ", 0x"
+		<< bb.BoardTimeStamp(i_b) << ")" << std::dec << std::endl;
+      std::cout << "\t(First data word is 0x"
+		<< std::hex << *(bb.BoardData(i_b)) << std::dec << ")" << std::endl;
+      for(size_t i_t=0; i_t<bb.nSamplesPerChannel(); ++i_t){
+	//std::cout << "Printing sample " << i_t+1 << " / " << bb.nSamplesPerChannel() << std::endl;
+	for(size_t i_c=0; i_c<bb.nChannelsPerBoard(); ++i_c){
+	  //std::cout << "\tPrinting channel " << i_c+1 << " / " << bb.nChannelsPerBoard() << std::endl;
 	  hist_vector.back()->SetBinContent(i_c+1,i_t+1,bb.adc_val(i_b,i_c,i_t));
+	}
+      }
     }
 
   }

@@ -96,7 +96,7 @@ void icarus::PhysCrateDump::analyze(art::Event const & evt)
     
     PhysCrateFragment bb(frag);
     
-    std::cout << bb << std::endl;
+    //std::cout << bb << std::endl;
 
 
     if (num_adcs_to_show_ > 0) {
