@@ -125,6 +125,7 @@ void icarus::PhysCrateViewer::analyze(art::Event const & evt)
 
       
       std::cout << "Printing board " << i_b+1 << " / " << bb.nBoards() << std::endl;
+      std::cout << "\tData location is " << bb.DataTileHeaderLocation(i_b) << "." << std::endl;
       std::cout << "\t Board (event,timestamp) = (0x" << std::hex << bb.BoardEventNumber(i_b) << ", 0x"
 		<< bb.BoardTimeStamp(i_b) << ")" << std::dec << std::endl;
       std::cout << "\t(First data word is 0x"
@@ -133,7 +134,8 @@ void icarus::PhysCrateViewer::analyze(art::Event const & evt)
 	//std::cout << "Printing sample " << i_t+1 << " / " << bb.nSamplesPerChannel() << std::endl;
 	for(size_t i_c=0; i_c<bb.nChannelsPerBoard(); ++i_c){
 	  //std::cout << "\tPrinting channel " << i_c+1 << " / " << bb.nChannelsPerBoard() << std::endl;
-	  hist_vector.back()->SetBinContent(i_c+1,i_t+1,bb.adc_val(i_b,i_c,i_t));
+	  auto adc_value = bb.adc_val(i_b,i_c,i_t);
+	  if(adc_value!=0) hist_vector.back()->SetBinContent(i_c+1,i_t+1,adc_value);
 	}
       }
     }
