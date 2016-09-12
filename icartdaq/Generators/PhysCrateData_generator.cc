@@ -124,15 +124,32 @@ void icarus::PhysCrateData::ConfigureStop(){
 }
 
 bool icarus::PhysCrateData::Monitor(){ 
+  //usleep(1e5);
+  /*  
+  if(veto_state)
+    usleep(1.5e6);
+  */
 
-  for(int ib=0; ib<physCr->NBoards(); ++ib){
-    auto status = physCr->BoardStatus(ib);
-
-    std::string varname = ".Board_"+std::to_string(ib)+"_Status.last";
-    metricMan_->sendMetric(varname,status,"Status",5,true,false);
+  if(!veto_state){
+    bool need_to_veto = false;
     
-    if( (status & STATUS_BUSY)!=0)
-      TRACE(TR_ERROR,"PhysCrateData::Monitor : STATUS_BUSY on board %d!",ib);
+    for(int ib=0; ib<physCr->NBoards(); ++ib){
+      auto status = physCr->BoardStatus(ib);
+      
+      std::string varname = ".Board_"+std::to_string(ib)+"_Status.last";
+      metricMan_->sendMetric(varname,status,"Status",5,true,false);
+      
+      if( (status & STATUS_BUSY)!=0){
+	TRACE(TR_ERROR,"PhysCrateData::Monitor : STATUS_BUSY on board %d!",ib);
+	need_to_veto = true;
+	break;
+      }
+    }
+    
+    if(need_to_veto && !veto_state)
+      VetoOn();
+    //else if(veto_state && !need_to_veto)
+    //VetoOff();
   }
   
   if(veto_state)
@@ -175,7 +192,12 @@ int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
   //start loop timer
   _tloop_start = std::chrono::high_resolution_clock::now();
 
+  _tloop_duration = std::chrono::duration_cast< std::chrono::duration<double> >(_tloop_end-_tloop_start);
+  TRACE(TR_TIMER,"PhysCrateData::GetData : waitData call time was %lf seconds",_tloop_duration.count());
+  metricMan_->sendMetric(".GetData.WaitTime.last",_tloop_duration.count()*1000.,"ms",5,true,true);
+  metricMan_->sendMetric(".GetData.WaitTime.max",_tloop_duration.count()*1000.,"ms",5,true,true);
 
+      
   while(physCr->dataAvail()){
     TRACE(TR_DEBUG,"PhysCrateData::GetData : DataAvail!");
     auto data_ptr = physCr->getData();
@@ -196,6 +218,10 @@ int icarus::PhysCrateData::GetData(size_t & data_size, uint32_t* data_loc){
   }
   
   TRACE(TR_LOG,"PhysCrateData::GetData completed. Status %d, Data size %lu",0,data_size);
+
+  if(data_size==0 && veto_state)
+    VetoOff();
+
   return 0;
 }
 
