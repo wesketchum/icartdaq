@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent icartdaq	v00_01_00
-defaultqual	e7:eth
+parent icarus_daq v00_01_00
+defaultqual	  e7:eth
 
 # These optional lines define the installed directories where
 # headers, libraries, and executables will be found
@@ -17,11 +17,11 @@ bindir      fq_dir      bin
 fcldir      -
 
 #
-product		 version	optional
-artdaq           v1_12_13
-icartdaq_core    v0_01_00
-ica_base         v00_01_00
-cetbuildtools    v4_14_02        -       only_for_build
+product		      version	   optional
+artdaq                v1_12_13
+icarus_artdaq_core    v0_01_00
+ica_base              v00_01_00
+cetbuildtools         v4_14_02     -       only_for_build
 end_product_list
 
 # e6 - with gcc 4.9.1 and -std=c++1y

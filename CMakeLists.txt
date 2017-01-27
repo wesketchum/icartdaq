@@ -11,7 +11,7 @@
 cmake_minimum_required (VERSION 2.8)
 
 
-project(icartdaq)
+project(icarus-artdaq)
 # cetbuildtools contains our cmake modules
 SET ( CETBUILDTOOLS_VERSION $ENV{CETBUILDTOOLS_VERSION} )
 IF (NOT CETBUILDTOOLS_VERSION)
@@ -42,7 +42,7 @@ find_ups_product( artdaq v0_04_02 )
 find_ups_product( artdaq_utilities v1_00_00)
 find_ups_product( artdaq_core v1_00_00 )
 find_ups_product( ica_base v00_01_00 )
-find_ups_product( icartdaq_core v0_00_01 )
+find_ups_product( icarus_artdaq_core v0_00_01 )
 find_ups_product( art v1_06_00 )
 find_ups_product( fhiclcpp v2_16_00 )
 find_ups_product( messagefacility v1_10_00 )
@@ -70,7 +70,7 @@ include(CetTest)
 include_directories($ENV{CAENCOMMDIR}/include)
 
 # source
-add_subdirectory(icartdaq)
+add_subdirectory(icarus-artdaq)
 
 # testing
 #add_subdirectory(test)
